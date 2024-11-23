@@ -9,7 +9,7 @@ The open-source Mixture of Depths code and the official implementation of the pa
 ## Introduction
 
 Traditional transformer models allocate a fixed amount of computational resources to every input token, leading to inefficient and unnecessary computation. To address this inefficiency, [Mixture of Depths (MoD)](https://arxiv.org/abs/2404.02258) was introduced, dynamically adjusting computational depth by skipping less important layers. While promising, current MoD approaches face two significant challenges:
-
+　　　ß
 1. **High Training Costs**: Existing methods require training the entire model alongside routers, which determine which layers to skip, resulting in substantial computational overhead.
 2. **Risk of Performance Degradation**: Bypassing important layers can lead to a drop in model performance.
 
@@ -35,7 +35,7 @@ conda activate router-tuning
 git clone https://github.com/CASE-Lab-UMD/Router-Tuning
 
 cd ./Router-Tuning
-pip install -e .
+pip install -r requirements.txt
 ```
 
 
