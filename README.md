@@ -42,7 +42,7 @@ pip install -r requirements.txt
 ## Train
 
 ```bash
-sh /scripts/finetune_mndskip.sh
+sh /scripts/finetune_mindskip.sh
 ```
 
 ## Evaluation 
