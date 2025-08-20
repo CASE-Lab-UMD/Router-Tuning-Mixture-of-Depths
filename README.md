@@ -22,6 +22,7 @@ Our approach delivers competitive results, achieving up to **21% speedup** with 
 
 ## News
 
+- **Aug 2025**: Accepted to the EMNLP 2025 main conference.
 - **Oct 2024**: Published preprint on [arXiv](https://arxiv.org/abs/2410.13184) along with the related codebase.
 
 ## Quick Start
