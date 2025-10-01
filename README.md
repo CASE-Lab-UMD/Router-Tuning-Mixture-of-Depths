@@ -1,6 +1,6 @@
 ## Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers
 
-**[Shwai He](https://shwai-he.github.io/), Tao Ge, Guoheng Sun, [Bowei Tian](https://bowei.netlify.app/#about), Xiaoyang Wang, [Ang Li](https://www.ang-li.com/), Dong Yu**
+**[Shwai He](https://shwai-he.github.io/), [Tao Ge](https://getao.github.io/), [Guoheng Sun](https://s1gh.alphaxiv.io/), [Bowei Tian](https://bowei.netlify.app/#about), [Xiaoyang Wang](https://xyang0.github.io/), [Ang Li](https://www.ang-li.com/), [Dong Yu](https://sites.google.com/view/dongyu888/)**
 
 ## TL;DR
 The open-source Mixture of Depths code and the official implementation of the paper "Router-Tuning: A Simple and Effective Approach for Enabling Dynamic Depth in Transformers."
