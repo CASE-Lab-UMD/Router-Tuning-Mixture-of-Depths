@@ -8,6 +8,7 @@ This file is modified from the huggingface example for finetuning language model
 import logging
 import os
 import sys
+import ast
 
 import warnings
 from dataclasses import dataclass, field
@@ -309,9 +310,9 @@ def main():
     if model_args.mod_n is None:
         raise ValueError("Please provide `--mod_n` (or legacy `--mindskip_n`).")
 
-    # 🔍
-    if training_args.extend_layers is not None:
-        exec("training_args.extend_layers = " + training_args.extend_layers)
+    # Backward-compatible optional field from older internal training args.
+    if hasattr(training_args, "extend_layers") and training_args.extend_layers is not None:
+        training_args.extend_layers = ast.literal_eval(training_args.extend_layers)
 
     # Setup logging
     logging.basicConfig(
@@ -412,11 +413,9 @@ def main():
     config.gradient_scale = model_args.gradient_scale
 
     print(f"model_args.model_name_or_path: {model_args.model_name_or_path}")
-    config.save_pretrained(model_args.model_name_or_path)
-    
+
     ###########################################################
-    
-    config = AutoConfig.from_pretrained(model_args.model_name_or_path, trust_remote_code=True)
+
     tokenizer_kwargs = {
         "cache_dir": model_args.cache_dir,
         "use_fast": model_args.use_fast_tokenizer,
@@ -518,8 +517,11 @@ def main():
             raise ValueError("--do_train requires a train dataset")
     
     if training_args.do_eval and val_set_size > 0:
+        eval_size = min(val_set_size, len(lm_datasets["train"]) - 1)
+        if eval_size <= 0:
+            raise ValueError("Evaluation requires at least 2 training samples.")
         train_val = lm_datasets["train"].train_test_split(
-            test_size=val_set_size, shuffle=True, seed=training_args.seed
+            test_size=eval_size, shuffle=True, seed=training_args.seed
         )
         train_data = (
             train_val["train"].shuffle()
@@ -603,7 +605,7 @@ def main():
         logger.info("*** Evaluate ***")
 
         metrics = trainer.evaluate()
-        metrics["eval_samples"] = min(val_set_size, len(val_dataset))
+        metrics["eval_samples"] = len(val_dataset)
         try:
             perplexity = math.exp(metrics["eval_loss"])
         except OverflowError:

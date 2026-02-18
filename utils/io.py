@@ -106,12 +106,11 @@ def save_json(data, file_path, indent=4, **kwargs):
 def load_jsonl(file_path) -> list:
     data = []
     with open(file_path, "r", encoding="utf8") as f:
-        for line in f:
+        for line_idx, line in enumerate(f, start=1):
             try:
                 data.append(json.loads(line))
             except json.JSONDecodeError:
-                print(f"Error decoding line: {line}")
-                continue
+                raise ValueError(f"Invalid JSONL at {file_path}:{line_idx}")
     return data
 
 

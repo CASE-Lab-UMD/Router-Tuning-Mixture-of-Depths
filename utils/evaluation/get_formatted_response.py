@@ -3,8 +3,12 @@ import re
 
 import pandas as pd
 
-from llmgate.entrypoints.evaluation.mmlu import format_example
-from llmgate.utils.io import load_json, load_jsonl
+try:
+    from llmgate.entrypoints.evaluation.mmlu import format_example
+except ImportError:
+    format_example = None
+
+from utils.io import load_json, load_jsonl
 
 
 def get_alpaca_eval_responses(result_path):
@@ -46,6 +50,11 @@ def get_human_eval_responses(result_path, return_id=False):
 
 
 def get_mmlu_responses(result_path):
+    if format_example is None:
+        raise ImportError(
+            "MMLU formatting requires llmgate. Install llmgate or provide a local format_example implementation."
+        )
+
     model_evaluation_results = []
 
     for subject_file_name in os.listdir(result_path):
@@ -91,14 +100,20 @@ def get_mt_bench_responses(result_path, return_id=False, multi_turn=False):
         pattern = re.compile(r"<\|The Start of Assistant A's Conversation with User\|>\n\n### User:\n(.*?)\n\n### Assistant", re.IGNORECASE | re.DOTALL)
         for i in range(len(model_evaluation_results)):
             prompted_result = model_evaluation_results[i]["user_prompt"]
-            pure_input = pattern.search(prompted_result).group(1)
+            match = pattern.search(prompted_result)
+            if match is None:
+                raise ValueError("Failed to parse MT-Bench multi-turn input from `user_prompt`.")
+            pure_input = match.group(1)
             model_evaluation_results[i]["pure_input"] = pure_input  # add to result
 
         # get pure outputs
         pattern = re.compile(r"\n\n### Assistant A:\n(.*?)\n\n### User:\n", re.IGNORECASE | re.DOTALL)
         for i in range(len(model_evaluation_results)):
             prompted_result = model_evaluation_results[i]["user_prompt"]
-            pure_output = pattern.search(prompted_result).group(1)
+            match = pattern.search(prompted_result)
+            if match is None:
+                raise ValueError("Failed to parse MT-Bench multi-turn output from `user_prompt`.")
+            pure_output = match.group(1)
             model_evaluation_results[i]["pure_output"] = pure_output  # add to result
 
     else:
@@ -111,14 +126,20 @@ def get_mt_bench_responses(result_path, return_id=False, multi_turn=False):
         pattern = re.compile(r"\n\n\[Question]\n(.*?)\n\n\[The Start of Assistant's Answer]\n", re.IGNORECASE | re.DOTALL)
         for i in range(len(model_evaluation_results)):
             prompted_input = model_evaluation_results[i]["user_prompt"]
-            pure_input = pattern.search(prompted_input).group(1)
+            match = pattern.search(prompted_input)
+            if match is None:
+                raise ValueError("Failed to parse MT-Bench single-turn input from `user_prompt`.")
+            pure_input = match.group(1)
             model_evaluation_results[i]["pure_input"] = pure_input  # add to result
 
         # get pure outputs
         pattern = re.compile(r"\n\n\[The Start of Assistant's Answer]\n(.*?)\n\[The End of Assistant's Answer]", re.IGNORECASE | re.DOTALL)
         for i in range(len(model_evaluation_results)):
             prompted_result = model_evaluation_results[i]["user_prompt"]
-            pure_output = pattern.search(prompted_result).group(1)
+            match = pattern.search(prompted_result)
+            if match is None:
+                raise ValueError("Failed to parse MT-Bench single-turn output from `user_prompt`.")
+            pure_output = match.group(1)
             model_evaluation_results[i]["pure_output"] = pure_output  # add to result
 
     if return_id:
