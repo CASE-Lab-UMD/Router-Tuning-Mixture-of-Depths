@@ -32,21 +32,21 @@ Router-Tuning tackles both by focusing optimization on routing components and in
 
 ## 📈 Results
 
-### Main Results
+### 🏁 Main Results
 <p align="center">
   <img src="figures/main_results.png" alt="Main benchmark results of Router-Tuning" width="92%">
 </p>
 Router-Tuning consistently improves the efficiency-quality tradeoff over full-parameter MoD tuning baselines.
 The reported best setting reaches notable speedup while keeping quality degradation small.
 
-### Expert Routing Analysis
+### 🔬 Expert Routing Analysis
 <p align="center">
   <img src="figures/expert_rt.png" alt="Expert-level routing behavior analysis" width="82%">
 </p>
 Router specialization becomes clearer after tuning: the model learns more stable token-to-layer routing patterns.
 This supports dynamic-depth execution with lower unnecessary computation.
 
-### LoRA Compatibility
+### 🔗 LoRA Compatibility
 <p align="center">
   <img src="figures/lora_rt.png" alt="LoRA and Router-Tuning combined results" width="92%">
 </p>
@@ -84,7 +84,7 @@ pip install -r requirements.txt
 ```
 
 ## 🚀 Quick Start
-### 1) Prepare Data
+### 1) 🧹 Prepare Data
 Put raw datasets under `data/raw/` using the expected subdirectory names:
 - `vicuna_sharegpt`
 - `evol_instruct`
@@ -105,12 +105,12 @@ python entrypoints/data/mix_datasets.py \
   --save_path ./data/mixed
 ```
 
-### 2) Run Router-Tuning
+### 2) 🏃 Run Router-Tuning
 ```bash
 bash scripts/finetune_mod.sh
 ```
 
-### 3) Minimal Single-Node Override Example
+### 3) 🖥️ Minimal Single-Node Override Example
 ```bash
 NUM_PROCESSES=4 PORT=29501 bash scripts/finetune_mod.sh
 ```
@@ -130,7 +130,7 @@ Distributed launch overrides:
 - `NUM_PROCESSES`: number of GPU processes.
 - `PORT`: distributed master port.
 
-### Knob Matrix
+### 🧭 Knob Matrix
 | Knob | Where | Typical Values | Effect |
 | --- | --- | --- | --- |
 | `folder_name` | `scripts/finetune_mod.sh` | `mistral-7b-mod`, `qwen-2.5-7b-mod`, `llama3-8b-instruct-mod` | Selects base checkpoint under `ckpt/` |
