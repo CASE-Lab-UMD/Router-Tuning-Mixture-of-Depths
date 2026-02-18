@@ -6,6 +6,21 @@ Authors: [Shwai He](https://shwai-he.github.io/), [Tao Ge](https://getao.github.
 
 Router-Tuning fine-tunes only router modules to enable dynamic depth with low training cost. This repo also includes MoD variants for multiple base models.
 
+## TL;DR
+Official implementation of Router-Tuning for dynamic-depth Transformers.
+Compared with standard MoD-style training, Router-Tuning focuses on tuning router-related parameters for lower training cost while preserving model quality.
+
+## Introduction
+
+Traditional Transformer models allocate a fixed amount of computation to every token, which can be inefficient.
+MoD-style methods improve this by dynamically skipping less important computation paths, but existing approaches often have two practical limitations:
+
+1. High training cost from updating a large portion of model parameters.
+2. Potential performance regression when important computation is skipped.
+
+Router-Tuning addresses both issues by tuning router behavior with lightweight updates.
+This repository also includes MoD-compatible checkpoints and scripts for practical training and evaluation workflows.
+
 ![Diagram of MoD](mod.svg)
 
 ## News
