@@ -5,15 +5,15 @@ import os
 import random
 
 from utils.io import find_files, load_jsonl, save_jsonl, create_dir
-from utils.operations.operation_list import replicate_elements
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-REFORMATTED_DATA_DIR = {
-    "vicuna_sharegpt": "/results/data/reformatted/vicuna_sharegpt",
-    "evol_instruct": "/results/data/reformatted/evol_instruct",
-    "slim_orca": "/results/data/reformatted/slim_orca",
-    "meta_math_qa": "/results/data/reformatted/meta_math_qa",
-    "evol_code_alpaca": "/results/data/reformatted/evol_code_alpaca",
-}
+DATASET_NAMES = (
+    "vicuna_sharegpt",
+    "evol_instruct",
+    "slim_orca",
+    "meta_math_qa",
+    "evol_code_alpaca",
+)
 
 MIX_PORTION = {
     "vicuna_sharegpt": 2.9,
@@ -23,17 +23,34 @@ MIX_PORTION = {
     "evol_code_alpaca": 1.0,
 }
 
+
+def replicate_elements(elements, portion):
+    """Replicate a list by a float multiplier (e.g., 2.9x)."""
+    if portion <= 0:
+        return []
+
+    integer_part = int(portion)
+    fractional_part = portion - integer_part
+    replicated = list(elements) * integer_part
+
+    if fractional_part > 0 and elements:
+        sampled_size = int(len(elements) * fractional_part)
+        if sampled_size > 0:
+            replicated.extend(random.sample(elements, sampled_size))
+    return replicated
+
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("--save_path", type=str, default="./results/data/mixed")
+    arg_parser.add_argument("--reformatted_dir", type=str, default=os.path.join(PROJECT_ROOT, "data", "reformatted"))
+    arg_parser.add_argument("--save_path", type=str, default=os.path.join(PROJECT_ROOT, "data", "mixed"))
     arg_parser.add_argument("--seed", type=int, default=233)
     args = arg_parser.parse_args()
     random.seed(args.seed)
 
     final_data_list = []
 
-    for dataset_name in REFORMATTED_DATA_DIR.keys():
-        dataset_path = REFORMATTED_DATA_DIR[dataset_name]
+    for dataset_name in DATASET_NAMES:
+        dataset_path = os.path.join(args.reformatted_dir, dataset_name)
         dataset_portion = MIX_PORTION[dataset_name]
 
         for data_file in find_files(dataset_path, "*.jsonl"):
@@ -43,7 +60,7 @@ if __name__ == "__main__":
             print(f"{dataset_name} {data_file}: replicated length {len(data_list)}")
             final_data_list.extend(data_list)
 
-    print(f"Shuffling final data list...")
+    print("Shuffling final data list...")
     random.shuffle(final_data_list)
     print(f"final mixed data list length: {len(final_data_list)}")
 

@@ -1,23 +1,24 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 
 ##############################################################################
 
-root_path="/workspace/MindSkip-github"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+root_path="$(cd "${SCRIPT_DIR}/.." && pwd)"
 echo $root_path
 cd ${root_path}
 
 
 version=3
 size=8
-# folder_name="llama${version}-${size}b-instruct-mindskip"
-# folder_name="qwen-2.5-7b-mindskip"
+# folder_name="llama${version}-${size}b-instruct-mod"
+# folder_name="qwen-2.5-7b-mod"
 folder_name="mistral-7b-mindskip"
-# folder_name="llama${version}-${size}b-mindskip"
+# folder_name="llama${version}-${size}b-mod"
 model_name_or_path="${root_path}/ckpt/${folder_name}"
 
 
 ##############################################################################
-mindskip_n=16
+mod_n=16
 granularity=attn_sequence
 # granularity=mlp_sequence
 
@@ -29,7 +30,7 @@ trust_remote_code=True
 router_only=True
 ##############################################################################
 config_file="${root_path}/configs/accelerate/deepspeed_llama_mindskip.yaml"
-data_type=mixed
+# Set one dataset name under data/reformatted/, or use "mixed" for data/mixed/data.jsonl.
 data_type=alpaca
 max_train_samples=1000
 max_seq_length=2048
@@ -41,10 +42,17 @@ else
 fi
 
 
-output_dir=$root_path/trained_models/$folder_name/${data_type}/${max_train_samples}/${granularity}_epoch${num_epochs}_lr${learning_rate}_mindskip_n${mindskip_n}_gradient_scale${gradient_scale}_wd${weight_decay}
+output_dir=$root_path/trained_models/$folder_name/${data_type}/${max_train_samples}/${granularity}_epoch${num_epochs}_lr${learning_rate}_mod_n${mod_n}_gradient_scale${gradient_scale}_wd${weight_decay}
 mkdir -p $output_dir
 
 num_nodes=1
+if command -v nvidia-smi >/dev/null 2>&1; then
+  detected_gpus="$(nvidia-smi -L | wc -l | tr -d ' ')"
+else
+  detected_gpus=1
+fi
+num_processes="${NUM_PROCESSES:-$detected_gpus}"
+port="${PORT:-29501}"
 NUM_GPUS=${num_processes}
 
 BATCH_SIZE_PER_GPU=1
@@ -84,14 +92,13 @@ accelerate launch \
   --tf32 True \
   --report_to "tensorboard" \
   --granularity ${granularity} \
-  --mindskip_n ${mindskip_n} \
+  --mod_n ${mod_n} \
   --gradient_scale ${gradient_scale} \
   --trust_remote_code ${trust_remote_code} \
   --overwrite_output_dir \
   --max_train_samples $max_train_samples \
   --use_flash_attn \
-  --do_train \
-  --do_eval \
+  --do_train
 
 
 ##############################################################################

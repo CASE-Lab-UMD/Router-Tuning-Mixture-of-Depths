@@ -211,7 +211,14 @@ class ModelArguments:
         },
     )
 
-    # 🔍 For MindSkip Configuration
+    # For MoD configuration
+    mod_capacity: Optional[float] = field(
+        default=None
+    )
+    mod_n: Optional[int] = field(
+        default=None
+    )
+    # Backward-compatible aliases.
     mindskip_capacity: Optional[float] = field(
         default=None
     )
@@ -230,7 +237,7 @@ class ModelArguments:
 
 
 @dataclass
-class MindSkipTrainingArguments(TrainingArguments):
+class ModTrainingArguments(TrainingArguments):
     router_only: Optional[bool] = field(
         default=False
     )
@@ -283,7 +290,7 @@ class DataTrainingArguments:
 
 
 def main():
-    parser = HfArgumentParser((ModelArguments, DataTrainingArguments, MindSkipTrainingArguments))
+    parser = HfArgumentParser((ModelArguments, DataTrainingArguments, ModTrainingArguments))
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         model_args, data_args, training_args = parser.parse_json_file(json_file=os.path.abspath(sys.argv[1]))
     else:
@@ -293,6 +300,14 @@ def main():
         if model_args.token is not None:
             raise ValueError("`token` and `use_auth_token` are both specified. Please set only the argument `token`.")
         model_args.token = model_args.use_auth_token
+
+    # Normalize MoD/MindSkip argument aliases.
+    if model_args.mod_n is None:
+        model_args.mod_n = model_args.mindskip_n
+    if model_args.mod_capacity is None:
+        model_args.mod_capacity = model_args.mindskip_capacity
+    if model_args.mod_n is None:
+        raise ValueError("Please provide `--mod_n` (or legacy `--mindskip_n`).")
 
     # 🔍
     if training_args.extend_layers is not None:
@@ -383,16 +398,16 @@ def main():
     print(f"use_cache: {config.use_cache}")
     
     num_hidden_layers = config.num_hidden_layers
-    is_mindskip = []
+    is_mod = []
     for i in range(num_hidden_layers - 1):
-        if i >= (num_hidden_layers - model_args.mindskip_n - 1):
-            is_mindskip.append(True)
+        if i >= (num_hidden_layers - model_args.mod_n - 1):
+            is_mod.append(True)
         else:
-            is_mindskip.append(False)
+            is_mod.append(False)
             
-    is_mindskip.append(False)
-    print(f"is_mindskip: {is_mindskip}")
-    config.is_mindskip = is_mindskip
+    is_mod.append(False)
+    print(f"is_mod: {is_mod}")
+    config.is_mindskip = is_mod
     config.granularity = model_args.granularity
     config.gradient_scale = model_args.gradient_scale
 

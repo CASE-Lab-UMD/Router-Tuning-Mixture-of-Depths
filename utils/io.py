@@ -109,7 +109,7 @@ def load_jsonl(file_path) -> list:
         for line in f:
             try:
                 data.append(json.loads(line))
-            except json.JSONDecodeError as e:
+            except json.JSONDecodeError:
                 print(f"Error decoding line: {line}")
                 continue
     return data

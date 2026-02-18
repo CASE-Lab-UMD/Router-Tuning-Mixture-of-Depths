@@ -15,6 +15,8 @@ from transformers.debug_utils import DebugOption, DebugUnderflowOverflow
 from transformers.integrations import hp_params
 from transformers.integrations.deepspeed import deepspeed_init, deepspeed_load_checkpoint
 from transformers.integrations.tpu import tpu_spmd_dataloader
+from transformers.modeling_utils import unwrap_model
+from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 from transformers.pytorch_utils import ALL_LAYERNORM_LAYERS
 from transformers.trainer import _is_peft_model, TRAINER_STATE_NAME
 from transformers.trainer_callback import TrainerState
@@ -184,7 +186,7 @@ class CustomizedTrainer(Trainer):
                     " (torchrun or torch.distributed.launch (deprecated))."
                 )
             else:
-                debug_overflow = DebugUnderflowOverflow(self.model)  # noqa
+                _ = DebugUnderflowOverflow(self.model)  # noqa
 
         delay_optimizer_creation = is_sagemaker_mp_enabled() or self.is_fsdp_xla_enabled or self.is_fsdp_enabled
 

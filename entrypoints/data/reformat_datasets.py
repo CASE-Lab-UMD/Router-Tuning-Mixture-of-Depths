@@ -26,6 +26,7 @@ from datasets import load_dataset
 from tqdm import tqdm
 
 from utils.io import create_dir, load_json
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 def convert_convert_ShareGPT_Vicuna_unfiltered(dataset_path, save_path):
@@ -217,14 +218,13 @@ def convert_alpaca_data(dataset_path, save_path):
             }) + "\n")
 
 
-RAW_DATA_DIR = {
-    "vicuna_sharegpt": "/mnt/petrelfs/share_data/quxiaoye/datasets/vicuna_sharegpt",
-    "evol_instruct": "/mnt/petrelfs/share_data/quxiaoye/datasets/evol_instruct",
-    "slim_orca": "/mnt/petrelfs/share_data/quxiaoye/datasets/slim_orca",
-    "meta_math_qa": "/mnt/petrelfs/share_data/quxiaoye/datasets/meta_math_qa",
-    "evol_code_alpaca": "/mnt/petrelfs/share_data/quxiaoye/datasets/evol_code_alpaca",
-
-    "alpaca": "/mnt/petrelfs/share_data/quxiaoye/datasets/alpaca",
+RAW_DATA_SUBDIR = {
+    "vicuna_sharegpt": "vicuna_sharegpt",
+    "evol_instruct": "evol_instruct",
+    "slim_orca": "slim_orca",
+    "meta_math_qa": "meta_math_qa",
+    "evol_code_alpaca": "evol_code_alpaca",
+    "alpaca": "alpaca",
 }
 
 DATA_PROCESS_FUNC = {
@@ -239,13 +239,15 @@ DATA_PROCESS_FUNC = {
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("--save_path", type=str, default="./results/data/reformatted")
+    arg_parser.add_argument("--raw_data_root", type=str, default=os.path.join(PROJECT_ROOT, "data", "raw"))
+    arg_parser.add_argument("--save_path", type=str, default=os.path.join(PROJECT_ROOT, "data", "reformatted"))
     args = arg_parser.parse_args()
 
     processes = []
 
-    for dataset_name, dataset_path in RAW_DATA_DIR.items():
+    for dataset_name, dataset_subdir in RAW_DATA_SUBDIR.items():
         process_function = DATA_PROCESS_FUNC[dataset_name]
+        dataset_path = os.path.join(args.raw_data_root, dataset_subdir)
         save_path = os.path.join(args.save_path, dataset_name)
         create_dir(save_path)
 
