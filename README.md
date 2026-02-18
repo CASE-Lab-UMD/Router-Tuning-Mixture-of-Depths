@@ -36,8 +36,8 @@ Our approach delivers competitive results, achieving up to **21% speedup** with 
 conda create -n router-tuning python=3.10 -y
 conda activate router-tuning
 
-git clone https://github.com/CASE-Lab-UMD/Router-Tuning.git
-cd Router-Tuning
+git clone https://github.com/CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths.git
+cd Router-Tuning-Mixture-of-Depths
 pip install -r requirements.txt
 ```
 
