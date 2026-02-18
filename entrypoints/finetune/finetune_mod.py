@@ -8,7 +8,6 @@ This file is modified from the huggingface example for finetuning language model
 import logging
 import os
 import sys
-import ast
 
 import warnings
 from dataclasses import dataclass, field
@@ -309,10 +308,6 @@ def main():
         model_args.mod_capacity = model_args.mindskip_capacity
     if model_args.mod_n is None:
         raise ValueError("Please provide `--mod_n` (or legacy `--mindskip_n`).")
-
-    # Backward-compatible optional field from older internal training args.
-    if hasattr(training_args, "extend_layers") and training_args.extend_layers is not None:
-        training_args.extend_layers = ast.literal_eval(training_args.extend_layers)
 
     # Setup logging
     logging.basicConfig(

@@ -1,10 +1,12 @@
-"""Mix the instruction tuning data by given portions"""
+"""Mix instruction-tuning datasets with configurable replication portions."""
 
 import argparse
 import os
 import random
+from typing import Sequence
 
 from utils.io import find_files, load_jsonl, save_jsonl, create_dir
+
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 DATASET_NAMES = (
@@ -24,7 +26,7 @@ MIX_PORTION = {
 }
 
 
-def replicate_elements(elements, portion):
+def replicate_elements(elements: Sequence, portion: float):
     """Replicate a list by a float multiplier (e.g., 2.9x)."""
     if portion <= 0:
         return []
@@ -39,12 +41,13 @@ def replicate_elements(elements, portion):
             replicated.extend(random.sample(elements, sampled_size))
     return replicated
 
+
 if __name__ == "__main__":
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("--reformatted_dir", type=str, default=os.path.join(PROJECT_ROOT, "data", "reformatted"))
-    arg_parser.add_argument("--save_path", type=str, default=os.path.join(PROJECT_ROOT, "data", "mixed"))
-    arg_parser.add_argument("--seed", type=int, default=233)
-    args = arg_parser.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--reformatted_dir", type=str, default=os.path.join(PROJECT_ROOT, "data", "reformatted"))
+    parser.add_argument("--save_path", type=str, default=os.path.join(PROJECT_ROOT, "data", "mixed"))
+    parser.add_argument("--seed", type=int, default=233)
+    args = parser.parse_args()
     random.seed(args.seed)
 
     final_data_list = []
@@ -62,7 +65,7 @@ if __name__ == "__main__":
 
     print("Shuffling final data list...")
     random.shuffle(final_data_list)
-    print(f"final mixed data list length: {len(final_data_list)}")
+    print(f"Final mixed data list length: {len(final_data_list)}")
 
     create_dir(args.save_path)
     save_file = os.path.join(args.save_path, "data.jsonl")
