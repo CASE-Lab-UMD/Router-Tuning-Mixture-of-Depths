@@ -6,7 +6,7 @@ Authors: [Shwai He](https://shwai-he.github.io/), [Tao Ge](https://getao.github.
 
 Router-Tuning fine-tunes only router modules to enable dynamic depth with low training cost. This repo also includes MoD variants for multiple base models.
 
-![Diagram of MoD](mindskip.svg)
+![Diagram of MoD](mod.svg)
 
 ## News
 - Aug 2025: Accepted to EMNLP 2025 main conference.
@@ -25,8 +25,8 @@ pip install -r requirements.txt
 
 ## Repository Layout
 
-- `entrypoints/finetune/finetune_mindskip.py`: main training entry (MoD router tuning).
-- `scripts/finetune_mindskip.sh`: training launcher example.
+- `entrypoints/finetune/finetune_mod.py`: main training entry (MoD router tuning).
+- `scripts/finetune_mod.sh`: training launcher example.
 - `entrypoints/data/reformat_datasets.py`: convert raw datasets to message format.
 - `entrypoints/data/mix_datasets.py`: build mixed instruction-tuning set.
 - `utils/pipeline/customized_trainer.py`: custom trainer for router-focused optimization.
@@ -56,7 +56,7 @@ python entrypoints/data/mix_datasets.py \
 Run the default launcher:
 
 ```bash
-bash scripts/finetune_mindskip.sh
+bash scripts/finetune_mod.sh
 ```
 
 Useful environment overrides:

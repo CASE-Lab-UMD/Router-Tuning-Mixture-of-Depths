@@ -12,7 +12,7 @@ version=3
 size=8
 # folder_name="llama${version}-${size}b-instruct-mod"
 # folder_name="qwen-2.5-7b-mod"
-folder_name="mistral-7b-mindskip"
+folder_name="mistral-7b-mod"
 # folder_name="llama${version}-${size}b-mod"
 model_name_or_path="${root_path}/ckpt/${folder_name}"
 
@@ -29,7 +29,7 @@ num_epochs=1
 trust_remote_code=True
 router_only=True
 ##############################################################################
-config_file="${root_path}/configs/accelerate/deepspeed_llama_mindskip.yaml"
+config_file="${root_path}/configs/accelerate/deepspeed_llama_mod.yaml"
 # Set one dataset name under data/reformatted/, or use "mixed" for data/mixed/data.jsonl.
 data_type=alpaca
 max_train_samples=1000
@@ -67,7 +67,7 @@ accelerate launch \
   --num_processes ${num_processes} \
   --num_machines ${num_nodes} \
   --main_process_port ${port} \
-  ${root_path}/entrypoints/finetune/finetune_mindskip.py \
+  ${root_path}/entrypoints/finetune/finetune_mod.py \
   --model_name_or_path ${model_name_or_path} \
   --tokenizer_name ${model_name_or_path} \
   --use_fast_tokenizer False \

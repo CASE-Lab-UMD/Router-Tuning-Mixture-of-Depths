@@ -4,8 +4,8 @@
   ],
   "attention_dropout": 0.0,
   "auto_map": {
-    "AutoConfig": "configuration_qwen2_mindskip.Qwen2MindSkipConfig",
-    "AutoModelForCausalLM": "modeling_qwen2_mindskip.Qwen2MindSkipForCausalLM"
+    "AutoConfig": "configuration_qwen2_mod.Qwen2MindSkipConfig",
+    "AutoModelForCausalLM": "modeling_qwen2_mod.Qwen2MindSkipForCausalLM"
   },
   "bos_token_id": 151643,
   "eos_token_id": 151643,

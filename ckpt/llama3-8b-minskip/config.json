@@ -5,8 +5,8 @@
   "attention_bias": false,
   "attention_dropout": 0.0,
   "auto_map": {
-    "AutoConfig": "configuration_llama_mindskip.LlamaMoDConfig",
-    "AutoModelForCausalLM": "modeling_llama_mindskip.LlamaMoDForCausalLM"
+    "AutoConfig": "configuration_llama_mod.LlamaMoDConfig",
+    "AutoModelForCausalLM": "modeling_llama_mod.LlamaMoDForCausalLM"
   },
   "bos_token_id": 128000,
   "eos_token_id": 128001,

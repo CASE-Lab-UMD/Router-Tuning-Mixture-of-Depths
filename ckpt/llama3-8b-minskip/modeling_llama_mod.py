@@ -29,7 +29,7 @@ from transformers.utils import (
     logging,
     replace_return_docstrings,
 )
-from .configuration_llama_mindskip import LlamaConfig
+from .configuration_llama_mod import LlamaConfig
 
 
 if is_flash_attn_2_available():
