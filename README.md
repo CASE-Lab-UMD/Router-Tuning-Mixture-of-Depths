@@ -6,7 +6,7 @@
 
 Official implementation of [**Router-Tuning**](https://arxiv.org/abs/2410.13184).
 
-Authors: [Shwai He](https://shwai-he.github.io/), [Tao Ge](https://getao.github.io/), [Guoheng Sun](https://s1gh.alphaxiv.io/), [Bowei Tian](https://bowei.netlify.app/#about), [Xiaoyang Wang](https://xyang0.github.io/), [Ang Li](https://www.ang-li.com/), [Dong Yu](https://sites.google.com/view/dongyu888/)
+Authors: [Shwai He](https://shwai-he.github.io/), [Tao Ge](https://getao.github.io/), [Guoheng Sun](https://s1gh.alphaxiv.io/), [Bowei Tian](https://bowei.netlify.app/#about), [Xiaoyang Wang](https://xyang0.github.io/), [Dong Yu](https://sites.google.com/view/dongyu888/)
 
 Router-Tuning enables dynamic-depth inference by fine-tuning only router-related parameters. Compared with standard MoD-style full tuning, it significantly reduces training cost while keeping model quality competitive.
 
@@ -27,6 +27,13 @@ Traditional transformers execute a fixed number of layers for every token, which
 2. Aggressive skipping can hurt quality if routing is not well calibrated.
 
 Router-Tuning tackles both by focusing optimization on routing components and introducing routing strategies that better preserve performance-efficiency tradeoffs.
+
+## Results at a Glance
+| Setting | Speedup | Quality Drop |
+| --- | --- | --- |
+| Router-Tuning (reported best tradeoff) | Up to **21%** | Around **0.2%** |
+
+> Numbers are from the Router-Tuning paper: https://arxiv.org/abs/2410.13184
 
 ## Core Methods
 1. **Router-Only Fine-Tuning**
@@ -90,6 +97,15 @@ bash scripts/finetune_mod.sh
 NUM_PROCESSES=4 PORT=29501 bash scripts/finetune_mod.sh
 ```
 
+## Training Pipeline
+```mermaid
+flowchart LR
+    A[Raw Data: data/raw] --> B[Reformat<br/>reformat_datasets.py]
+    B --> C[Mix Data<br/>mix_datasets.py]
+    C --> D[Launch Training<br/>scripts/finetune_mod.sh]
+    D --> E[Model Output<br/>trained_models/...]
+```
+
 ## Training Knobs
 `finetune_mod.sh` is the recommended launcher. Commonly adjusted fields:
 
@@ -104,6 +120,17 @@ NUM_PROCESSES=4 PORT=29501 bash scripts/finetune_mod.sh
 Distributed launch overrides:
 - `NUM_PROCESSES`: number of GPU processes.
 - `PORT`: distributed master port.
+
+### Knob Matrix
+| Knob | Where | Typical Values | Effect |
+| --- | --- | --- | --- |
+| `folder_name` | `scripts/finetune_mod.sh` | `mistral-7b-mod`, `qwen-2.5-7b-mod`, `llama3-8b-instruct-mod` | Selects base checkpoint under `ckpt/` |
+| `data_type` | `scripts/finetune_mod.sh` | `alpaca`, `mixed`, ... | Chooses training data source |
+| `mod_n` | `scripts/finetune_mod.sh` / CLI | `8`, `16`, `32` | Controls dynamic-depth sparsity/keep behavior |
+| `granularity` | `scripts/finetune_mod.sh` | `attn_sequence`, `mlp_sequence` | Chooses routing granularity |
+| `max_train_samples` | `scripts/finetune_mod.sh` | `1000`, `5000`, `all` (by removing cap) | Controls quick debug vs full tuning |
+| `NUM_PROCESSES` | shell env | `1`, `4`, `8` | Number of distributed workers |
+| `PORT` | shell env | e.g., `29501` | Master communication port |
 
 ## Evaluation
 Evaluation is compatible with [EleutherAI/lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness).
@@ -120,7 +147,7 @@ For strict reproduction used in earlier experiments, see [s1ghhh/lm-evaluation-h
 ```bibtex
 @misc{he2024routertuningsimpleeffectiveapproach,
   title={Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers},
-  author={Shwai He and Tao Ge and Guoheng Sun and Bowei Tian and Xiaoyang Wang and Ang Li and Dong Yu},
+  author={Shwai He and Tao Ge and Guoheng Sun and Bowei Tian and Xiaoyang Wang and Dong Yu},
   year={2024},
   eprint={2410.13184},
   archivePrefix={arXiv},
