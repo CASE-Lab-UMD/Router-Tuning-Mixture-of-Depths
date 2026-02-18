@@ -12,14 +12,17 @@ Compared with standard MoD-style training, Router-Tuning focuses on tuning route
 
 ## Introduction
 
-Traditional Transformer models allocate a fixed amount of computation to every token, which can be inefficient.
-MoD-style methods improve this by dynamically skipping less important computation paths, but existing approaches often have two practical limitations:
+Traditional transformer models allocate a fixed amount of computational resources to every input token, leading to inefficient and unnecessary computation.
+To address this inefficiency, [**Mixture of Depths (MoD)**](https://arxiv.org/abs/2404.02258) was introduced, dynamically adjusting computational depth by skipping less important layers.
+While promising, current MoD approaches face two significant challenges:
 
-1. High training cost from updating a large portion of model parameters.
-2. Potential performance regression when important computation is skipped.
+1. **High Training Costs**: Existing methods require training the entire model alongside routers, which determine which layers to skip, resulting in substantial computational overhead.
+2. **Risk of Performance Degradation**: Bypassing important layers can lead to a drop in model performance.
 
-Router-Tuning addresses both issues by tuning router behavior with lightweight updates.
-This repository also includes MoD-compatible checkpoints and scripts for practical training and evaluation workflows.
+To overcome these challenges, we introduce [**Router-Tuning**](https://arxiv.org/abs/2410.13184), a method that fine-tunes only the router on a small dataset, drastically reducing training costs.
+Additionally, we propose **MoD attention routing**, which preserves model performance while significantly enhancing computational and memory efficiency.
+
+Our approach delivers competitive results, achieving up to **21% speedup** with only a **0.2% performance drop**, demonstrating effectiveness in balancing efficiency and performance.
 
 ![Diagram of MoD](mod.svg)
 
