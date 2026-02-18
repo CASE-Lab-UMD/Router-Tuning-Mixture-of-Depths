@@ -113,15 +113,6 @@ bash scripts/finetune_mod.sh
 NUM_PROCESSES=4 PORT=29501 bash scripts/finetune_mod.sh
 ```
 
-## 🧭 Training Pipeline
-```mermaid
-flowchart LR
-    A[Raw Data: data/raw] --> B[Reformat<br/>reformat_datasets.py]
-    B --> C[Mix Data<br/>mix_datasets.py]
-    C --> D[Launch Training<br/>scripts/finetune_mod.sh]
-    D --> E[Model Output<br/>trained_models/...]
-```
-
 ## 🎛️ Training Knobs
 `finetune_mod.sh` is the recommended launcher. Commonly adjusted fields:
 
