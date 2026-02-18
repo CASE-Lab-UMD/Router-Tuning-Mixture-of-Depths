@@ -14,7 +14,7 @@ Router-Tuning enables dynamic-depth inference by fine-tuning only router-related
   <img src="figures/mod.svg" alt="Router-Tuning and MoD overview" width="68%">
 </p>
 
-## News
+## 📰 News
 - Aug 2025: Router-Tuning accepted to **EMNLP 2025** main conference.
 - Oct 2024: arXiv preprint and code release.
 
@@ -51,7 +51,7 @@ This supports dynamic-depth execution with lower unnecessary computation.
 Router-Tuning is compatible with LoRA-based adaptation and can be composed for a better efficiency-performance balance.
 In practice, this enables lightweight deployment recipes without full-model retraining.
 
-## Core Methods
+## 🔍 Core Methods
 1. **Router-Only Fine-Tuning**
 - Tune router-related parameters instead of full-model updates.
 - Strongly reduces optimization cost for dynamic-depth adaptation.
@@ -60,7 +60,7 @@ In practice, this enables lightweight deployment recipes without full-model retr
 - Uses attention-based routing granularity to improve compute and memory efficiency.
 - Preserves output quality under dynamic-depth execution.
 
-## Repository Layout
+## 📦 Repository Layout
 - `entrypoints/finetune/finetune_mod.py`: main training entrypoint.
 - `scripts/finetune_mod.sh`: reproducible launcher with `accelerate` + DeepSpeed.
 - `entrypoints/data/reformat_datasets.py`: convert raw datasets to unified `messages` format.
@@ -70,7 +70,7 @@ In practice, this enables lightweight deployment recipes without full-model retr
 - `configs/deepspeed/`: DeepSpeed runtime configs.
 - `ckpt/`: model config/tokenizer files for supported MoD variants.
 
-## Installation
+## ⚙️ Installation
 ```bash
 conda create -n router-tuning python=3.10 -y
 conda activate router-tuning
@@ -81,7 +81,7 @@ cd Router-Tuning-Mixture-of-Depths
 pip install -r requirements.txt
 ```
 
-## Quick Start
+## 🚀 Quick Start
 ### 1) Prepare Data
 Put raw datasets under `data/raw/` using the expected subdirectory names:
 - `vicuna_sharegpt`
@@ -113,7 +113,7 @@ bash scripts/finetune_mod.sh
 NUM_PROCESSES=4 PORT=29501 bash scripts/finetune_mod.sh
 ```
 
-## Training Pipeline
+## 🧭 Training Pipeline
 ```mermaid
 flowchart LR
     A[Raw Data: data/raw] --> B[Reformat<br/>reformat_datasets.py]
@@ -122,7 +122,7 @@ flowchart LR
     D --> E[Model Output<br/>trained_models/...]
 ```
 
-## Training Knobs
+## 🎛️ Training Knobs
 `finetune_mod.sh` is the recommended launcher. Commonly adjusted fields:
 
 - `folder_name`: base checkpoint directory under `ckpt/`.
@@ -148,18 +148,18 @@ Distributed launch overrides:
 | `NUM_PROCESSES` | shell env | `1`, `4`, `8` | Number of distributed workers |
 | `PORT` | shell env | e.g., `29501` | Master communication port |
 
-## Evaluation
+## 🧪 Evaluation
 Evaluation is compatible with [EleutherAI/lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness).
 For strict reproduction used in earlier experiments, see [s1ghhh/lm-evaluation-harness](https://github.com/s1ghhh/lm-evaluation-harness).
 
-## Repro Checklist
+## ✅ Repro Checklist
 - Python 3.10 environment with `pip install -r requirements.txt`.
 - Valid local model path under `ckpt/` (or customize `folder_name`).
 - Reformatted/mixed data exists at `data/reformatted/*/data.jsonl` or `data/mixed/data.jsonl`.
 - `accelerate` config selected in `scripts/finetune_mod.sh` matches your hardware.
 - `NUM_PROCESSES` and GPU memory are consistent with `max_seq_length` and batch setup.
 
-## Citation
+## 📄 Citation
 ```bibtex
 @misc{he2024routertuningsimpleeffectiveapproach,
   title={Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers},
@@ -172,5 +172,5 @@ For strict reproduction used in earlier experiments, see [s1ghhh/lm-evaluation-h
 }
 ```
 
-## Contact
+## 📬 Contact
 - Shwai He: `shwaihe@umd.edu`
