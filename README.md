@@ -1,12 +1,14 @@
 # Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers
 
+---
+
 [![Paper](https://img.shields.io/badge/Paper-arXiv-red)](https://arxiv.org/abs/2410.13184)
-![Conference](https://img.shields.io/badge/EMNLP-2025-blue)
+[![Conference](https://img.shields.io/badge/EMNLP-2025-blue)](https://2025.emnlp.org/)
 ![Python](https://img.shields.io/badge/Python-3.10+-green)
 
-Official implementation of [**Router-Tuning**](https://arxiv.org/abs/2410.13184).
+[Shwai He](https://shwai-he.github.io/), [Tao Ge](https://getao.github.io/), [Guoheng Sun](https://s1gh.alphaxiv.io/), [Bowei Tian](https://bowei.netlify.app/#about), [Xiaoyang Wang](https://xyang0.github.io/), [Dong Yu](https://sites.google.com/view/dongyu888/)
 
-Authors: [Shwai He](https://shwai-he.github.io/), [Tao Ge](https://getao.github.io/), [Guoheng Sun](https://s1gh.alphaxiv.io/), [Bowei Tian](https://bowei.netlify.app/#about), [Xiaoyang Wang](https://xyang0.github.io/), [Dong Yu](https://sites.google.com/view/dongyu888/)
+> This is the official implementation of the paper [**Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers**](https://arxiv.org/abs/2410.13184), accepted at **EMNLP 2025**. We provide a practical framework for efficient dynamic-depth training and inference in Transformers.
 
 Router-Tuning enables dynamic-depth inference by fine-tuning only router-related parameters. Compared with standard MoD-style full tuning, it significantly reduces training cost while keeping model quality competitive.
 
