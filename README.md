@@ -18,7 +18,7 @@ Router-Tuning enables dynamic-depth inference by fine-tuning only router-related
 - Aug 2025: Router-Tuning accepted to **EMNLP 2025** main conference.
 - Oct 2024: arXiv preprint and code release.
 
-## Why This Repo
+## ✨ Why This Repo
 Traditional transformers execute a fixed number of layers for every token, which wastes computation on easy tokens.
 
 [Mixture of Depths (MoD)](https://arxiv.org/abs/2404.02258) addresses this by dynamically skipping less important computations, but two practical issues remain:
@@ -27,6 +27,8 @@ Traditional transformers execute a fixed number of layers for every token, which
 2. Aggressive skipping can hurt quality if routing is not well calibrated.
 
 Router-Tuning tackles both by focusing optimization on routing components and introducing routing strategies that better preserve performance-efficiency tradeoffs.
+
+## 📈 Results
 
 ### Main Results
 <p align="center">
