@@ -28,13 +28,6 @@ Traditional transformers execute a fixed number of layers for every token, which
 
 Router-Tuning tackles both by focusing optimization on routing components and introducing routing strategies that better preserve performance-efficiency tradeoffs.
 
-## Results at a Glance
-| Setting | Speedup | Quality Drop |
-| --- | --- | --- |
-| Router-Tuning (reported best tradeoff) | Up to **21%** | Around **0.2%** |
-
-> Numbers are from the Router-Tuning paper: https://arxiv.org/abs/2410.13184
-
 ### Main Results
 <p align="center">
   <img src="figures/main_results.png" alt="Main benchmark results of Router-Tuning" width="92%">
