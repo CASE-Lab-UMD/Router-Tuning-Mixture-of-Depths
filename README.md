@@ -1,12 +1,24 @@
-# Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers
+<h1 align="center">Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers</h1>
 
 ---
 
-[![Paper](https://img.shields.io/badge/Paper-arXiv-red)](https://arxiv.org/abs/2410.13184)
-[![Conference](https://img.shields.io/badge/EMNLP-2025-blue)](https://2025.emnlp.org/)
-![Python](https://img.shields.io/badge/Python-3.10+-green)
+<p align="center">
+  <a href="https://arxiv.org/abs/2410.13184"><img src="https://img.shields.io/badge/arXiv-2410.13184-b31b1b.svg" alt="arXiv"></a>
+  <a href="https://2025.emnlp.org/"><img src="https://img.shields.io/badge/EMNLP-2025-blue" alt="EMNLP 2025"></a>
+  <img src="https://img.shields.io/badge/Python-3.10+-green" alt="Python 3.10+">
+</p>
 
-[Shwai He](https://shwai-he.github.io/), [Tao Ge](https://getao.github.io/), [Guoheng Sun](https://s1gh.alphaxiv.io/), [Bowei Tian](https://bowei.netlify.app/#about), [Xiaoyang Wang](https://xyang0.github.io/), [Dong Yu](https://sites.google.com/view/dongyu888/)
+<p align="center">
+  <a href="#-news">📰 News</a> •
+  <a href="#-why-this-repo">✨ Why</a> •
+  <a href="#-results">📈 Results</a> •
+  <a href="#-quick-start">🚀 Quick Start</a> •
+  <a href="#-citation">📄 Citation</a>
+</p>
+
+<p align="center">
+  <a href="https://shwai-he.github.io/">Shwai He</a>, <a href="https://getao.github.io/">Tao Ge</a>, <a href="https://s1gh.alphaxiv.io/">Guoheng Sun</a>, <a href="https://bowei.netlify.app/#about">Bowei Tian</a>, <a href="https://xyang0.github.io/">Xiaoyang Wang</a>, <a href="https://sites.google.com/view/dongyu888/">Dong Yu</a>
+</p>
 
 > This is the official implementation of the paper [**Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers**](https://arxiv.org/abs/2410.13184), accepted at **EMNLP 2025**. We provide a practical framework for efficient dynamic-depth training and inference in Transformers.
 
