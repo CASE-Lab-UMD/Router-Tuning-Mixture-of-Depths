@@ -1,6 +1,5 @@
 <h1 align="center">Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers</h1>
 
----
 
 <p align="center">
   <a href="https://arxiv.org/abs/2410.13184"><img src="https://img.shields.io/badge/arXiv-2410.13184-b31b1b.svg" alt="arXiv"></a>
