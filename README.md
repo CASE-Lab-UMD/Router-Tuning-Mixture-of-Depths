@@ -20,7 +20,10 @@
   <a href="https://shwai-he.github.io/">Shwai He</a>, <a href="https://getao.github.io/">Tao Ge</a>, <a href="https://s1gh.alphaxiv.io/">Guoheng Sun</a>, <a href="https://bowei.netlify.app/#about">Bowei Tian</a>, <a href="https://xyang0.github.io/">Xiaoyang Wang</a>, <a href="https://sites.google.com/view/dongyu888/">Dong Yu</a>
 </p>
 
-> This is the official implementation of the paper [**Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers**](https://arxiv.org/abs/2410.13184), accepted at **EMNLP 2025**. We provide a practical framework for efficient dynamic-depth training and inference in Transformers.
+
+## 📖 Introduction
+
+This is the official implementation of the paper [**Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers**](https://arxiv.org/abs/2410.13184), accepted at **EMNLP 2025**. We provide a practical framework for efficient dynamic-depth training and inference in Transformers.
 
 Router-Tuning enables dynamic-depth inference by fine-tuning only router-related parameters. Compared with standard MoD-style full tuning, it significantly reduces training cost while keeping model quality competitive.
 
