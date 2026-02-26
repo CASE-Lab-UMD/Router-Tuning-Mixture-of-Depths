@@ -1,4 +1,4 @@
-<h1 align="center">Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers</h1>
+<h1 align="center">[EMNLP 2025] Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers</h1>
 
 
 <p align="center">
