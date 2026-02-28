@@ -8,15 +8,16 @@
 </p>
 
 <p align="center">
+  <a href="https://shwai-he.github.io/">Shwai He</a>, <a href="https://getao.github.io/">Tao Ge</a>, <a href="https://s1gh.alphaxiv.io/">Guoheng Sun</a>, <a href="https://bowei.netlify.app/#about">Bowei Tian</a>, <a href="https://xyang0.github.io/">Xiaoyang Wang</a>, <a href="https://sites.google.com/view/dongyu888/">Dong Yu</a>
+</p>
+
+<p align="center">
+  <a href="#-introduction">📖 Introduction</a> •
   <a href="#-news">📰 News</a> •
   <a href="#-why-this-repo">✨ Why</a> •
   <a href="#-results">📈 Results</a> •
   <a href="#-quick-start">🚀 Quick Start</a> •
   <a href="#-citation">📄 Citation</a>
-</p>
-
-<p align="center">
-  <a href="https://shwai-he.github.io/">Shwai He</a>, <a href="https://getao.github.io/">Tao Ge</a>, <a href="https://s1gh.alphaxiv.io/">Guoheng Sun</a>, <a href="https://bowei.netlify.app/#about">Bowei Tian</a>, <a href="https://xyang0.github.io/">Xiaoyang Wang</a>, <a href="https://sites.google.com/view/dongyu888/">Dong Yu</a>
 </p>
 
 
