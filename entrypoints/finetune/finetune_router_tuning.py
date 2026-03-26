@@ -211,19 +211,22 @@ class ModelArguments:
         },
     )
 
-    # For MoD configuration
+    # Router-Tuning configuration
+    target_capacity: Optional[float] = field(
+        default=None,
+        metadata={"help": "Target activation ratio used by the router regularization term."},
+    )
     mod_capacity: Optional[float] = field(
-        default=None
+        default=None,
+        metadata={"help": "Legacy alias for `target_capacity`."},
+    )
+    router_layers: Optional[int] = field(
+        default=None,
+        metadata={"help": "Number of deeper layers that enable Router-Tuning."},
     )
     mod_n: Optional[int] = field(
-        default=None
-    )
-    # Backward-compatible aliases.
-    mindskip_capacity: Optional[float] = field(
-        default=None
-    )
-    mindskip_n: Optional[int] = field(
-        default=None
+        default=None,
+        metadata={"help": "Legacy alias for `router_layers`."},
     )
     gradient_scale: Optional[float] = field(
         default=None
@@ -301,13 +304,18 @@ def main():
             raise ValueError("`token` and `use_auth_token` are both specified. Please set only the argument `token`.")
         model_args.token = model_args.use_auth_token
 
-    # Normalize MoD/MindSkip argument aliases.
-    if model_args.mod_n is None:
-        model_args.mod_n = model_args.mindskip_n
-    if model_args.mod_capacity is None:
-        model_args.mod_capacity = model_args.mindskip_capacity
-    if model_args.mod_n is None:
-        raise ValueError("Please provide `--mod_n` (or legacy `--mindskip_n`).")
+    if model_args.router_layers is None:
+        model_args.router_layers = model_args.mod_n
+    elif model_args.mod_n is not None and model_args.router_layers != model_args.mod_n:
+        raise ValueError("Please provide only one of `--router_layers` or `--mod_n`.")
+
+    if model_args.target_capacity is None:
+        model_args.target_capacity = model_args.mod_capacity
+    elif model_args.mod_capacity is not None and model_args.target_capacity != model_args.mod_capacity:
+        raise ValueError("Please provide only one of `--target_capacity` or `--mod_capacity`.")
+
+    if model_args.router_layers is None:
+        raise ValueError("Please provide `--router_layers`.")
 
     # Setup logging
     logging.basicConfig(
@@ -396,16 +404,22 @@ def main():
     num_hidden_layers = config.num_hidden_layers
     is_mod = []
     for i in range(num_hidden_layers - 1):
-        if i >= (num_hidden_layers - model_args.mod_n - 1):
+        if i >= (num_hidden_layers - model_args.router_layers - 1):
             is_mod.append(True)
         else:
             is_mod.append(False)
             
     is_mod.append(False)
     print(f"is_mod: {is_mod}")
-    config.is_mindskip = is_mod
-    config.granularity = model_args.granularity
-    config.gradient_scale = model_args.gradient_scale
+    config.is_mod = is_mod
+    if model_args.granularity is not None:
+        config.granularity = model_args.granularity
+    if model_args.gradient_scale is not None:
+        config.gradient_scale = model_args.gradient_scale
+    if model_args.target_capacity is not None:
+        config.mod_capacity = model_args.target_capacity
+    elif not hasattr(config, "mod_capacity"):
+        config.mod_capacity = None
 
     print(f"model_args.model_name_or_path: {model_args.model_name_or_path}")
 

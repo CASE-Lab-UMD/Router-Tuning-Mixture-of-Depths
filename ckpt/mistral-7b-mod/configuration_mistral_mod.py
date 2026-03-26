@@ -1,4 +1,4 @@
-"""Mistral-MindSkip model configuration"""
+"""Mistral-MoD model configuration"""
 
 from transformers.configuration_utils import PretrainedConfig
 from transformers.utils import logging
@@ -7,8 +7,8 @@ from transformers.utils import logging
 logger = logging.get_logger(__name__)
 
 
-class MistralMindSkipConfig(PretrainedConfig):
-    model_type = "mistral_mindskip"
+class MistralMoDConfig(PretrainedConfig):
+    model_type = "mistral_mod"
     keys_to_ignore_at_inference = ["past_key_values"]
 
     def __init__(
@@ -32,9 +32,10 @@ class MistralMindSkipConfig(PretrainedConfig):
         sliding_window=4096,
         attention_dropout=0.0,
         # 🔍
-        is_mindskip: list = None,
+        is_mod: list = None,
         granularity: str = "sequence", 
         gradient_scale: float = 5e-3, 
+        mod_capacity = None,
         threshold: float = 0.5, 
         **kwargs,
     ):
@@ -59,9 +60,10 @@ class MistralMindSkipConfig(PretrainedConfig):
         self.attention_dropout = attention_dropout
 
         # 🔍
-        self.is_mindskip = [False for _ in range(num_hidden_layers)] if is_mindskip is None else is_mindskip
+        self.is_mod = [False for _ in range(num_hidden_layers)] if is_mod is None else is_mod
         self.granularity = granularity
         self.gradient_scale = gradient_scale
+        self.mod_capacity = mod_capacity
         self.threshold = threshold
         
         super().__init__(

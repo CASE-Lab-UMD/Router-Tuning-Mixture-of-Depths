@@ -7,13 +7,14 @@ cd "${ROOT_PATH}"
 
 VERSION=3
 SIZE=8
-# FOLDER_NAME="llama${VERSION}-${SIZE}b-instruct-mod"
+# Checkpoints still use -mod naming for HF compatibility.
 # FOLDER_NAME="qwen-2.5-7b-mod"
 FOLDER_NAME="mistral-7b-mod"
 # FOLDER_NAME="llama${VERSION}-${SIZE}b-mod"
 MODEL_NAME_OR_PATH="${ROOT_PATH}/ckpt/${FOLDER_NAME}"
 
-MOD_N=16
+ROUTER_LAYERS=16
+TARGET_CAPACITY=""
 GRANULARITY="attn_sequence"
 # GRANULARITY="mlp_sequence"
 
@@ -24,7 +25,7 @@ NUM_EPOCHS=1
 TRUST_REMOTE_CODE=True
 ROUTER_ONLY=True
 
-CONFIG_FILE="${ROOT_PATH}/configs/accelerate/deepspeed_llama_mod.yaml"
+CONFIG_FILE="${ROOT_PATH}/configs/accelerate/deepspeed_llama_router_tuning.yaml"
 # Set one dataset name under data/reformatted/, or use "mixed" for data/mixed/data.jsonl.
 DATA_TYPE="alpaca"
 MAX_TRAIN_SAMPLES=1000
@@ -36,8 +37,16 @@ else
   DATA_FILE="${ROOT_PATH}/data/reformatted/${DATA_TYPE}/data.jsonl"
 fi
 
-OUTPUT_DIR="${ROOT_PATH}/trained_models/${FOLDER_NAME}/${DATA_TYPE}/${MAX_TRAIN_SAMPLES}/${GRANULARITY}_epoch${NUM_EPOCHS}_lr${LEARNING_RATE}_mod_n${MOD_N}_gradient_scale${GRADIENT_SCALE}_wd${WEIGHT_DECAY}"
+OUTPUT_DIR="${ROOT_PATH}/trained_models/${FOLDER_NAME}/${DATA_TYPE}/${MAX_TRAIN_SAMPLES}/${GRANULARITY}_epoch${NUM_EPOCHS}_router_layers${ROUTER_LAYERS}_lambda${GRADIENT_SCALE}_lr${LEARNING_RATE}_wd${WEIGHT_DECAY}"
+if [[ -n "${TARGET_CAPACITY}" ]]; then
+  OUTPUT_DIR="${OUTPUT_DIR}_target${TARGET_CAPACITY}"
+fi
 mkdir -p "${OUTPUT_DIR}"
+
+EXTRA_ROUTER_ARGS=()
+if [[ -n "${TARGET_CAPACITY}" ]]; then
+  EXTRA_ROUTER_ARGS+=(--target_capacity "${TARGET_CAPACITY}")
+fi
 
 NUM_NODES=1
 if command -v nvidia-smi >/dev/null 2>&1; then
@@ -64,7 +73,7 @@ accelerate launch \
   --num_processes "${NUM_PROCESSES}" \
   --num_machines "${NUM_NODES}" \
   --main_process_port "${PORT}" \
-  "${ROOT_PATH}/entrypoints/finetune/finetune_mod.py" \
+  "${ROOT_PATH}/entrypoints/finetune/finetune_router_tuning.py" \
   --model_name_or_path "${MODEL_NAME_OR_PATH}" \
   --tokenizer_name "${MODEL_NAME_OR_PATH}" \
   --use_fast_tokenizer False \
@@ -89,10 +98,11 @@ accelerate launch \
   --tf32 True \
   --report_to "tensorboard" \
   --granularity "${GRANULARITY}" \
-  --mod_n "${MOD_N}" \
+  --router_layers "${ROUTER_LAYERS}" \
   --gradient_scale "${GRADIENT_SCALE}" \
   --trust_remote_code "${TRUST_REMOTE_CODE}" \
   --overwrite_output_dir \
   --max_train_samples "${MAX_TRAIN_SAMPLES}" \
   --use_flash_attn \
+  "${EXTRA_ROUTER_ARGS[@]}" \
   --do_train

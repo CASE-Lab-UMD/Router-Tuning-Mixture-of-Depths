@@ -1,4 +1,4 @@
-""" Qwen2-MindSkip model configuration"""
+""" Qwen2-MoD model configuration"""
 
 from transformers.configuration_utils import PretrainedConfig
 from transformers.utils import logging
@@ -6,8 +6,8 @@ from transformers.utils import logging
 
 logger = logging.get_logger(__name__)
 
-class Qwen2MindSkipConfig(PretrainedConfig):
-    model_type = "qwen2_mindskip"
+class Qwen2MoDConfig(PretrainedConfig):
+    model_type = "qwen2_mod"
     keys_to_ignore_at_inference = ["past_key_values"]
 
     def __init__(
@@ -30,9 +30,10 @@ class Qwen2MindSkipConfig(PretrainedConfig):
         max_window_layers=28,
         attention_dropout=0.0,
         # 🔍
-        is_mindskip: list = None,
+        is_mod: list = None,
         granularity: str = "sequence", 
         gradient_scale: float = 5e-3, 
+        mod_capacity = None,
         threshold: float = 0.5, 
         **kwargs,
     ):
@@ -59,9 +60,10 @@ class Qwen2MindSkipConfig(PretrainedConfig):
         self.attention_dropout = attention_dropout
 
         # 🔍
-        self.is_mindskip = [False for _ in range(num_hidden_layers)] if is_mindskip is None else is_mindskip
+        self.is_mod = [False for _ in range(num_hidden_layers)] if is_mod is None else is_mod
         self.granularity = granularity
         self.gradient_scale = gradient_scale
+        self.mod_capacity = mod_capacity
         self.threshold = threshold
         
         super().__init__(

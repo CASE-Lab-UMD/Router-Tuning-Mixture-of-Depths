@@ -1,4 +1,4 @@
-"""PyTorch LLaMA-MindSkip model."""
+"""PyTorch LLaMA-MoD model."""
 
 import math
 import warnings
@@ -43,13 +43,13 @@ _CONFIG_FOR_DOC = "LlamaConfig"
 
 
 @dataclass
-class BaseMindSkipModelOutputWithPast(ModelOutput):
+class BaseMoDModelOutputWithPast(ModelOutput):
     last_hidden_state: torch.FloatTensor = None
     past_key_values: Optional[Tuple[Tuple[torch.FloatTensor]]] = None
     hidden_states: Optional[Tuple[torch.FloatTensor, ...]] = None
     attentions: Optional[Tuple[torch.FloatTensor, ...]] = None
-    mindskip_capacity: Optional[float] = None  # 🔍
-    mindskip_losses: Optional[torch.FloatTensor] = None
+    mod_capacity: Optional[float] = None  # 🔍
+    mod_losses: Optional[torch.FloatTensor] = None
 
 
 @dataclass
@@ -86,7 +86,7 @@ class CausalLMOutputWithPast(ModelOutput):
     past_key_values: Optional[Tuple[Tuple[torch.FloatTensor]]] = None
     hidden_states: Optional[Tuple[torch.FloatTensor]] = None
     attentions: Optional[Tuple[torch.FloatTensor]] = None
-    mindskip_capacity: Optional[float] = None  # 🔍
+    mod_capacity: Optional[float] = None  # 🔍
 
 
 def _get_unpad_data(attention_mask):
@@ -649,7 +649,7 @@ class LlamaSdpaAttention(LlamaAttention):
         if output_attentions:
             # TODO: Improve this warning with e.g. `model.config.attn_implementation = "manual"` once this is implemented.
             logger.warning_once(
-                "LlamaMindSkipModel is using LlamaSdpaAttention, but `torch.nn.functional.scaled_dot_product_attention` does not support `output_attentions=True`. Falling back to the manual attention implementation, "
+                "LlamaMoDModel is using LlamaSdpaAttention, but `torch.nn.functional.scaled_dot_product_attention` does not support `output_attentions=True`. Falling back to the manual attention implementation, "
                 'but specifying the manual implementation will be required from Transformers version v5.0.0 onwards. This warning can be removed using the argument `attn_implementation="eager"` when loading the model.'
             )
             return super().forward(
@@ -742,13 +742,13 @@ LLAMA_ATTENTION_CLASSES = {
 }
 
 
-class LlamaMindSkipDecoderLayer(nn.Module):
+class LlamaMoDDecoderLayer(nn.Module):
     def __init__(self, config: LlamaConfig, layer_idx: int):
         super().__init__()
         # ✨✨✨
         self.config = config
         self.layer_idx = layer_idx
-        self.is_mindskip = config.is_mindskip[layer_idx]
+        self.is_mod = config.is_mod[layer_idx]
         self.granularity = config.granularity
         
         self.hidden_size = config.hidden_size
@@ -758,13 +758,17 @@ class LlamaMindSkipDecoderLayer(nn.Module):
         self.input_layernorm = LlamaRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
         self.post_attention_layernorm = LlamaRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
         # ✨✨✨
-        if self.is_mindskip:
+        if self.is_mod:
             self.router = nn.Linear(config.hidden_size, 1, bias=False)
-            self.gradient_scale = config.gradient_scale
+            self.gradient_scale = getattr(config, "gradient_scale", 0.0) or 0.0
+            target_capacity = getattr(config, "mod_capacity", None)
+            if isinstance(target_capacity, (list, tuple)):
+                target_capacity = target_capacity[layer_idx]
+            self.target_mod_capacity = target_capacity
             self.threshold = getattr(config, "threshold", 0.5)
         # ✨✨✨
         self.routing_scores = None
-        self.mindskip_capacity = None
+        self.mod_capacity = None
         self.kv_cache_idx = None
         self.indices = None
         
@@ -799,8 +803,8 @@ class LlamaMindSkipDecoderLayer(nn.Module):
                 "Passing `padding_mask` is deprecated and will be removed in v4.37. Please make sure use `attention_mask` instead.`"
             )
         # ✨✨✨
-        mindskip_capacity = None
-        mindskip_loss = None
+        mod_capacity = None
+        mod_loss = None
         
         residual = hidden_states
 
@@ -810,8 +814,8 @@ class LlamaMindSkipDecoderLayer(nn.Module):
 
         # Self Attention
         # ✨✨✨
-        if self.is_mindskip and "attn" in self.granularity:
-            hidden_states, self_attn_weights, present_key_value, mindskip_capacity, mindskip_loss = self.mindskip_attn(
+        if self.is_mod and "attn" in self.granularity:
+            hidden_states, self_attn_weights, present_key_value, mod_capacity, mod_loss = self.mod_attn(
                 hidden_states=hidden_states,
                 residual=residual,
                 attention_mask=attention_mask,
@@ -850,39 +854,74 @@ class LlamaMindSkipDecoderLayer(nn.Module):
         if use_cache:
             outputs += (present_key_value,)
             
-        return outputs, mindskip_capacity, mindskip_loss
+        return outputs, mod_capacity, mod_loss
 
 
-    def mindskip_attn_inputs(
+    def mod_attn_inputs(
             self, 
             hidden_states, 
             attention_mask, 
             position_ids, 
             indices
-        ): 
+        ):
+        if indices is None:
+            return hidden_states, attention_mask, position_ids
+
         bsz, seq, dim = hidden_states.size()
         hidden_states = hidden_states[indices]
         hidden_states = hidden_states.view(-1, seq, dim)
 
-
-        # print(f"position_ids: {position_ids.size()}")
-        # print(f"indices: {indices.size()}")
-        # print(f"indices: {indices}")
-        
         if not self.training:
             if attention_mask is not None:
                 org_mask_size = attention_mask.size()
                 attention_mask = attention_mask[indices]
                 attention_mask = attention_mask.view(len(indices), *org_mask_size[1:])
-        
-            if position_ids is not None and not position_ids.size()[0] == 1: 
+
+            if position_ids is not None and position_ids.size(0) != 1:
                 org_size = position_ids.size()
                 position_ids = position_ids[indices]
                 position_ids = position_ids.view(len(indices), *org_size[1:])
-    
+
         return hidden_states, attention_mask, position_ids
 
-    def mindskip_attn(
+    def _compute_routing_state(self, hidden_states, training):
+        routing_scores = torch.sigmoid(self.router(hidden_states.mean(-2)).view(hidden_states.size(0)))
+        if training:
+            routing_scores = STEFunction.apply(routing_scores - self.threshold)
+        else:
+            routing_scores = (routing_scores - self.threshold >= 0).float()
+
+        current_capacity = routing_scores.mean()
+        mod_capacity = current_capacity.detach().cpu().item()
+        if not training or self.target_mod_capacity is None:
+            mod_loss = current_capacity.new_zeros(()) if training else None
+        else:
+            target_capacity = current_capacity.new_tensor(float(self.target_mod_capacity))
+            mod_loss = torch.relu(current_capacity - target_capacity) * self.gradient_scale
+
+        return routing_scores, mod_capacity, mod_loss
+
+    def _get_active_indices(self, routing_scores):
+        indices = torch.where(routing_scores > 0.)[0]
+        if indices.numel() == routing_scores.numel():
+            return None
+        return indices
+
+    def _store_prefill_routing_state(self, routing_scores, mod_capacity, indices):
+        self.routing_scores = routing_scores
+        self.mod_capacity = mod_capacity
+        self.indices = indices
+
+    def _merge_routed_output(self, residual, hidden_states, indices):
+        if indices is None:
+            residual += hidden_states
+        elif indices.dim() == 2:
+            residual[indices[:, 0], indices[:, 1], :] += hidden_states
+        else:
+            residual[indices, :, :] += hidden_states
+        return residual
+
+    def mod_attn(
             self, 
             hidden_states, 
             residual, 
@@ -894,133 +933,53 @@ class LlamaMindSkipDecoderLayer(nn.Module):
             cache_position, 
             **kwargs,
         ):
-        
-        if self.training:   # ✨✨✨ training
-            routing_scores = torch.sigmoid(self.router(hidden_states.mean(-2)).view(hidden_states.size()[0]))  # b
-            routing_scores = STEFunction.apply(routing_scores - self.threshold)
-            mindskip_loss = routing_scores.mean() * self.gradient_scale
-            mindskip_capacity = routing_scores.mean().cpu().item()
+        topk_scores = None
 
-            indices = torch.where(routing_scores > 0.)[0]
-            topk_scores = routing_scores[indices].unsqueeze(-1)
+        if self.training:
+            routing_scores, mod_capacity, mod_loss = self._compute_routing_state(hidden_states, training=True)
+            indices = self._get_active_indices(routing_scores)
+            if indices is not None:
+                topk_scores = routing_scores[indices].unsqueeze(-1)
+            returned_capacity = mod_capacity
+        elif hidden_states.size(1) == 1:
+            routing_scores = self.routing_scores
+            mod_capacity = self.mod_capacity
+            mod_loss = None
+            indices = self.indices
+            returned_capacity = 1.0
+        else:
+            routing_scores, mod_capacity, mod_loss = self._compute_routing_state(hidden_states, training=False)
+            indices = self._get_active_indices(routing_scores)
+            self._store_prefill_routing_state(routing_scores, mod_capacity, indices)
+            returned_capacity = mod_capacity
 
-            hidden_states, attention_mask, position_ids = self.mindskip_attn_inputs(hidden_states, attention_mask, position_ids, indices)
+        if mod_capacity == 0.:
+            return residual, None, None, returned_capacity, mod_loss
 
-            if hidden_states.size()[0] == 0:
-                return residual, None, None, mindskip_capacity, mindskip_loss
+        hidden_states, attention_mask, position_ids = self.mod_attn_inputs(
+            hidden_states, attention_mask, position_ids, indices
+        )
 
-            hidden_states, self_attn_weights, present_key_value = self.self_attn(
-                hidden_states=hidden_states,
-                attention_mask=attention_mask,
-                position_ids=position_ids,
-                past_key_value=past_key_value,
-                output_attentions=output_attentions,
-                use_cache=use_cache,
-                cache_position=cache_position,
-                **kwargs,
-            )
+        attn_kwargs = dict(
+            hidden_states=hidden_states,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+            past_key_value=past_key_value,
+            output_attentions=output_attentions,
+            use_cache=use_cache,
+            cache_position=cache_position,
+            **kwargs,
+        )
+        if not self.training:
+            attn_kwargs["kv_cache_idx"] = self.kv_cache_idx
 
+        hidden_states, self_attn_weights, present_key_value = self.self_attn(**attn_kwargs)
+
+        if topk_scores is not None:
             hidden_states = hidden_states * topk_scores.unsqueeze(-1)
-            residual[indices, :, :] += hidden_states
-            return residual, self_attn_weights, present_key_value, mindskip_capacity, mindskip_loss
-        
-        else:               # ✨✨✨ evalutation, test
-            if hidden_states.size()[1] == 1:        # ✨✨✨ generation
-                routing_scores = self.routing_scores
-                mindskip_capacity = self.mindskip_capacity    # ✨✨✨ mindskip_capacity is determined by the prefill phase. 
-                indices = self.indices
-                if mindskip_capacity == 0.:              # 🔍 skip, and no kv-cache here.
-                    return residual, None, None, 1., None
-                if mindskip_capacity == 1.:              # 🔍 no need of indices
-                    pass
-                else:
-                    hidden_states, attention_mask, position_ids = self.mindskip_attn_inputs(hidden_states, attention_mask, position_ids, indices)
 
-
-                hidden_states, self_attn_weights, present_key_value = self.self_attn(
-                    hidden_states=hidden_states,
-                    attention_mask=attention_mask,
-                    position_ids=position_ids,
-                    past_key_value=past_key_value,
-                    output_attentions=output_attentions,
-                    use_cache=use_cache,
-                    cache_position=cache_position,
-                    kv_cache_idx=self.kv_cache_idx,
-                    **kwargs,
-                )
-
-                if mindskip_capacity == 1.:
-                    residual += hidden_states
-                elif routing_scores.dim() == 2:
-                    residual[indices[:, 0], indices[:, 1], :] += hidden_states
-                elif routing_scores.dim() == 1:
-                    residual[indices, :, :] += hidden_states
-
-                return residual, self_attn_weights, present_key_value, 1., None
-            
-            else: # ✨✨✨ prefill
-                # if self.routing_scores is not None:  # 🔍 training is not compatible with cache.
-                #     routing_scores = self.routing_scores
-                # else:
-                routing_scores = torch.sigmoid(self.router(hidden_states.mean(-2)).view(hidden_states.size()[0]))  # b
-                # print(f"routing_scores: {routing_scores}")
-                routing_scores = (routing_scores - self.threshold >= 0).float()
-
-                mindskip_loss = None
-                # routing_scores_cpu = routing_scores.cpu()
-
-                mindskip_capacity = routing_scores.mean().data
-
-                # print(f"mindskip_capacity: {mindskip_capacity}")
-                # if use_cache:
-                self.routing_scores = routing_scores # ✨ store scores for generation steps. 
-                # print(f"self.routing_scores: {self.routing_scores}")
-                self.mindskip_capacity = mindskip_capacity     # ✨ store mindskip_capacity for generation steps. 
-                if mindskip_capacity == 0.:  # 🔍 skip
-                    return residual, None, None, mindskip_capacity, mindskip_loss
-                if mindskip_capacity == 1.:  # 🔍 no need of indices
-                    pass
-                else:
-                    indices = torch.where(routing_scores > 0.)[0]
-                    self.indices = indices
-                    # hidden_states = hidden_states[indices]
-                    # hidden_states = hidden_states.view(-1, seq, dim)
-                    hidden_states, attention_mask, position_ids = self.mindskip_attn_inputs(hidden_states, attention_mask, position_ids, indices)
-
-                    # if attention_mask is not None:
-                    #     org_mask_size = attention_mask.size()
-                    #     attention_mask = attention_mask[indices]
-                    #     attention_mask = attention_mask.view(len(indices), *org_mask_size[1:])
-                    # if position_ids is not None: 
-                    #     org_size = position_ids.size()
-                    #     position_ids = position_ids[indices]
-                    #     position_ids = position_ids.view(len(indices), *org_size[1:])
-                        
-                # if use_cache and self.kv_cache_idx is None: # ✨ only works when using cache. 
-                #     self.kv_cache_idx = len(past_key_value)
-
-                hidden_states, self_attn_weights, present_key_value = self.self_attn(
-                    hidden_states=hidden_states,
-                    attention_mask=attention_mask,
-                    position_ids=position_ids,
-                    past_key_value=past_key_value,
-                    output_attentions=output_attentions,
-                    use_cache=use_cache,
-                    cache_position=cache_position,
-                    kv_cache_idx=self.kv_cache_idx,
-                    **kwargs,
-                )
-                # print(f"mindskip_capacity: {mindskip_capacity}")
-
-                if mindskip_capacity == 1.:
-                    residual += hidden_states
-                elif routing_scores.dim() == 2:
-                    residual[indices[:, 0], indices[:, 1], :] += hidden_states
-                elif routing_scores.dim() == 1:
-                    residual[indices, :, :] += hidden_states
-                    
-                # print(f"mindskip_capacity: {mindskip_capacity}")
-                return residual, self_attn_weights, present_key_value, mindskip_capacity, mindskip_loss
+        residual = self._merge_routed_output(residual, hidden_states, indices)
+        return residual, self_attn_weights, present_key_value, returned_capacity, mod_loss
 
 
 LLAMA_START_DOCSTRING = r"""
@@ -1048,7 +1007,7 @@ class LlamaPreTrainedModel(PreTrainedModel):
     config_class = LlamaConfig
     base_model_prefix = "model"
     supports_gradient_checkpointing = True
-    _no_split_modules = ["LlamaMindSkipDecoderLayer"]
+    _no_split_modules = ["LlamaMoDDecoderLayer"]
     _skip_keys_device_placement = ["past_key_values"]
     _supports_flash_attn_2 = True
     _supports_sdpa = True
@@ -1165,9 +1124,9 @@ LLAMA_INPUTS_DOCSTRING = r"""
     "The bare LLaMA Model outputting raw hidden-states without any specific head on top.",
     LLAMA_START_DOCSTRING,
 )
-class LlamaMindSkipModel(LlamaPreTrainedModel):
+class LlamaMoDModel(LlamaPreTrainedModel):
     """
-    Transformer decoder consisting of *config.num_hidden_layers* layers. Each layer is a [`LlamaMindSkipDecoderLayer`]
+    Transformer decoder consisting of *config.num_hidden_layers* layers. Each layer is a [`LlamaMoDDecoderLayer`]
 
     Args:
         config: LlamaConfig
@@ -1180,7 +1139,7 @@ class LlamaMindSkipModel(LlamaPreTrainedModel):
 
         self.embed_tokens = nn.Embedding(config.vocab_size, config.hidden_size, self.padding_idx)
         self.layers = nn.ModuleList(
-            [LlamaMindSkipDecoderLayer(config, layer_idx) for layer_idx in range(config.num_hidden_layers)]
+            [LlamaMoDDecoderLayer(config, layer_idx) for layer_idx in range(config.num_hidden_layers)]
         )
         self.norm = LlamaRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
         self.gradient_checkpointing = False
@@ -1199,9 +1158,9 @@ class LlamaMindSkipModel(LlamaPreTrainedModel):
         # print(f"_reset_routing_scores")
         for layer in self.layers:
             layer.kv_cache_idx = None
-            if layer.is_mindskip and "attn" in layer.granularity:
+            if layer.is_mod and "attn" in layer.granularity:
                 layer.routing_scores = None
-                layer.mindskip_capacity = None
+                layer.mod_capacity = None
                 layer.indices = None
         
     @add_start_docstrings_to_model_forward(LLAMA_INPUTS_DOCSTRING)
@@ -1217,7 +1176,7 @@ class LlamaMindSkipModel(LlamaPreTrainedModel):
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
         cache_position: Optional[torch.LongTensor] = None,
-    ) -> Union[Tuple, BaseMindSkipModelOutputWithPast]:
+    ) -> Union[Tuple, BaseMoDModelOutputWithPast]:
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
             output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
@@ -1226,9 +1185,9 @@ class LlamaMindSkipModel(LlamaPreTrainedModel):
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
         # ✨✨✨
-        mindskip_capacity = 1.
-        mindskip_losses = 0. if self.training else None
-        mindskip_layers = 0
+        mod_capacity = 1.
+        mod_losses = 0. if self.training else None
+        mod_layers = 0
 
         if (input_ids is None) ^ (inputs_embeds is not None):
             raise ValueError(
@@ -1279,7 +1238,7 @@ class LlamaMindSkipModel(LlamaPreTrainedModel):
 
             if self.gradient_checkpointing and self.training:
                 # ✨✨✨
-                layer_outputs, temp_mindskip_capacity, temp_mindskip_loss = self._gradient_checkpointing_func(
+                layer_outputs, temp_mod_capacity, temp_mod_loss = self._gradient_checkpointing_func(
                     decoder_layer.__call__,
                     hidden_states,
                     causal_mask,
@@ -1291,7 +1250,7 @@ class LlamaMindSkipModel(LlamaPreTrainedModel):
                 )
             else:
                 # ✨✨✨
-                layer_outputs, temp_mindskip_capacity, temp_mindskip_loss = decoder_layer(
+                layer_outputs, temp_mod_capacity, temp_mod_loss = decoder_layer(
                     hidden_states,
                     attention_mask=causal_mask,
                     position_ids=position_ids,
@@ -1303,11 +1262,11 @@ class LlamaMindSkipModel(LlamaPreTrainedModel):
 
             hidden_states = layer_outputs[0]
             # ✨✨✨
-            if temp_mindskip_capacity is not None:
-                mindskip_capacity = (mindskip_capacity * mindskip_layers + temp_mindskip_capacity) / (mindskip_layers + 1)
-                if self.training and temp_mindskip_loss is not None:
-                    mindskip_losses = mindskip_losses + temp_mindskip_loss
-                mindskip_layers += 1
+            if temp_mod_capacity is not None:
+                mod_capacity = (mod_capacity * mod_layers + temp_mod_capacity) / (mod_layers + 1)
+                if self.training and temp_mod_loss is not None:
+                    mod_losses = mod_losses + temp_mod_loss
+                mod_layers += 1
                 
             if use_cache:
                 next_decoder_cache = layer_outputs[2 if output_attentions else 1]
@@ -1330,13 +1289,13 @@ class LlamaMindSkipModel(LlamaPreTrainedModel):
             )
         if not return_dict:
             return tuple(v for v in [hidden_states, next_cache, all_hidden_states, all_self_attns] if v is not None)
-        return BaseMindSkipModelOutputWithPast(
+        return BaseMoDModelOutputWithPast(
             last_hidden_state=hidden_states,
             past_key_values=next_cache,
             hidden_states=all_hidden_states,
             attentions=all_self_attns,
-            mindskip_losses=mindskip_losses,      # 🔍
-            mindskip_capacity=mindskip_capacity,  # 🔍
+            mod_losses=mod_losses,      # 🔍
+            mod_capacity=mod_capacity,  # 🔍
         )
 
     def _update_causal_mask(
@@ -1413,12 +1372,12 @@ class LlamaMindSkipModel(LlamaPreTrainedModel):
         return causal_mask
 
 
-class LlamaMindSkipForCausalLM(LlamaPreTrainedModel):
+class LlamaMoDForCausalLM(LlamaPreTrainedModel):
     _tied_weights_keys = ["lm_head.weight"]
 
     def __init__(self, config):
         super().__init__(config)
-        self.model = LlamaMindSkipModel(config)
+        self.model = LlamaMoDModel(config)
         self.vocab_size = config.vocab_size
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
 
@@ -1471,9 +1430,9 @@ class LlamaMindSkipForCausalLM(LlamaPreTrainedModel):
         Example:
 
         ```python
-        >>> from transformers import AutoTokenizer, LlamaMindSkipForCausalLM
+        >>> from transformers import AutoTokenizer, LlamaMoDForCausalLM
 
-        >>> model = LlamaMindSkipForCausalLM.from_pretrained("meta-llama/Llama-2-7b-hf")
+        >>> model = LlamaMoDForCausalLM.from_pretrained("meta-llama/Llama-2-7b-hf")
         >>> tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-hf")
 
         >>> prompt = "Hey, are you conscious? Can you talk to me?"
@@ -1530,10 +1489,10 @@ class LlamaMindSkipForCausalLM(LlamaPreTrainedModel):
             output = (logits,) + outputs[1:]
             return (loss,) + output if loss is not None else output
 
-        mindskip_capacity = outputs.mindskip_capacity
+        mod_capacity = outputs.mod_capacity
         if self.training:
-            mindskip_losses = outputs.mindskip_losses
-            loss = loss + mindskip_losses
+            mod_losses = outputs.mod_losses
+            loss = loss + mod_losses
             
         return CausalLMOutputWithPast(
             loss=loss,
@@ -1541,7 +1500,7 @@ class LlamaMindSkipForCausalLM(LlamaPreTrainedModel):
             past_key_values=outputs.past_key_values,
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
-            mindskip_capacity=mindskip_capacity,
+            mod_capacity=mod_capacity,
         )
 
     def prepare_inputs_for_generation(
@@ -1658,7 +1617,7 @@ class LlamaForSequenceClassification(LlamaPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
-        self.model = LlamaMindSkipModel(config)
+        self.model = LlamaMoDModel(config)
         self.score = nn.Linear(config.hidden_size, self.num_labels, bias=False)
 
         # Initialize weights and apply final processing
@@ -1775,7 +1734,7 @@ class LlamaForQuestionAnswering(LlamaPreTrainedModel):
     # Copied from transformers.models.bloom.modeling_bloom.BloomForQuestionAnswering.__init__ with Bloom->Llama
     def __init__(self, config):
         super().__init__(config)
-        self.transformer = LlamaMindSkipModel(config)
+        self.transformer = LlamaMoDModel(config)
         self.qa_outputs = nn.Linear(config.hidden_size, 2)
 
         # Initialize weights and apply final processing

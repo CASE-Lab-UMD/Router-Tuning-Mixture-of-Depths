@@ -1,4 +1,4 @@
-"""PyTorch Mistral-MindSkip model."""
+"""PyTorch Mistral-MoD model."""
 import inspect
 import math
 import warnings
@@ -27,7 +27,7 @@ from transformers.utils import (
     logging,
     replace_return_docstrings,
 )
-from .configuration_mistral_mod import MistralMindSkipConfig
+from .configuration_mistral_mod import MistralMoDConfig
 
 
 if is_flash_attn_2_available():
@@ -39,17 +39,17 @@ if is_flash_attn_2_available():
 
 logger = logging.get_logger(__name__)
 
-_CONFIG_FOR_DOC = "MistralMindSkipConfig"
+_CONFIG_FOR_DOC = "MistralMoDConfig"
 
 
 @dataclass
-class BaseMindSkipModelOutputWithPast(ModelOutput):
+class BaseMoDModelOutputWithPast(ModelOutput):
     last_hidden_state: torch.FloatTensor = None
     past_key_values: Optional[Tuple[Tuple[torch.FloatTensor]]] = None
     hidden_states: Optional[Tuple[torch.FloatTensor, ...]] = None
     attentions: Optional[Tuple[torch.FloatTensor, ...]] = None
-    mindskip_capacity: Optional[float] = None  # 🔍
-    mindskip_losses: Optional[torch.FloatTensor] = None
+    mod_capacity: Optional[float] = None  # 🔍
+    mod_losses: Optional[torch.FloatTensor] = None
 
 
 @dataclass
@@ -86,7 +86,7 @@ class CausalLMOutputWithPast(ModelOutput):
     past_key_values: Optional[Tuple[Tuple[torch.FloatTensor]]] = None
     hidden_states: Optional[Tuple[torch.FloatTensor]] = None
     attentions: Optional[Tuple[torch.FloatTensor]] = None
-    mindskip_capacity: Optional[float] = None  # 🔍
+    mod_capacity: Optional[float] = None  # 🔍
 
 
 
@@ -231,7 +231,7 @@ class MistralAttention(nn.Module):
     and "Generating Long Sequences with Sparse Transformers".
     """
 
-    def __init__(self, config: MistralMindSkipConfig, layer_idx: Optional[int] = None):
+    def __init__(self, config: MistralMoDConfig, layer_idx: Optional[int] = None):
         super().__init__()
         self.config = config
         self.layer_idx = layer_idx
@@ -748,13 +748,13 @@ MISTRAL_ATTENTION_CLASSES = {
 }
 
 
-class MistralMindSkipDecoderLayer(nn.Module):
-    def __init__(self, config: MistralMindSkipConfig, layer_idx: int):
+class MistralMoDDecoderLayer(nn.Module):
+    def __init__(self, config: MistralMoDConfig, layer_idx: int):
         super().__init__()
         # ✨✨✨
         self.config = config
         self.layer_idx = layer_idx
-        self.is_mindskip = config.is_mindskip[layer_idx]
+        self.is_mod = config.is_mod[layer_idx]
         self.granularity = config.granularity
         
         self.hidden_size = config.hidden_size
@@ -764,13 +764,17 @@ class MistralMindSkipDecoderLayer(nn.Module):
         self.input_layernorm = MistralRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
         self.post_attention_layernorm = MistralRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
         # ✨✨✨
-        if self.is_mindskip:
+        if self.is_mod:
             self.router = nn.Linear(config.hidden_size, 1, bias=False)
-            self.gradient_scale = config.gradient_scale
+            self.gradient_scale = getattr(config, "gradient_scale", 0.0) or 0.0
+            target_capacity = getattr(config, "mod_capacity", None)
+            if isinstance(target_capacity, (list, tuple)):
+                target_capacity = target_capacity[layer_idx]
+            self.target_mod_capacity = target_capacity
             self.threshold = getattr(config, "threshold", 0.5)
         # ✨✨✨
         self.routing_scores = None
-        self.mindskip_capacity = None
+        self.mod_capacity = None
         self.kv_cache_idx = None
         self.indices = None
         
@@ -802,8 +806,8 @@ class MistralMindSkipDecoderLayer(nn.Module):
             past_key_value (`Tuple(torch.FloatTensor)`, *optional*): cached past key and value projection states
         """
         # ✨✨✨
-        mindskip_capacity = None
-        mindskip_loss = None
+        mod_capacity = None
+        mod_loss = None
         
         residual = hidden_states
 
@@ -813,8 +817,8 @@ class MistralMindSkipDecoderLayer(nn.Module):
 
         # Self Attention
         # ✨✨✨
-        if self.is_mindskip and "attn" in self.granularity:
-            hidden_states, self_attn_weights, present_key_value, mindskip_capacity, mindskip_loss = self.mindskip_attn(
+        if self.is_mod and "attn" in self.granularity:
+            hidden_states, self_attn_weights, present_key_value, mod_capacity, mod_loss = self.mod_attn(
                 hidden_states=hidden_states,
                 residual=residual,
                 attention_mask=attention_mask,
@@ -850,34 +854,73 @@ class MistralMindSkipDecoderLayer(nn.Module):
             outputs += (present_key_value,)
 
         # ✨✨✨
-        return outputs, mindskip_capacity, mindskip_loss
+        return outputs, mod_capacity, mod_loss
 
-    def mindskip_attn_inputs(
+    def mod_attn_inputs(
             self, 
             hidden_states, 
             attention_mask, 
             position_ids, 
             indices
-        ): 
+        ):
+        if indices is None:
+            return hidden_states, attention_mask, position_ids
+
         bsz, seq, dim = hidden_states.size()
         hidden_states = hidden_states[indices]
         hidden_states = hidden_states.view(-1, seq, dim)
-        
+
         if not self.training:
             if attention_mask is not None:
                 org_mask_size = attention_mask.size()
                 attention_mask = attention_mask[indices]
                 attention_mask = attention_mask.view(len(indices), *org_mask_size[1:])
-        
-            if position_ids is not None and not position_ids.size()[0] == 1: 
+
+            if position_ids is not None and position_ids.size(0) != 1:
                 org_size = position_ids.size()
                 position_ids = position_ids[indices]
                 position_ids = position_ids.view(len(indices), *org_size[1:])
-    
+
         return hidden_states, attention_mask, position_ids
 
+    def _compute_routing_state(self, hidden_states, training):
+        routing_scores = torch.sigmoid(self.router(hidden_states.mean(-2)).view(hidden_states.size(0)))
+        if training:
+            routing_scores = STEFunction.apply(routing_scores - self.threshold)
+        else:
+            routing_scores = (routing_scores - self.threshold >= 0).float()
 
-    def mindskip_attn(
+        current_capacity = routing_scores.mean()
+        mod_capacity = current_capacity.detach().cpu().item()
+        if not training or self.target_mod_capacity is None:
+            mod_loss = current_capacity.new_zeros(()) if training else None
+        else:
+            target_capacity = current_capacity.new_tensor(float(self.target_mod_capacity))
+            mod_loss = torch.relu(current_capacity - target_capacity) * self.gradient_scale
+
+        return routing_scores, mod_capacity, mod_loss
+
+    def _get_active_indices(self, routing_scores):
+        indices = torch.where(routing_scores > 0.)[0]
+        if indices.numel() == routing_scores.numel():
+            return None
+        return indices
+
+    def _store_prefill_routing_state(self, routing_scores, mod_capacity, indices):
+        self.routing_scores = routing_scores
+        self.mod_capacity = mod_capacity
+        self.indices = indices
+
+    def _merge_routed_output(self, residual, hidden_states, indices):
+        if indices is None:
+            residual += hidden_states
+        elif indices.dim() == 2:
+            residual[indices[:, 0], indices[:, 1], :] += hidden_states
+        else:
+            residual[indices, :, :] += hidden_states
+        return residual
+
+    def mod_attn(
             self, 
             hidden_states, 
             residual, 
@@ -888,106 +931,52 @@ class MistralMindSkipDecoderLayer(nn.Module):
             use_cache, 
             **kwargs,
         ):
-        
-        if self.training:   # ✨✨✨ training
-            routing_scores = torch.sigmoid(self.router(hidden_states.mean(-2)).view(hidden_states.size()[0]))  # b
-            routing_scores = STEFunction.apply(routing_scores - self.threshold)
-            mindskip_loss = routing_scores.mean() * self.gradient_scale
-            mindskip_capacity = routing_scores.mean().cpu().item()
+        topk_scores = None
 
-            indices = torch.where(routing_scores > 0.)[0]
-            topk_scores = routing_scores[indices].unsqueeze(-1)
+        if self.training:
+            routing_scores, mod_capacity, mod_loss = self._compute_routing_state(hidden_states, training=True)
+            indices = self._get_active_indices(routing_scores)
+            if indices is not None:
+                topk_scores = routing_scores[indices].unsqueeze(-1)
+            returned_capacity = mod_capacity
+        elif hidden_states.size(1) == 1:
+            routing_scores = self.routing_scores
+            mod_capacity = self.mod_capacity
+            mod_loss = None
+            indices = self.indices
+            returned_capacity = 1.0
+        else:
+            routing_scores, mod_capacity, mod_loss = self._compute_routing_state(hidden_states, training=False)
+            indices = self._get_active_indices(routing_scores)
+            self._store_prefill_routing_state(routing_scores, mod_capacity, indices)
+            returned_capacity = mod_capacity
 
-            hidden_states, attention_mask, position_ids = self.mindskip_attn_inputs(hidden_states, attention_mask, position_ids, indices)
+        if mod_capacity == 0.:
+            return residual, None, None, returned_capacity, mod_loss
 
-            if hidden_states.size()[0] == 0:
-                return residual, None, None, mindskip_capacity, mindskip_loss
+        hidden_states, attention_mask, position_ids = self.mod_attn_inputs(
+            hidden_states, attention_mask, position_ids, indices
+        )
 
-            hidden_states, self_attn_weights, present_key_value = self.self_attn(
-                hidden_states=hidden_states,
-                attention_mask=attention_mask,
-                position_ids=position_ids,
-                past_key_value=past_key_value,
-                output_attentions=output_attentions,
-                use_cache=use_cache,
-                **kwargs,
-            )
+        attn_kwargs = dict(
+            hidden_states=hidden_states,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+            past_key_value=past_key_value,
+            output_attentions=output_attentions,
+            use_cache=use_cache,
+            **kwargs,
+        )
+        if not self.training:
+            attn_kwargs["kv_cache_idx"] = self.kv_cache_idx
 
+        hidden_states, self_attn_weights, present_key_value = self.self_attn(**attn_kwargs)
+
+        if topk_scores is not None:
             hidden_states = hidden_states * topk_scores.unsqueeze(-1)
-            residual[indices, :, :] += hidden_states
-            return residual, self_attn_weights, present_key_value, mindskip_capacity, mindskip_loss
-        
-        else:               # ✨✨✨ evalutation, test
-            if hidden_states.size()[1] == 1:        # ✨✨✨ generation
-                routing_scores = self.routing_scores
-                mindskip_capacity = self.mindskip_capacity    # ✨✨✨ mindskip_capacity is determined by the prefill phase. 
-                indices = self.indices
-                if mindskip_capacity == 0.:              # 🔍 skip, and no kv-cache here.
-                    return residual, None, None, 1., None
-                if mindskip_capacity == 1.:              # 🔍 no need of indices
-                    pass
-                else:
-                    hidden_states, attention_mask, position_ids = self.mindskip_attn_inputs(hidden_states, attention_mask, position_ids, indices)
 
-
-                hidden_states, self_attn_weights, present_key_value = self.self_attn(
-                    hidden_states=hidden_states,
-                    attention_mask=attention_mask,
-                    position_ids=position_ids,
-                    past_key_value=past_key_value,
-                    output_attentions=output_attentions,
-                    use_cache=use_cache,
-                    kv_cache_idx=self.kv_cache_idx,
-                    **kwargs,
-                )
-
-                if mindskip_capacity == 1.:
-                    residual += hidden_states
-                elif routing_scores.dim() == 2:
-                    residual[indices[:, 0], indices[:, 1], :] += hidden_states
-                elif routing_scores.dim() == 1:
-                    residual[indices, :, :] += hidden_states
-
-                return residual, self_attn_weights, present_key_value, 1., None
-            
-            else: # ✨✨✨ prefill
-                routing_scores = torch.sigmoid(self.router(hidden_states.mean(-2)).view(hidden_states.size()[0]))  # b
-                routing_scores = (routing_scores - self.threshold >= 0).float()
-
-                mindskip_loss = None
-
-                mindskip_capacity = routing_scores.mean().data
-
-                self.routing_scores = routing_scores # ✨ store scores for generation steps. 
-                self.mindskip_capacity = mindskip_capacity     # ✨ store mindskip_capacity for generation steps. 
-                if mindskip_capacity == 0.:  # 🔍 skip
-                    return residual, None, None, mindskip_capacity, mindskip_loss
-                if mindskip_capacity == 1.:  # 🔍 no need of indices
-                    pass
-                else:
-                    indices = torch.where(routing_scores > 0.)[0]
-                    self.indices = indices
-                    hidden_states, attention_mask, position_ids = self.mindskip_attn_inputs(hidden_states, attention_mask, position_ids, indices)
-
-                hidden_states, self_attn_weights, present_key_value = self.self_attn(
-                    hidden_states=hidden_states,
-                    attention_mask=attention_mask,
-                    position_ids=position_ids,
-                    past_key_value=past_key_value,
-                    output_attentions=output_attentions,
-                    use_cache=use_cache,
-                    kv_cache_idx=self.kv_cache_idx,
-                    **kwargs,
-                )
-
-                if mindskip_capacity == 1.:
-                    residual += hidden_states
-                elif routing_scores.dim() == 2:
-                    residual[indices[:, 0], indices[:, 1], :] += hidden_states
-                elif routing_scores.dim() == 1:
-                    residual[indices, :, :] += hidden_states
-                    
-                return residual, self_attn_weights, present_key_value, mindskip_capacity, mindskip_loss
+        residual = self._merge_routed_output(residual, hidden_states, indices)
+        return residual, self_attn_weights, present_key_value, returned_capacity, mod_loss
 
 
 MISTRAL_START_DOCSTRING = r"""
@@ -1000,7 +989,7 @@ MISTRAL_START_DOCSTRING = r"""
     and behavior.
 
     Parameters:
-        config ([`MistralMindSkipConfig`]):
+        config ([`MistralMoDConfig`]):
             Model configuration class with all the parameters of the model. Initializing with a config file does not
             load the weights associated with the model, only the configuration. Check out the
             [`~PreTrainedModel.from_pretrained`] method to load the model weights.
@@ -1012,10 +1001,10 @@ MISTRAL_START_DOCSTRING = r"""
     MISTRAL_START_DOCSTRING,
 )
 class MistralPreTrainedModel(PreTrainedModel):
-    config_class = MistralMindSkipConfig
+    config_class = MistralMoDConfig
     base_model_prefix = "model"
     supports_gradient_checkpointing = True
-    _no_split_modules = ["MistralMindSkipDecoderLayer"]
+    _no_split_modules = ["MistralMoDDecoderLayer"]
     _skip_keys_device_placement = "past_key_values"
     _supports_flash_attn_2 = True
     _supports_sdpa = True
@@ -1109,20 +1098,20 @@ MISTRAL_INPUTS_DOCSTRING = r"""
 )
 class MistralModel(MistralPreTrainedModel):
     """
-    Transformer decoder consisting of *config.num_hidden_layers* layers. Each layer is a [`MistralMindSkipDecoderLayer`]
+    Transformer decoder consisting of *config.num_hidden_layers* layers. Each layer is a [`MistralMoDDecoderLayer`]
 
     Args:
-        config: MistralMindSkipConfig
+        config: MistralMoDConfig
     """
 
-    def __init__(self, config: MistralMindSkipConfig):
+    def __init__(self, config: MistralMoDConfig):
         super().__init__(config)
         self.padding_idx = config.pad_token_id
         self.vocab_size = config.vocab_size
 
         self.embed_tokens = nn.Embedding(config.vocab_size, config.hidden_size, self.padding_idx)
         self.layers = nn.ModuleList(
-            [MistralMindSkipDecoderLayer(config, layer_idx) for layer_idx in range(config.num_hidden_layers)]
+            [MistralMoDDecoderLayer(config, layer_idx) for layer_idx in range(config.num_hidden_layers)]
         )
         self._attn_implementation = config._attn_implementation
         self.norm = MistralRMSNorm(config.hidden_size, eps=config.rms_norm_eps)
@@ -1142,9 +1131,9 @@ class MistralModel(MistralPreTrainedModel):
         # print(f"_reset_routing_scores")
         for layer in self.layers:
             layer.kv_cache_idx = None
-            if layer.is_mindskip and "attn" in layer.granularity:
+            if layer.is_mod and "attn" in layer.granularity:
                 layer.routing_scores = None
-                layer.mindskip_capacity = None
+                layer.mod_capacity = None
                 layer.indices = None
         
     @add_start_docstrings_to_model_forward(MISTRAL_INPUTS_DOCSTRING)
@@ -1159,7 +1148,7 @@ class MistralModel(MistralPreTrainedModel):
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
-    ) -> Union[Tuple, BaseMindSkipModelOutputWithPast]:
+    ) -> Union[Tuple, BaseMoDModelOutputWithPast]:
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
             output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
@@ -1168,9 +1157,9 @@ class MistralModel(MistralPreTrainedModel):
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
         # ✨✨✨
-        mindskip_capacity = 1.
-        mindskip_losses = 0. if self.training else None
-        mindskip_layers = 0
+        mod_capacity = 1.
+        mod_losses = 0. if self.training else None
+        mod_layers = 0
         
         # retrieve input_ids and inputs_embeds
         if input_ids is not None and inputs_embeds is not None:
@@ -1257,7 +1246,7 @@ class MistralModel(MistralPreTrainedModel):
 
             if self.gradient_checkpointing and self.training:
                 # ✨✨✨
-                layer_outputs, temp_mindskip_capacity, temp_mindskip_loss = self._gradient_checkpointing_func(
+                layer_outputs, temp_mod_capacity, temp_mod_loss = self._gradient_checkpointing_func(
                     decoder_layer.__call__,
                     hidden_states,
                     attention_mask,
@@ -1268,7 +1257,7 @@ class MistralModel(MistralPreTrainedModel):
                 )
             else:
                 # ✨✨✨
-                layer_outputs, temp_mindskip_capacity, temp_mindskip_loss = decoder_layer(
+                layer_outputs, temp_mod_capacity, temp_mod_loss = decoder_layer(
                     hidden_states,
                     attention_mask=attention_mask,
                     position_ids=position_ids,
@@ -1279,11 +1268,11 @@ class MistralModel(MistralPreTrainedModel):
 
             hidden_states = layer_outputs[0]
             # ✨✨✨
-            if temp_mindskip_capacity is not None:
-                mindskip_capacity = (mindskip_capacity * mindskip_layers + temp_mindskip_capacity) / (mindskip_layers + 1)
-                if self.training and temp_mindskip_loss is not None:
-                    mindskip_losses = mindskip_losses + temp_mindskip_loss
-                mindskip_layers += 1
+            if temp_mod_capacity is not None:
+                mod_capacity = (mod_capacity * mod_layers + temp_mod_capacity) / (mod_layers + 1)
+                if self.training and temp_mod_loss is not None:
+                    mod_losses = mod_losses + temp_mod_loss
+                mod_layers += 1
                 
             if use_cache:
                 next_decoder_cache = layer_outputs[2 if output_attentions else 1]
@@ -1303,17 +1292,17 @@ class MistralModel(MistralPreTrainedModel):
 
         if not return_dict:
             return tuple(v for v in [hidden_states, next_cache, all_hidden_states, all_self_attns] if v is not None)
-        return BaseMindSkipModelOutputWithPast(
+        return BaseMoDModelOutputWithPast(
             last_hidden_state=hidden_states,
             past_key_values=next_cache,
             hidden_states=all_hidden_states,
             attentions=all_self_attns,
-            mindskip_losses=mindskip_losses,      # 🔍
-            mindskip_capacity=mindskip_capacity,  # 🔍
+            mod_losses=mod_losses,      # 🔍
+            mod_capacity=mod_capacity,  # 🔍
         )
 
 
-class MistralMindSkipForCausalLM(MistralPreTrainedModel):
+class MistralMoDForCausalLM(MistralPreTrainedModel):
     _tied_weights_keys = ["lm_head.weight"]
 
     def __init__(self, config):
@@ -1370,9 +1359,9 @@ class MistralMindSkipForCausalLM(MistralPreTrainedModel):
         Example:
 
         ```python
-        >>> from transformers import AutoTokenizer, MistralMindSkipForCausalLM
+        >>> from transformers import AutoTokenizer, MistralMoDForCausalLM
 
-        >>> model = MistralMindSkipForCausalLM.from_pretrained("mistralai/Mistral-7B-v0.1")
+        >>> model = MistralMoDForCausalLM.from_pretrained("mistralai/Mistral-7B-v0.1")
         >>> tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-v0.1")
 
         >>> prompt = "Hey, are you conscious? Can you talk to me?"
@@ -1424,10 +1413,10 @@ class MistralMindSkipForCausalLM(MistralPreTrainedModel):
             output = (logits,) + outputs[1:]
             return (loss,) + output if loss is not None else output
 
-        mindskip_capacity = outputs.mindskip_capacity
+        mod_capacity = outputs.mod_capacity
         if self.training:
-            mindskip_losses = outputs.mindskip_losses
-            loss = loss + mindskip_losses
+            mod_losses = outputs.mod_losses
+            loss = loss + mod_losses
             
         return CausalLMOutputWithPast(
             loss=loss,
@@ -1435,7 +1424,7 @@ class MistralMindSkipForCausalLM(MistralPreTrainedModel):
             past_key_values=outputs.past_key_values,
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
-            mindskip_capacity=mindskip_capacity,  # 🔍
+            mod_capacity=mod_capacity,  # 🔍
         )
 
     def prepare_inputs_for_generation(

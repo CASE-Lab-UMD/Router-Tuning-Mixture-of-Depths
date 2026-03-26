@@ -25,10 +25,10 @@
 
 This is the official implementation of the paper [**Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers**](https://arxiv.org/abs/2410.13184), accepted at **EMNLP 2025**. We provide a practical framework for efficient dynamic-depth training and inference in Transformers.
 
-Router-Tuning enables dynamic-depth inference by fine-tuning only router-related parameters. Compared with standard MoD-style full tuning, it significantly reduces training cost while keeping model quality competitive.
+Router-Tuning enables dynamic-depth inference by fine-tuning only router-related parameters. Compared with standard full-model dynamic-depth tuning, it significantly reduces training cost while keeping model quality competitive.
 
 <p align="center">
-  <img src="figures/mod.svg" alt="Router-Tuning and MoD overview" width="68%">
+  <img src="figures/router_tuning.svg" alt="Router-Tuning overview" width="68%">
 </p>
 
 ## 📰 News
@@ -51,7 +51,7 @@ Router-Tuning tackles both by focusing optimization on routing components and in
 <p align="center">
   <img src="figures/main_results.png" alt="Main benchmark results of Router-Tuning" width="92%">
 </p>
-Router-Tuning consistently improves the efficiency-quality tradeoff over full-parameter MoD tuning baselines.
+Router-Tuning consistently improves the efficiency-quality tradeoff over full-parameter dynamic-depth tuning baselines.
 The reported best setting reaches notable speedup while keeping quality degradation small.
 
 ### 🔬 Expert Routing Analysis
@@ -73,19 +73,19 @@ In practice, this enables lightweight deployment recipes without full-model retr
 - Tune router-related parameters instead of full-model updates.
 - Strongly reduces optimization cost for dynamic-depth adaptation.
 
-2. **MoD Attention Routing**
+2. **Attention-Based Dynamic Depth**
 - Uses attention-based routing granularity to improve compute and memory efficiency.
 - Preserves output quality under dynamic-depth execution.
 
 ## 📦 Repository Layout
-- `entrypoints/finetune/finetune_mod.py`: main training entrypoint.
-- `scripts/finetune_mod.sh`: reproducible launcher with `accelerate` + DeepSpeed.
+- `entrypoints/finetune/finetune_router_tuning.py`: main training entrypoint.
+- `scripts/finetune_router_tuning.sh`: reproducible launcher with `accelerate` + DeepSpeed.
 - `entrypoints/data/reformat_datasets.py`: convert raw datasets to unified `messages` format.
 - `entrypoints/data/mix_datasets.py`: build mixed instruction-tuning data.
 - `utils/pipeline/customized_trainer.py`: router-focused trainer logic.
 - `configs/accelerate/`: distributed training launcher configs.
 - `configs/deepspeed/`: DeepSpeed runtime configs.
-- `ckpt/`: model config/tokenizer files for supported MoD variants.
+- `ckpt/`: model config/tokenizer files for supported Router-Tuning checkpoints.
 
 ## ⚙️ Installation
 ```bash
@@ -122,24 +122,26 @@ python entrypoints/data/mix_datasets.py \
 
 ### 2) 🏃 Run Router-Tuning
 ```bash
-bash scripts/finetune_mod.sh
+bash scripts/finetune_router_tuning.sh
 ```
 
 ### 3) 🖥️ Minimal Single-Node Override Example
 ```bash
-NUM_PROCESSES=4 PORT=29501 bash scripts/finetune_mod.sh
+NUM_PROCESSES=4 PORT=29501 bash scripts/finetune_router_tuning.sh
 ```
 
 ## 🎛️ Training Knobs
-`finetune_mod.sh` is the recommended launcher. Commonly adjusted fields:
+`finetune_router_tuning.sh` is the recommended launcher. Commonly adjusted fields:
 
 - `folder_name`: base checkpoint directory under `ckpt/`.
 - `data_type`: one dataset under `data/reformatted/` or `mixed`.
 - `max_train_samples`: training subset size for quick experiments.
-- `mod_n`: MoD keep ratio control (legacy alias `mindskip_n` is still supported in Python entrypoint).
+- `router_layers`: number of deep layers enabled for router tuning in the current implementation.
+- `target_capacity`: optional target activation ratio for router regularization.
 - `granularity`: routing granularity (`attn_sequence` or `mlp_sequence`).
 - `router_only`: enable router-only training (default `True`).
 - `learning_rate`, `weight_decay`, `num_epochs`.
+- Legacy compatibility: `--mod_n` and `--mod_capacity` remain accepted, but `--router_layers` and `--target_capacity` are the preferred names.
 
 Distributed launch overrides:
 - `NUM_PROCESSES`: number of GPU processes.
@@ -148,11 +150,12 @@ Distributed launch overrides:
 ### 🧭 Knob Matrix
 | Knob | Where | Typical Values | Effect |
 | --- | --- | --- | --- |
-| `folder_name` | `scripts/finetune_mod.sh` | `mistral-7b-mod`, `qwen-2.5-7b-mod`, `llama3-8b-instruct-mod` | Selects base checkpoint under `ckpt/` |
-| `data_type` | `scripts/finetune_mod.sh` | `alpaca`, `mixed`, ... | Chooses training data source |
-| `mod_n` | `scripts/finetune_mod.sh` / CLI | `8`, `16`, `32` | Controls dynamic-depth sparsity/keep behavior |
-| `granularity` | `scripts/finetune_mod.sh` | `attn_sequence`, `mlp_sequence` | Chooses routing granularity |
-| `max_train_samples` | `scripts/finetune_mod.sh` | `1000`, `5000`, `all` (by removing cap) | Controls quick debug vs full tuning |
+| `folder_name` | `scripts/finetune_router_tuning.sh` | `mistral-7b-mod`, `qwen-2.5-7b-mod`, `llama3-8b-instruct-mod` | Selects base checkpoint under `ckpt/` |
+| `data_type` | `scripts/finetune_router_tuning.sh` | `alpaca`, `mixed`, ... | Chooses training data source |
+| `router_layers` | `scripts/finetune_router_tuning.sh` / CLI | `8`, `16`, `32` | Controls how many deeper layers use router tuning |
+| `target_capacity` | `scripts/finetune_router_tuning.sh` / CLI | `0.5`, `0.75`, unset | Sets the router activation target used by regularization |
+| `granularity` | `scripts/finetune_router_tuning.sh` | `attn_sequence`, `mlp_sequence` | Chooses routing granularity |
+| `max_train_samples` | `scripts/finetune_router_tuning.sh` | `1000`, `5000`, `all` (by removing cap) | Controls quick debug vs full tuning |
 | `NUM_PROCESSES` | shell env | `1`, `4`, `8` | Number of distributed workers |
 | `PORT` | shell env | e.g., `29501` | Master communication port |
 
@@ -164,7 +167,7 @@ For strict reproduction used in earlier experiments, see [s1ghhh/lm-evaluation-h
 - Python 3.10 environment with `pip install -r requirements.txt`.
 - Valid local model path under `ckpt/` (or customize `folder_name`).
 - Reformatted/mixed data exists at `data/reformatted/*/data.jsonl` or `data/mixed/data.jsonl`.
-- `accelerate` config selected in `scripts/finetune_mod.sh` matches your hardware.
+- `accelerate` config selected in `scripts/finetune_router_tuning.sh` matches your hardware.
 - `NUM_PROCESSES` and GPU memory are consistent with `max_seq_length` and batch setup.
 
 ## 📄 Citation

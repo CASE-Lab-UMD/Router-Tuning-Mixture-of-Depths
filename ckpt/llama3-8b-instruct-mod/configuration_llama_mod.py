@@ -1,4 +1,4 @@
-"""LLaMA-MindSkip model configuration"""
+"""LLaMA-MoD model configuration"""
 
 from typing import Union
 from transformers import LlamaConfig
@@ -8,8 +8,8 @@ from transformers.configuration_utils import PretrainedConfig
 logger = logging.get_logger(__name__)
 
 
-class LlamaMindSkipConfig(PretrainedConfig):
-    model_type = "llama_mindskip"
+class LlamaMoDConfig(PretrainedConfig):
+    model_type = "llama_mod"
     keys_to_ignore_at_inference = ["past_key_values"]
 
     def __init__(
@@ -35,7 +35,7 @@ class LlamaMindSkipConfig(PretrainedConfig):
             attention_bias=False,
             attention_dropout=0.0,
             # 🔍
-            is_mindskip: list = None,
+            is_mod: list = None,
             granularity: str = "sequence", 
             gradient_scale: float = 5e-3, 
             threshold: float = 0.5, 
@@ -65,7 +65,7 @@ class LlamaMindSkipConfig(PretrainedConfig):
         self.attention_dropout = attention_dropout
 
         # 🔍
-        self.is_mindskip = [False for _ in range(num_hidden_layers)] if is_mindskip is None else is_mindskip
+        self.is_mod = [False for _ in range(num_hidden_layers)] if is_mod is None else is_mod
         self.granularity = granularity
         self.gradient_scale = gradient_scale
         self.threshold = threshold
@@ -101,17 +101,17 @@ class LlamaMindSkipConfig(PretrainedConfig):
     # 🔍
     def from_llama_config(
             config: LlamaConfig,
-            is_mindskip: list = None,
-            mindskip_capacity: Union[float, list] = 0.9,
-            mindskip_loss_coefficient: float = 0.1,
-            mindskip_loss_type: str = "self",
+            is_mod: list = None,
+            mod_capacity: Union[float, list] = 0.9,
+            mod_loss_coefficient: float = 0.1,
+            mod_loss_type: str = "self",
             rescale_hidden_states: bool = True,
             scale_factor: float = 1.0,
             scale_gap: float = 1.0,
             gate_init_method: str = "zero",
             **kwargs
     ):
-        return LlamaMindSkipConfig(
+        return LlamaMoDConfig(
             vocab_size=config.vocab_size,
             hidden_size=config.hidden_size,
             intermediate_size=config.intermediate_size,
@@ -133,10 +133,10 @@ class LlamaMindSkipConfig(PretrainedConfig):
             attention_bias=config.attention_bias,
             attention_dropout=config.attention_dropout,
             # 🔍
-            is_mindskip=is_mindskip,
-            mindskip_capacity=mindskip_capacity,
-            mindskip_loss_coefficient=mindskip_loss_coefficient,
-            mindskip_loss_type=mindskip_loss_type,
+            is_mod=is_mod,
+            mod_capacity=mod_capacity,
+            mod_loss_coefficient=mod_loss_coefficient,
+            mod_loss_type=mod_loss_type,
             rescale_hidden_states=rescale_hidden_states,
             scale_factor=scale_factor,
             scale_gap=scale_gap,
