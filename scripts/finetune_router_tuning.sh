@@ -5,24 +5,24 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_PATH="$(cd "${SCRIPT_DIR}/.." && pwd)"
 cd "${ROOT_PATH}"
 
-VERSION=3
-SIZE=8
-# Checkpoints still use -mod naming for HF compatibility.
-# FOLDER_NAME="qwen-2.5-7b-mod"
-FOLDER_NAME="mistral-7b-mod"
-# FOLDER_NAME="llama${VERSION}-${SIZE}b-mod"
-MODEL_NAME_OR_PATH="${ROOT_PATH}/ckpt/${FOLDER_NAME}"
+DEFAULT_MODEL_ID="Qwen/Qwen2.5-7B"
+# Examples:
+# DEFAULT_MODEL_ID="mistralai/Mistral-7B-v0.1"
+# DEFAULT_MODEL_ID="meta-llama/Meta-Llama-3-8B"
+MODEL_NAME_OR_PATH="${MODEL_NAME_OR_PATH:-${DEFAULT_MODEL_ID}}"
+TOKENIZER_NAME="${TOKENIZER_NAME:-${MODEL_NAME_OR_PATH}}"
+RUN_NAME="${RUN_NAME:-$(basename "${MODEL_NAME_OR_PATH}")}"
 
 ROUTER_LAYERS=16
 TARGET_CAPACITY=""
 GRANULARITY="attn_sequence"
-# GRANULARITY="mlp_sequence"
+# Example alternatives: attn_token / mlp_sequence / mlp_token / block_sequence / block_token
 
 GRADIENT_SCALE=0.0
 LEARNING_RATE=1e-5
 WEIGHT_DECAY=0.
 NUM_EPOCHS=1
-TRUST_REMOTE_CODE=True
+TRUST_REMOTE_CODE="${TRUST_REMOTE_CODE:-False}"
 ROUTER_ONLY=True
 
 CONFIG_FILE="${ROOT_PATH}/configs/accelerate/deepspeed_llama_router_tuning.yaml"
@@ -37,7 +37,7 @@ else
   DATA_FILE="${ROOT_PATH}/data/reformatted/${DATA_TYPE}/data.jsonl"
 fi
 
-OUTPUT_DIR="${ROOT_PATH}/trained_models/${FOLDER_NAME}/${DATA_TYPE}/${MAX_TRAIN_SAMPLES}/${GRANULARITY}_epoch${NUM_EPOCHS}_router_layers${ROUTER_LAYERS}_lambda${GRADIENT_SCALE}_lr${LEARNING_RATE}_wd${WEIGHT_DECAY}"
+OUTPUT_DIR="${ROOT_PATH}/trained_models/${RUN_NAME}/${DATA_TYPE}/${MAX_TRAIN_SAMPLES}/${GRANULARITY}_epoch${NUM_EPOCHS}_router_layers${ROUTER_LAYERS}_lambda${GRADIENT_SCALE}_lr${LEARNING_RATE}_wd${WEIGHT_DECAY}"
 if [[ -n "${TARGET_CAPACITY}" ]]; then
   OUTPUT_DIR="${OUTPUT_DIR}_target${TARGET_CAPACITY}"
 fi
@@ -75,7 +75,7 @@ accelerate launch \
   --main_process_port "${PORT}" \
   "${ROOT_PATH}/entrypoints/finetune/finetune_router_tuning.py" \
   --model_name_or_path "${MODEL_NAME_OR_PATH}" \
-  --tokenizer_name "${MODEL_NAME_OR_PATH}" \
+  --tokenizer_name "${TOKENIZER_NAME}" \
   --use_fast_tokenizer False \
   --train_file "${DATA_FILE}" \
   --max_seq_length "${MAX_SEQ_LENGTH}" \

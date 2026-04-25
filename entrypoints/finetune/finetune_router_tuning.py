@@ -29,6 +29,7 @@ from transformers import (
 )
 from transformers.trainer_utils import get_last_checkpoint
 
+from utils.model import apply_router_tuning_patch, supports_router_tuning_patch
 from utils.pipeline.customized_trainer import CustomizedTrainer
 
 
@@ -216,17 +217,9 @@ class ModelArguments:
         default=None,
         metadata={"help": "Target activation ratio used by the router regularization term."},
     )
-    mod_capacity: Optional[float] = field(
-        default=None,
-        metadata={"help": "Legacy alias for `target_capacity`."},
-    )
     router_layers: Optional[int] = field(
         default=None,
         metadata={"help": "Number of deeper layers that enable Router-Tuning."},
-    )
-    mod_n: Optional[int] = field(
-        default=None,
-        metadata={"help": "Legacy alias for `router_layers`."},
     )
     gradient_scale: Optional[float] = field(
         default=None
@@ -303,16 +296,6 @@ def main():
         if model_args.token is not None:
             raise ValueError("`token` and `use_auth_token` are both specified. Please set only the argument `token`.")
         model_args.token = model_args.use_auth_token
-
-    if model_args.router_layers is None:
-        model_args.router_layers = model_args.mod_n
-    elif model_args.mod_n is not None and model_args.router_layers != model_args.mod_n:
-        raise ValueError("Please provide only one of `--router_layers` or `--mod_n`.")
-
-    if model_args.target_capacity is None:
-        model_args.target_capacity = model_args.mod_capacity
-    elif model_args.mod_capacity is not None and model_args.target_capacity != model_args.mod_capacity:
-        raise ValueError("Please provide only one of `--target_capacity` or `--mod_capacity`.")
 
     if model_args.router_layers is None:
         raise ValueError("Please provide `--router_layers`.")
@@ -449,7 +432,7 @@ def main():
         )
         model = AutoModelForCausalLM.from_pretrained(
             model_args.model_name_or_path,
-            from_tf=bool(".ckpt" in model_args.model_name_or_path),
+            from_tf=str(model_args.model_name_or_path).endswith(".ckpt"),
             config=config,
             cache_dir=model_args.cache_dir,
             revision=model_args.model_revision,
@@ -468,6 +451,15 @@ def main():
     
 
     print(model)
+
+    if supports_router_tuning_patch(model):
+        model = apply_router_tuning_patch(model)
+        print(f"Applied Router-Tuning runtime patch with granularity={config.granularity}.")
+    elif not str(getattr(model.config, "model_type", "")).endswith("_mod"):
+        raise ValueError(
+            "This model architecture is not yet supported by the generic Router-Tuning patcher. "
+            "Expected decoder layers with self_attn/mlp/input_layernorm/post_attention_layernorm."
+        )
     
     
     if model_args.use_checkpointing:

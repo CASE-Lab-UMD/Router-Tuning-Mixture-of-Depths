@@ -265,11 +265,10 @@ class CustomizedTrainer(Trainer):
         if model is not self.model:
             self.model_wrapped = model
 
-        # backward compatibility
         if self.is_deepspeed_enabled:
             self.deepspeed = self.model_wrapped
 
-        # ckpt loading
+        # Resume training state if a checkpoint path is provided.
         if resume_from_checkpoint is not None:
             if self.is_deepspeed_enabled:
                 deepspeed_load_checkpoint(

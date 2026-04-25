@@ -85,7 +85,6 @@ In practice, this enables lightweight deployment recipes without full-model retr
 - `utils/pipeline/customized_trainer.py`: router-focused trainer logic.
 - `configs/accelerate/`: distributed training launcher configs.
 - `configs/deepspeed/`: DeepSpeed runtime configs.
-- `ckpt/`: model config/tokenizer files for supported Router-Tuning checkpoints.
 
 ## ⚙️ Installation
 ```bash
@@ -125,23 +124,36 @@ python entrypoints/data/mix_datasets.py \
 bash scripts/finetune_router_tuning.sh
 ```
 
+The training entrypoint is now Hugging Face first:
+- Preferred: pass a Hugging Face model ID such as `Qwen/Qwen2.5-7B`.
+- Also supported: a normal local model directory.
+
 ### 3) 🖥️ Minimal Single-Node Override Example
 ```bash
 NUM_PROCESSES=4 PORT=29501 bash scripts/finetune_router_tuning.sh
 ```
 
+### 4) ☁️ Hugging Face Example
+```bash
+MODEL_NAME_OR_PATH="Qwen/Qwen2.5-7B" \
+RUN_NAME="qwen2.5-7b" \
+NUM_PROCESSES=4 PORT=29501 \
+bash scripts/finetune_router_tuning.sh
+```
+
 ## 🎛️ Training Knobs
 `finetune_router_tuning.sh` is the recommended launcher. Commonly adjusted fields:
 
-- `folder_name`: base checkpoint directory under `ckpt/`.
+- `model_name_or_path`: preferred Hugging Face model ID, or a normal local model path.
+- `run_name`: optional output folder alias; defaults to `basename(model_name_or_path)`.
+- `trust_remote_code`: defaults to `False`; enable only for architectures that require it.
 - `data_type`: one dataset under `data/reformatted/` or `mixed`.
 - `max_train_samples`: training subset size for quick experiments.
 - `router_layers`: number of deep layers enabled for router tuning in the current implementation.
 - `target_capacity`: optional target activation ratio for router regularization.
-- `granularity`: routing granularity (`attn_sequence` or `mlp_sequence`).
+- `granularity`: routing granularity (`attn_sequence`, `attn_token`, `mlp_sequence`, `mlp_token`, `block_sequence`, `block_token`).
 - `router_only`: enable router-only training (default `True`).
 - `learning_rate`, `weight_decay`, `num_epochs`.
-- Legacy compatibility: `--mod_n` and `--mod_capacity` remain accepted, but `--router_layers` and `--target_capacity` are the preferred names.
 
 Distributed launch overrides:
 - `NUM_PROCESSES`: number of GPU processes.
@@ -150,11 +162,13 @@ Distributed launch overrides:
 ### 🧭 Knob Matrix
 | Knob | Where | Typical Values | Effect |
 | --- | --- | --- | --- |
-| `folder_name` | `scripts/finetune_router_tuning.sh` | `mistral-7b-mod`, `qwen-2.5-7b-mod`, `llama3-8b-instruct-mod` | Selects base checkpoint under `ckpt/` |
+| `model_name_or_path` | `scripts/finetune_router_tuning.sh` / env | `Qwen/Qwen2.5-7B`, `mistralai/Mistral-7B-v0.1`, local HF path | Selects the base model to patch or load |
+| `run_name` | `scripts/finetune_router_tuning.sh` / env | `mistral-7b`, `qwen2.5-7b` | Controls the output subdirectory name |
+| `trust_remote_code` | `scripts/finetune_router_tuning.sh` / env | `False`, `True` | Enables remote custom code only when the selected model requires it |
 | `data_type` | `scripts/finetune_router_tuning.sh` | `alpaca`, `mixed`, ... | Chooses training data source |
 | `router_layers` | `scripts/finetune_router_tuning.sh` / CLI | `8`, `16`, `32` | Controls how many deeper layers use router tuning |
 | `target_capacity` | `scripts/finetune_router_tuning.sh` / CLI | `0.5`, `0.75`, unset | Sets the router activation target used by regularization |
-| `granularity` | `scripts/finetune_router_tuning.sh` | `attn_sequence`, `mlp_sequence` | Chooses routing granularity |
+| `granularity` | `scripts/finetune_router_tuning.sh` | `attn_sequence`, `attn_token`, `mlp_sequence`, `mlp_token`, `block_sequence`, `block_token` | Chooses routed sublayer and routing level |
 | `max_train_samples` | `scripts/finetune_router_tuning.sh` | `1000`, `5000`, `all` (by removing cap) | Controls quick debug vs full tuning |
 | `NUM_PROCESSES` | shell env | `1`, `4`, `8` | Number of distributed workers |
 | `PORT` | shell env | e.g., `29501` | Master communication port |
@@ -165,7 +179,7 @@ For strict reproduction used in earlier experiments, see [s1ghhh/lm-evaluation-h
 
 ## ✅ Repro Checklist
 - Python 3.10 environment with `pip install -r requirements.txt`.
-- Valid local model path under `ckpt/` (or customize `folder_name`).
+- Valid `model_name_or_path`: preferably a Hugging Face model ID or a normal local model path.
 - Reformatted/mixed data exists at `data/reformatted/*/data.jsonl` or `data/mixed/data.jsonl`.
 - `accelerate` config selected in `scripts/finetune_router_tuning.sh` matches your hardware.
 - `NUM_PROCESSES` and GPU memory are consistent with `max_seq_length` and batch setup.
