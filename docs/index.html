@@ -68,13 +68,37 @@
         padding: 40px;
       }
 
-      .title {
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         margin: 0 auto 18px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .title {
+        margin: 0 auto 16px;
         max-width: 900px;
         text-align: center;
         font-size: clamp(34px, 5.7vw, 58px);
         line-height: 1.04;
         letter-spacing: -0.05em;
+      }
+
+      .hero-copy {
+        max-width: 760px;
+        margin: 0 auto 22px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1.75;
       }
 
       .badges,
@@ -125,6 +149,11 @@
         color: var(--accent);
         font-size: 14px;
         font-weight: 600;
+      }
+
+      .hero-figure {
+        margin: 24px auto 0;
+        max-width: 860px;
       }
 
       .sections {
@@ -189,6 +218,10 @@
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       }
 
+      .results-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      }
+
       .card,
       .callout {
         border: 1px solid var(--line);
@@ -200,6 +233,11 @@
       .news-list {
         margin: 0;
         padding-left: 18px;
+      }
+
+      .lead {
+        max-width: 820px;
+        margin-bottom: 8px;
       }
 
       .codeblock {
@@ -253,7 +291,12 @@
   <body>
     <main class="page">
       <section class="hero">
+        <div class="eyebrow">EMNLP 2025 Project Page</div>
         <h1 class="title">[EMNLP 2025] Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers</h1>
+        <p class="hero-copy">
+          Router-Tuning enables dynamic-depth inference by tuning only router-related parameters, preserving the
+          efficiency benefits of Mixture of Depths while avoiding the cost of full-model dynamic-depth training.
+        </p>
 
         <div class="badges">
           <a class="badge" href="https://arxiv.org/abs/2410.13184">arXiv 2410.13184</a>
@@ -280,16 +323,21 @@
           <a href="#news">News</a>
           <a href="#why">Why</a>
           <a href="#results">Results</a>
+          <a href="#methods">Methods</a>
           <a href="#quick-start">Quick Start</a>
           <a href="#citation">Citation</a>
           <a href="https://github.com/CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths">GitHub</a>
+        </div>
+
+        <div class="figure hero-figure">
+          <img src="../figures/router_tuning.svg" alt="Router-Tuning overview">
         </div>
       </section>
 
       <div class="sections">
         <section class="section" id="introduction">
           <h2>Introduction</h2>
-          <p>
+          <p class="lead">
             This is the official implementation of the paper
             <a href="https://arxiv.org/abs/2410.13184"><strong>Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers</strong></a>,
             accepted at <strong>EMNLP 2025</strong>. We provide a practical framework for efficient dynamic-depth
@@ -300,9 +348,6 @@
             standard full-model dynamic-depth tuning, it significantly reduces training cost while keeping model quality
             competitive.
           </p>
-          <div class="figure">
-            <img src="../figures/router_tuning.svg" alt="Router-Tuning overview">
-          </div>
         </section>
 
         <section class="section" id="news">
@@ -335,7 +380,11 @@
 
         <section class="section" id="results">
           <h2>Results</h2>
-          <div class="cards">
+          <p class="lead">
+            Router-Tuning improves the efficiency-quality tradeoff over full-parameter dynamic-depth tuning baselines
+            while keeping routing behavior more stable and interpretable.
+          </p>
+          <div class="cards results-grid">
             <div class="card">
               <h3>Main Results</h3>
               <p>Router-Tuning consistently improves the efficiency-quality tradeoff over full-parameter dynamic-depth tuning baselines.</p>
@@ -362,6 +411,10 @@
 
         <section class="section" id="methods">
           <h2>Core Methods</h2>
+          <p class="lead">
+            The method focuses optimization on routing components and uses dynamic-depth attention-style execution to
+            preserve the performance-efficiency balance.
+          </p>
           <div class="split">
             <div class="callout">
               <h3>Router-Only Fine-Tuning</h3>
@@ -378,6 +431,10 @@
 
         <section class="section" id="quick-start">
           <h2>Quick Start</h2>
+          <p class="lead">
+            The repository is now Hugging Face first. The default launcher uses <code>Qwen/Qwen2.5-7B</code> and
+            patches routing behavior at runtime.
+          </p>
           <div class="split">
             <div class="card">
               <h3>Installation</h3>
@@ -409,7 +466,6 @@ python entrypoints/data/mix_datasets.py \
   --save_path ./data/mixed</div>
             </div>
           </div>
-
           <div class="split" style="margin-top: 16px;">
             <div class="card">
               <h3>Run Router-Tuning</h3>
