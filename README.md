@@ -141,9 +141,6 @@ NUM_PROCESSES=4 PORT=29501 \
 bash scripts/finetune_router_tuning.sh
 ```
 
-### 5) 🌐 Project Webpage
-An embeddable project page draft lives at `docs/index.html`. It is ready to publish with GitHub Pages or any static host.
-
 ## 🎛️ Training Knobs
 `finetune_router_tuning.sh` is the recommended launcher. Commonly adjusted fields:
 
