@@ -141,6 +141,9 @@ NUM_PROCESSES=4 PORT=29501 \
 bash scripts/finetune_router_tuning.sh
 ```
 
+### 5) 🌐 Project Webpage
+An embeddable project page draft lives at `docs/index.html`. It is ready to publish with GitHub Pages or any static host.
+
 ## 🎛️ Training Knobs
 `finetune_router_tuning.sh` is the recommended launcher. Commonly adjusted fields:
 
@@ -158,20 +161,6 @@ bash scripts/finetune_router_tuning.sh
 Distributed launch overrides:
 - `NUM_PROCESSES`: number of GPU processes.
 - `PORT`: distributed master port.
-
-### 🧭 Knob Matrix
-| Knob | Where | Typical Values | Effect |
-| --- | --- | --- | --- |
-| `model_name_or_path` | `scripts/finetune_router_tuning.sh` / env | `Qwen/Qwen2.5-7B`, `mistralai/Mistral-7B-v0.1`, local HF path | Selects the base model to patch or load |
-| `run_name` | `scripts/finetune_router_tuning.sh` / env | `mistral-7b`, `qwen2.5-7b` | Controls the output subdirectory name |
-| `trust_remote_code` | `scripts/finetune_router_tuning.sh` / env | `False`, `True` | Enables remote custom code only when the selected model requires it |
-| `data_type` | `scripts/finetune_router_tuning.sh` | `alpaca`, `mixed`, ... | Chooses training data source |
-| `router_layers` | `scripts/finetune_router_tuning.sh` / CLI | `8`, `16`, `32` | Controls how many deeper layers use router tuning |
-| `target_capacity` | `scripts/finetune_router_tuning.sh` / CLI | `0.5`, `0.75`, unset | Sets the router activation target used by regularization |
-| `granularity` | `scripts/finetune_router_tuning.sh` | `attn_sequence`, `attn_token`, `mlp_sequence`, `mlp_token`, `block_sequence`, `block_token` | Chooses routed sublayer and routing level |
-| `max_train_samples` | `scripts/finetune_router_tuning.sh` | `1000`, `5000`, `all` (by removing cap) | Controls quick debug vs full tuning |
-| `NUM_PROCESSES` | shell env | `1`, `4`, `8` | Number of distributed workers |
-| `PORT` | shell env | e.g., `29501` | Master communication port |
 
 ## 🧪 Evaluation
 Evaluation is compatible with [EleutherAI/lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness).
