@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <a href="docs/index.html">🏠 Homepage</a> •
+  <a href="https://case-lab-umd.github.io/Router-Tuning-Mixture-of-Depths/">🏠 Homepage</a> •
   <a href="#-introduction">📖 Introduction</a> •
   <a href="#-news">📰 News</a> •
   <a href="#-why-this-repo">✨ Why</a> •
