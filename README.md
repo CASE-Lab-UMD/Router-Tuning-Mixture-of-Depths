@@ -29,7 +29,7 @@ This is the official implementation of the paper [**Router-Tuning: A Simple and 
 Router-Tuning enables dynamic-depth inference by fine-tuning only router-related parameters. Compared with standard full-model dynamic-depth tuning, it significantly reduces training cost while keeping model quality competitive.
 
 <p align="center">
-  <img src="figures/router_tuning.svg" alt="Router-Tuning overview" width="68%">
+  <img src="docs/figures/router_tuning.svg" alt="Router-Tuning overview" width="68%">
 </p>
 
 ## 📰 News
@@ -50,21 +50,21 @@ Router-Tuning tackles both by focusing optimization on routing components and in
 
 ### 🏁 Main Results
 <p align="center">
-  <img src="figures/main_results.png" alt="Main benchmark results of Router-Tuning" width="92%">
+  <img src="docs/figures/main_results.png" alt="Main benchmark results of Router-Tuning" width="92%">
 </p>
 Router-Tuning consistently improves the efficiency-quality tradeoff over full-parameter dynamic-depth tuning baselines.
 The reported best setting reaches notable speedup while keeping quality degradation small.
 
 ### 🔬 Expert Routing Analysis
 <p align="center">
-  <img src="figures/expert_rt.png" alt="Expert-level routing behavior analysis" width="82%">
+  <img src="docs/figures/expert_rt.png" alt="Expert-level routing behavior analysis" width="82%">
 </p>
 Router specialization becomes clearer after tuning: the model learns more stable token-to-layer routing patterns.
 This supports dynamic-depth execution with lower unnecessary computation.
 
 ### 🔗 LoRA Compatibility
 <p align="center">
-  <img src="figures/lora_rt.png" alt="LoRA and Router-Tuning combined results" width="92%">
+  <img src="docs/figures/lora_rt.png" alt="LoRA and Router-Tuning combined results" width="92%">
 </p>
 Router-Tuning is compatible with LoRA-based adaptation and can be composed for a better efficiency-performance balance.
 In practice, this enables lightweight deployment recipes without full-model retraining.

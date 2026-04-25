@@ -1,454 +1,616 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Router-Tuning</title>
-    <meta
-      name="description"
-      content="Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers."
-    >
-    <style>
-      :root {
-        --bg: #f6f4ee;
-        --panel: rgba(255, 255, 255, 0.78);
-        --panel-strong: rgba(255, 255, 255, 0.92);
-        --text: #181816;
-        --muted: #5f615b;
-        --line: rgba(24, 24, 22, 0.1);
-        --accent: #1f6f5d;
-        --accent-soft: rgba(31, 111, 93, 0.08);
-        --shadow: 0 16px 50px rgba(25, 28, 24, 0.08);
-      }
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Router-Tuning — EMNLP 2025</title>
+  <meta name="description" content="Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers. EMNLP 2025.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ── Tokens ── */
+    :root {
+      --bg:       #ffffff;
+      --bg2:      #f8fafc;
+      --bg3:      #f1f5f9;
+      --border:   #e2e8f0;
+      --border2:  #cbd5e1;
+      --text:     #0f172a;
+      --muted:    #475569;
+      --dim:      #94a3b8;
+      --green:    #059669;
+      --green-bg: #ecfdf5;
+      --green-bd: #a7f3d0;
+      --indigo:   #4f46e5;
+      --ind-bg:   #eef2ff;
+      --ind-bd:   #c7d2fe;
+      --amber:    #d97706;
+      --amb-bg:   #fffbeb;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+      --shadow:    0 4px 16px rgba(0,0,0,.07), 0 1px 4px rgba(0,0,0,.04);
+      --shadow-lg: 0 16px 48px rgba(0,0,0,.10), 0 4px 12px rgba(0,0,0,.05);
+      --r:  12px;
+      --r2: 18px;
+    }
 
-      * {
-        box-sizing: border-box;
-      }
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body { font-family: "Inter", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; height: auto; }
+    ul, ol { padding-left: 1.4em; }
 
-      html {
-        scroll-behavior: smooth;
-      }
+    /* ── Sticky nav ── */
+    .nav {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(255,255,255,.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      width: min(1100px, calc(100% - 32px));
+      margin: 0 auto;
+      display: flex; align-items: center; gap: 2px;
+      padding: 8px 0;
+      overflow-x: auto;
+    }
+    .nav-inner a {
+      padding: 5px 11px; border-radius: 8px;
+      font-size: 13px; font-weight: 500; color: var(--muted);
+      white-space: nowrap;
+      transition: color .15s, background .15s;
+    }
+    .nav-inner a:hover { color: var(--text); background: var(--bg3); }
+    .nav-inner .cta {
+      margin-left: auto;
+      background: var(--green-bg); color: var(--green);
+      border: 1px solid var(--green-bd);
+    }
+    .nav-inner .cta:hover { background: #d1fae5; }
 
-      body {
-        margin: 0;
-        color: var(--text);
-        font-family: "Inter", "Segoe UI", system-ui, sans-serif;
-        background:
-          radial-gradient(circle at top left, rgba(31, 111, 93, 0.08), transparent 30%),
-          radial-gradient(circle at top right, rgba(180, 140, 72, 0.08), transparent 26%),
-          linear-gradient(180deg, #fbfaf6 0%, var(--bg) 100%);
-      }
+    /* ── Page container ── */
+    .wrap { width: min(1100px, calc(100% - 32px)); margin: 0 auto; }
 
-      a {
-        color: inherit;
-        text-decoration: none;
-      }
+    /* ══ HERO ══ */
+    .hero {
+      padding: 72px 0 56px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .venue-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 14px; border-radius: 999px;
+      background: var(--green-bg); border: 1px solid var(--green-bd);
+      color: var(--green); font-size: 12px; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase;
+      margin-bottom: 22px;
+    }
+    .venue-tag::before {
+      content: ""; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green); flex-shrink: 0;
+      animation: blink 2.4s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-      img {
-        display: block;
-        max-width: 100%;
-      }
+    .hero h1 {
+      font-size: clamp(26px, 4vw, 48px);
+      font-weight: 800; letter-spacing: -.04em; line-height: 1.1;
+      max-width: 860px; margin: 0 auto 20px;
+    }
+    .hero h1 em { font-style: normal; color: var(--green); }
 
-      .page {
-        width: min(1120px, calc(100% - 32px));
-        margin: 0 auto;
-        padding: 28px 0 56px;
-      }
+    .hero-sub {
+      font-size: 17px; color: var(--muted); line-height: 1.75;
+      max-width: 680px; margin: 0 auto 28px;
+    }
 
-      .hero,
-      .section {
-        background: var(--panel);
-        border: 1px solid var(--line);
-        border-radius: 28px;
-        box-shadow: var(--shadow);
-        backdrop-filter: blur(10px);
-      }
+    .authors {
+      display: flex; flex-wrap: wrap; justify-content: center;
+      gap: 0; margin-bottom: 28px;
+      font-size: 15px; color: var(--muted);
+    }
+    .authors a { color: var(--text); font-weight: 500; border-bottom: 1px solid var(--border2); transition: color .15s, border-color .15s; }
+    .authors a:hover { color: var(--green); border-color: var(--green); }
+    .authors .sep { padding: 0 5px; }
 
-      .hero {
-        padding: 40px;
-      }
+    .hero-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 52px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 18px; border-radius: 10px;
+      font-size: 14px; font-weight: 600;
+      border: 1px solid var(--border2); background: var(--bg);
+      color: var(--text); box-shadow: var(--shadow-sm);
+      transition: box-shadow .15s, transform .1s, border-color .15s;
+    }
+    .btn:hover { box-shadow: var(--shadow); transform: translateY(-1px); border-color: var(--border2); }
+    .btn.accent { background: var(--green-bg); color: var(--green); border-color: var(--green-bd); }
+    .btn.accent:hover { background: #d1fae5; }
+    .btn svg { flex-shrink: 0; }
 
-      .eyebrow {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 18px;
-        padding: 8px 14px;
-        border-radius: 999px;
-        background: var(--accent-soft);
-        color: var(--accent);
-        font-size: 13px;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      }
+    .teaser {
+      max-width: 920px; margin: 0 auto;
+      border-radius: var(--r2); overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-lg);
+      background: var(--bg2);
+    }
 
-      .title {
-        margin: 0 auto 16px;
-        max-width: 900px;
-        text-align: center;
-        font-size: clamp(34px, 5.7vw, 58px);
-        line-height: 1.04;
-        letter-spacing: -0.05em;
-      }
+    /* ══ LAYOUT ══ */
+    .page-body {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 0;
+      align-items: start;
+    }
 
-      .hero-copy {
-        max-width: 760px;
-        margin: 0 auto 22px;
-        text-align: center;
-        color: var(--muted);
-        font-size: 18px;
-        line-height: 1.75;
-      }
+    /* ── Sidebar TOC ── */
+    .toc {
+      position: sticky; top: 52px;
+      padding: 40px 0 40px 0;
+      border-right: 1px solid var(--border);
+    }
+    .toc-title {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 10px; padding-left: 24px;
+    }
+    .toc a {
+      display: block; padding: 6px 24px;
+      font-size: 13px; color: var(--muted);
+      border-left: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .toc a:hover { color: var(--green); border-left-color: var(--green); }
 
-      .badges,
-      .authors,
-      .nav,
-      .meta {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: center;
-        gap: 10px 12px;
-      }
+    /* ── Content ── */
+    .content { padding: 48px 0 48px 48px; }
 
-      .badges {
-        margin-bottom: 18px;
-      }
+    .sec { margin-bottom: 64px; }
+    .sec:last-child { margin-bottom: 0; }
 
-      .badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 8px 12px;
-        border-radius: 999px;
-        background: var(--panel-strong);
-        border: 1px solid var(--line);
-        font-size: 14px;
-      }
+    .sec-label {
+      display: inline-block;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 8px;
+    }
+    .sec h2 {
+      font-size: clamp(20px, 2.5vw, 30px);
+      font-weight: 800; letter-spacing: -.03em; margin-bottom: 14px;
+    }
+    .sec h3 {
+      font-size: 17px; font-weight: 700; letter-spacing: -.02em; margin-bottom: 8px;
+    }
+    .sec p {
+      color: var(--muted); font-size: 15px; line-height: 1.8; margin-bottom: 12px;
+    }
+    .sec p:last-child { margin-bottom: 0; }
+    .sec p a { color: var(--indigo); border-bottom: 1px solid var(--ind-bd); }
+    .sec p a:hover { color: var(--green); border-color: var(--green-bd); }
+    .sec li { color: var(--muted); font-size: 15px; line-height: 1.8; }
+    .sec li + li { margin-top: 2px; }
 
-      .authors {
-        color: var(--muted);
-        font-size: 16px;
-        line-height: 1.7;
-        margin-bottom: 20px;
-      }
+    /* News */
+    .news-list { display: flex; flex-direction: column; gap: 8px; }
+    .news-row {
+      display: flex; align-items: baseline; gap: 14px;
+      padding: 12px 16px; border-radius: var(--r);
+      background: var(--bg2); border: 1px solid var(--border);
+    }
+    .news-date { flex-shrink: 0; font-size: 12px; font-weight: 700; color: var(--green); font-family: "JetBrains Mono", monospace; }
+    .news-body { font-size: 14px; color: var(--muted); }
+    .news-body strong { color: var(--text); }
 
-      .authors a {
-        border-bottom: 1px solid rgba(24, 24, 22, 0.12);
-      }
+    /* Motivation callout */
+    .callout-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 14px; margin-top: 16px; }
+    .callout {
+      padding: 18px 20px; border-radius: var(--r);
+      border: 1px solid var(--border); background: var(--bg2);
+    }
+    .callout-icon { font-size: 20px; margin-bottom: 8px; }
+    .callout h4 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+    .callout p { font-size: 13px; color: var(--muted); line-height: 1.65; margin: 0; }
 
-      .nav {
-        padding-top: 18px;
-        border-top: 1px solid var(--line);
-      }
+    /* Method cards */
+    .method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap: 14px; margin-top: 16px; }
+    .method-card {
+      padding: 22px; border-radius: var(--r2);
+      border: 1px solid var(--border); background: var(--bg);
+      box-shadow: var(--shadow-sm);
+      position: relative; overflow: hidden;
+    }
+    .method-card::after {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    }
+    .method-card:nth-child(1)::after { background: linear-gradient(90deg, var(--green), #34d399); }
+    .method-card:nth-child(2)::after { background: linear-gradient(90deg, var(--indigo), #818cf8); }
+    .method-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+    .method-card p { font-size: 14px; color: var(--muted); line-height: 1.7; margin: 0; }
+    .method-card p + p { margin-top: 8px; }
 
-      .nav a {
-        padding: 9px 14px;
-        border-radius: 999px;
-        background: var(--accent-soft);
-        color: var(--accent);
-        font-size: 14px;
-        font-weight: 600;
-      }
+    /* Figures */
+    .fig { margin-top: 16px; border-radius: var(--r2); overflow: hidden; border: 1px solid var(--border); background: var(--bg2); box-shadow: var(--shadow-sm); }
+    .fig img { width: 100%; }
+    .fig-cap { padding: 10px 16px; font-size: 13px; color: var(--dim); border-top: 1px solid var(--border); font-style: italic; }
 
-      .hero-figure {
-        margin: 24px auto 0;
-        max-width: 860px;
-      }
+    .result-block { margin-bottom: 36px; }
+    .result-block:last-child { margin-bottom: 0; }
 
-      .sections {
-        display: grid;
-        gap: 18px;
-        margin-top: 20px;
-      }
+    /* Repo layout */
+    .file-tree {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px; line-height: 1.9;
+      padding: 20px 22px; border-radius: var(--r2);
+      background: var(--bg2); border: 1px solid var(--border);
+      color: var(--muted); margin-top: 16px;
+    }
+    .file-tree .path { color: var(--green); }
+    .file-tree .comment { color: var(--dim); }
 
-      .section {
-        padding: 30px;
-      }
+    /* Code blocks */
+    .code-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap: 14px; margin-top: 16px; }
+    .code-card {
+      border-radius: var(--r2); border: 1px solid var(--border);
+      background: var(--bg); overflow: hidden; box-shadow: var(--shadow-sm);
+    }
+    .code-card-hd {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px; border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      font-size: 12px; font-weight: 600; color: var(--muted);
+    }
+    .code-card-bd { padding: 0; }
+    .code-card-bd ul { padding: 14px 14px 14px 28px; }
+    .code-card-bd li { font-size: 13px; color: var(--muted); line-height: 1.75; }
+    .code-card-bd li + li { margin-top: 2px; }
+    pre {
+      margin: 0; padding: 16px 18px;
+      background: #1e293b; border-radius: 0;
+      overflow-x: auto;
+    }
+    pre code {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12.5px; line-height: 1.75;
+      color: #94d4b0; white-space: pre;
+    }
+    .code-card-hd + .code-card-bd pre { border-top: none; }
 
-      h2 {
-        margin: 0 0 14px;
-        font-size: 28px;
-        letter-spacing: -0.03em;
-      }
+    /* Knobs table */
+    .knobs-table { width: 100%; margin-top: 14px; border-collapse: collapse; }
+    .knobs-table th {
+      text-align: left; padding: 8px 14px;
+      font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      color: var(--dim); background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+    }
+    .knobs-table td {
+      padding: 9px 14px; font-size: 13px; color: var(--muted);
+      border-bottom: 1px solid var(--border); vertical-align: top;
+    }
+    .knobs-table tr:last-child td { border-bottom: none; }
+    .knobs-table tr:hover td { background: var(--bg2); }
+    .knobs-table .param {
+      font-family: "JetBrains Mono", monospace; font-size: 12px;
+      color: var(--green); white-space: nowrap;
+    }
+    .table-wrap { border-radius: var(--r2); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow-sm); }
 
-      h3 {
-        margin: 0 0 14px;
-        font-size: 20px;
-        letter-spacing: -0.02em;
-      }
+    /* Checklist */
+    .checklist { list-style: none; padding: 0; margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .checklist li {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 16px; border-radius: var(--r);
+      background: var(--bg2); border: 1px solid var(--border);
+      font-size: 14px; color: var(--muted); line-height: 1.6;
+    }
+    .checklist li::before {
+      content: ""; flex-shrink: 0;
+      width: 18px; height: 18px; margin-top: 1px;
+      border-radius: 5px; border: 1.5px solid var(--green-bd);
+      background: var(--green-bg);
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 10 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4l3 3 5-6' stroke='%23059669' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: center; background-size: 10px 8px;
+    }
+    .checklist li code {
+      font-family: "JetBrains Mono", monospace; font-size: 11.5px;
+      background: var(--bg3); padding: 1px 5px; border-radius: 4px;
+      color: var(--text);
+    }
 
-      p,
-      li {
-        color: var(--muted);
-        font-size: 16px;
-        line-height: 1.75;
-      }
+    /* Citation */
+    .cite-box { border-radius: var(--r2); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow-sm); }
+    .cite-hd {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px; background: var(--bg2); border-bottom: 1px solid var(--border);
+    }
+    .cite-hd span { font-size: 13px; font-weight: 600; color: var(--muted); }
+    .copy-btn {
+      padding: 4px 12px; border-radius: 7px;
+      background: var(--bg); border: 1px solid var(--border);
+      color: var(--muted); font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: background .15s, color .15s, border-color .15s;
+      font-family: inherit;
+    }
+    .copy-btn:hover { background: var(--green-bg); color: var(--green); border-color: var(--green-bd); }
 
-      ul,
-      ol {
-        margin: 10px 0 0;
-        padding-left: 22px;
-      }
+    /* Inline code */
+    code {
+      font-family: "JetBrains Mono", monospace; font-size: 12px;
+      background: var(--bg3); padding: 1px 5px; border-radius: 4px; color: var(--text);
+    }
 
-      .figure {
-        margin-top: 18px;
-        border-radius: 22px;
-        overflow: hidden;
-        border: 1px solid var(--line);
-        background: var(--panel-strong);
-      }
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 0;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    }
+    footer .left { font-size: 13px; color: var(--dim); }
+    footer .right { display: flex; gap: 20px; }
+    footer .right a { font-size: 13px; color: var(--dim); transition: color .15s; }
+    footer .right a:hover { color: var(--green); }
 
-      .figure img {
-        width: 100%;
-        height: auto;
-      }
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .page-body { grid-template-columns: 1fr; }
+      .toc { display: none; }
+      .content { padding: 32px 0 32px; }
+      .hero { padding: 48px 0 40px; }
+    }
+    @media (max-width: 520px) {
+      .code-tabs, .method-grid, .callout-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
 
-      .split,
-      .cards {
-        display: grid;
-        gap: 16px;
-      }
+<!-- ── Sticky nav ── -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#intro">Introduction</a>
+    <a href="#news">News</a>
+    <a href="#why">Motivation</a>
+    <a href="#method">Method</a>
+    <a href="#results">Results</a>
+    <a href="#repo">Repo</a>
+    <a href="#quickstart">Quick Start</a>
+    <a href="#knobs">Config</a>
+    <a href="#eval">Evaluation</a>
+    <a href="#citation">Citation</a>
+    <a class="cta" href="https://github.com/CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths">&#xe000; GitHub</a>
+  </div>
+</nav>
 
-      .split {
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      }
+<!-- ══ HERO ══ -->
+<div class="wrap">
+  <header class="hero">
+    <div class="venue-tag">EMNLP 2025 Main Conference</div>
 
-      .cards {
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      }
+    <h1>Router-Tuning: A Simple and Effective Approach<br>for <em>Dynamic-Depth</em> in Transformers</h1>
 
-      .results-grid {
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      }
+    <p class="hero-sub">
+      Fine-tune only router-related parameters to enable dynamic-depth inference —
+      capturing the efficiency of Mixture of Depths at a fraction of full-model training cost.
+    </p>
 
-      .card,
-      .callout {
-        border: 1px solid var(--line);
-        background: var(--panel-strong);
-        border-radius: 22px;
-        padding: 22px;
-      }
+    <div class="authors">
+      <a href="https://shwai-he.github.io/">Shwai He</a><span class="sep">,&nbsp;</span>
+      <a href="https://getao.github.io/">Tao Ge</a><span class="sep">,&nbsp;</span>
+      <a href="https://s1gh.alphaxiv.io/">Guoheng Sun</a><span class="sep">,&nbsp;</span>
+      <a href="https://bowei.netlify.app/#about">Bowei Tian</a><span class="sep">,&nbsp;</span>
+      <a href="https://xyang0.github.io/">Xiaoyang Wang</a><span class="sep">,&nbsp;</span>
+      <a href="https://sites.google.com/view/dongyu888/">Dong Yu</a>
+    </div>
 
-      .news-list {
-        margin: 0;
-        padding-left: 18px;
-      }
+    <div class="hero-links">
+      <a class="btn accent" href="https://arxiv.org/abs/2410.13184">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Paper (arXiv 2410.13184)
+      </a>
+      <a class="btn" href="https://aclanthology.org/2025.emnlp-main.99">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        ACL Anthology
+      </a>
+      <a class="btn" href="https://github.com/CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        Code &amp; Weights
+      </a>
+    </div>
 
-      .lead {
-        max-width: 820px;
-        margin-bottom: 8px;
-      }
+    <div class="teaser">
+      <img src="figures/router_tuning.svg" alt="Router-Tuning overview: only router parameters are updated during fine-tuning">
+    </div>
+  </header>
+</div>
 
-      .codeblock {
-        margin-top: 16px;
-        padding: 18px 20px;
-        border-radius: 22px;
-        background: #182420;
-        color: #edf4ef;
-        overflow-x: auto;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        font-family: "SFMono-Regular", "Menlo", "Monaco", "Consolas", monospace;
-        font-size: 14px;
-        line-height: 1.7;
-      }
+<!-- ══ TWO-COLUMN BODY ══ -->
+<div class="wrap">
+  <div class="page-body">
 
-      .meta {
-        justify-content: flex-start;
-        margin-top: 18px;
-      }
+    <!-- Sidebar TOC -->
+    <aside class="toc">
+      <div class="toc-title">On this page</div>
+      <a href="#intro">Introduction</a>
+      <a href="#news">News</a>
+      <a href="#why">Motivation</a>
+      <a href="#method">Method</a>
+      <a href="#results">Results</a>
+      <a href="#repo">Repo Layout</a>
+      <a href="#quickstart">Quick Start</a>
+      <a href="#knobs">Training Config</a>
+      <a href="#eval">Evaluation</a>
+      <a href="#repro">Repro Checklist</a>
+      <a href="#citation">Citation</a>
+    </aside>
 
-      .meta a {
-        color: var(--accent);
-        font-weight: 600;
-      }
+    <!-- Main content -->
+    <main class="content">
 
-      .footer {
-        padding: 8px 2px 0;
-        text-align: center;
-        color: var(--muted);
-        font-size: 14px;
-      }
-
-      @media (max-width: 720px) {
-        .page {
-          width: min(100% - 20px, 1120px);
-          padding-top: 20px;
-        }
-
-        .hero,
-        .section {
-          border-radius: 24px;
-          padding: 22px;
-        }
-
-        .nav {
-          justify-content: flex-start;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <main class="page">
-      <section class="hero">
-        <div class="eyebrow">EMNLP 2025 Project Page</div>
-        <h1 class="title">[EMNLP 2025] Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers</h1>
-        <p class="hero-copy">
-          Router-Tuning enables dynamic-depth inference by tuning only router-related parameters, preserving the
-          efficiency benefits of Mixture of Depths while avoiding the cost of full-model dynamic-depth training.
+      <!-- Introduction -->
+      <section class="sec" id="intro">
+        <span class="sec-label">Overview</span>
+        <h2>Introduction</h2>
+        <p>
+          This is the official implementation of
+          <strong><a href="https://arxiv.org/abs/2410.13184">Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers</a></strong>,
+          accepted at <strong>EMNLP 2025</strong> (main conference).
+          We provide a practical framework for efficient dynamic-depth training and inference in Transformers.
         </p>
+        <p>
+          Router-Tuning enables dynamic-depth inference by fine-tuning only router-related parameters.
+          Compared with standard full-model dynamic-depth tuning, it significantly reduces training cost
+          while keeping model quality competitive.
+        </p>
+      </section>
 
-        <div class="badges">
-          <a class="badge" href="https://arxiv.org/abs/2410.13184">arXiv 2410.13184</a>
-          <a class="badge" href="https://aclanthology.org/2025.emnlp-main.99">EMNLP 2025</a>
-          <span class="badge">Python 3.10+</span>
-        </div>
-
-        <div class="authors">
-          <a href="https://shwai-he.github.io/">Shwai He</a>
-          <span>,</span>
-          <a href="https://getao.github.io/">Tao Ge</a>
-          <span>,</span>
-          <a href="https://s1gh.alphaxiv.io/">Guoheng Sun</a>
-          <span>,</span>
-          <a href="https://bowei.netlify.app/#about">Bowei Tian</a>
-          <span>,</span>
-          <a href="https://xyang0.github.io/">Xiaoyang Wang</a>
-          <span>,</span>
-          <a href="https://sites.google.com/view/dongyu888/">Dong Yu</a>
-        </div>
-
-        <div class="nav">
-          <a href="#introduction">Introduction</a>
-          <a href="#news">News</a>
-          <a href="#why">Why</a>
-          <a href="#results">Results</a>
-          <a href="#methods">Methods</a>
-          <a href="#quick-start">Quick Start</a>
-          <a href="#citation">Citation</a>
-          <a href="https://github.com/CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths">GitHub</a>
-        </div>
-
-        <div class="figure hero-figure">
-          <img src="../figures/router_tuning.svg" alt="Router-Tuning overview">
+      <!-- News -->
+      <section class="sec" id="news">
+        <span class="sec-label">Updates</span>
+        <h2>News</h2>
+        <div class="news-list">
+          <div class="news-row">
+            <span class="news-date">Aug 2025</span>
+            <span class="news-body">Router-Tuning accepted to <strong>EMNLP 2025</strong> main conference.</span>
+          </div>
+          <div class="news-row">
+            <span class="news-date">Oct 2024</span>
+            <span class="news-body">arXiv preprint and code released.</span>
+          </div>
         </div>
       </section>
 
-      <div class="sections">
-        <section class="section" id="introduction">
-          <h2>Introduction</h2>
-          <p class="lead">
-            This is the official implementation of the paper
-            <a href="https://arxiv.org/abs/2410.13184"><strong>Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers</strong></a>,
-            accepted at <strong>EMNLP 2025</strong>. We provide a practical framework for efficient dynamic-depth
-            training and inference in Transformers.
-          </p>
-          <p>
-            Router-Tuning enables dynamic-depth inference by fine-tuning only router-related parameters. Compared with
-            standard full-model dynamic-depth tuning, it significantly reduces training cost while keeping model quality
-            competitive.
-          </p>
-        </section>
-
-        <section class="section" id="news">
-          <h2>News</h2>
-          <ol class="news-list">
-            <li>Aug 2025: Router-Tuning accepted to <strong>EMNLP 2025</strong> main conference.</li>
-            <li>Oct 2024: arXiv preprint and code release.</li>
-          </ol>
-        </section>
-
-        <section class="section" id="why">
-          <h2>Why This Repo</h2>
-          <p>
-            Traditional transformers execute a fixed number of layers for every token, which wastes computation on easy
-            tokens.
-          </p>
-          <p>
-            <a href="https://arxiv.org/abs/2404.02258">Mixture of Depths (MoD)</a> addresses this by dynamically
-            skipping less important computations, but two practical issues remain:
-          </p>
-          <ol>
-            <li>Existing methods usually tune the whole model, causing high training cost.</li>
-            <li>Aggressive skipping can hurt quality if routing is not well calibrated.</li>
-          </ol>
-          <p>
-            Router-Tuning tackles both by focusing optimization on routing components and introducing routing strategies
-            that better preserve performance-efficiency tradeoffs.
-          </p>
-        </section>
-
-        <section class="section" id="results">
-          <h2>Results</h2>
-          <p class="lead">
-            Router-Tuning improves the efficiency-quality tradeoff over full-parameter dynamic-depth tuning baselines
-            while keeping routing behavior more stable and interpretable.
-          </p>
-          <div class="cards results-grid">
-            <div class="card">
-              <h3>Main Results</h3>
-              <p>Router-Tuning consistently improves the efficiency-quality tradeoff over full-parameter dynamic-depth tuning baselines.</p>
-              <div class="figure">
-                <img src="../figures/main_results.png" alt="Main benchmark results of Router-Tuning">
-              </div>
-            </div>
-            <div class="card">
-              <h3>Expert Routing Analysis</h3>
-              <p>Router specialization becomes clearer after tuning: the model learns more stable token-to-layer routing patterns.</p>
-              <div class="figure">
-                <img src="../figures/expert_rt.png" alt="Expert-level routing behavior analysis">
-              </div>
-            </div>
-            <div class="card">
-              <h3>LoRA Compatibility</h3>
-              <p>Router-Tuning can be composed with LoRA-based adaptation for a better efficiency-performance balance.</p>
-              <div class="figure">
-                <img src="../figures/lora_rt.png" alt="LoRA and Router-Tuning combined results">
-              </div>
-            </div>
+      <!-- Motivation -->
+      <section class="sec" id="why">
+        <span class="sec-label">Motivation</span>
+        <h2>Why Router-Tuning?</h2>
+        <p>
+          Traditional transformers execute a fixed number of layers for every token, wasting computation
+          on easy tokens.
+          <a href="https://arxiv.org/abs/2404.02258">Mixture of Depths (MoD)</a> addresses this by
+          dynamically skipping less important computations, but two practical issues remain:
+        </p>
+        <div class="callout-grid">
+          <div class="callout">
+            <div class="callout-icon">💸</div>
+            <h4>High Training Cost</h4>
+            <p>Existing methods usually tune the whole model, causing expensive full-parameter dynamic-depth adaptation.</p>
           </div>
-        </section>
-
-        <section class="section" id="methods">
-          <h2>Core Methods</h2>
-          <p class="lead">
-            The method focuses optimization on routing components and uses dynamic-depth attention-style execution to
-            preserve the performance-efficiency balance.
-          </p>
-          <div class="split">
-            <div class="callout">
-              <h3>Router-Only Fine-Tuning</h3>
-              <p>Tune router-related parameters instead of full-model updates.</p>
-              <p>Strongly reduces optimization cost for dynamic-depth adaptation.</p>
-            </div>
-            <div class="callout">
-              <h3>Attention-Based Dynamic Depth</h3>
-              <p>Uses attention-based routing granularity to improve compute and memory efficiency.</p>
-              <p>Preserves output quality under dynamic-depth execution.</p>
-            </div>
+          <div class="callout">
+            <div class="callout-icon">📉</div>
+            <h4>Quality Degradation</h4>
+            <p>Aggressive skipping can hurt quality if routing is not well calibrated, especially with higher compute budgets.</p>
           </div>
-        </section>
+        </div>
+        <p style="margin-top:16px">
+          Router-Tuning tackles both: it focuses optimization on routing components and introduces
+          routing strategies that better preserve performance-efficiency tradeoffs.
+        </p>
+      </section>
 
-        <section class="section" id="quick-start">
-          <h2>Quick Start</h2>
-          <p class="lead">
-            The repository is now Hugging Face first. The default launcher uses <code>Qwen/Qwen2.5-7B</code> and
-            patches routing behavior at runtime.
+      <!-- Method -->
+      <section class="sec" id="method">
+        <span class="sec-label">Approach</span>
+        <h2>Core Method</h2>
+        <div class="method-grid">
+          <div class="method-card">
+            <h3>1 · Router-Only Fine-Tuning</h3>
+            <p>Tune only router-related parameters instead of full-model updates.</p>
+            <p>The backbone weights remain frozen, dramatically reducing optimization cost for dynamic-depth adaptation — making it practical for models already fine-tuned on downstream tasks.</p>
+          </div>
+          <div class="method-card">
+            <h3>2 · Attention-Based Dynamic Depth</h3>
+            <p>Uses attention-based routing granularity (<code>attn_token</code>, <code>attn_sequence</code>) to improve compute and memory efficiency.</p>
+            <p>Preserves output quality under dynamic-depth execution while enabling flexible deployment at different compute budgets.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Results -->
+      <section class="sec" id="results">
+        <span class="sec-label">Experiments</span>
+        <h2>Results</h2>
+        <p>
+          Router-Tuning consistently improves the efficiency-quality tradeoff over full-parameter
+          dynamic-depth tuning baselines, while keeping routing behavior more stable and interpretable.
+        </p>
+
+        <div class="result-block">
+          <h3>Main Benchmark Results</h3>
+          <p>
+            Router-Tuning reaches notable speedup while keeping quality degradation small —
+            outperforming full-parameter dynamic-depth tuning baselines across all evaluated settings.
           </p>
-          <div class="split">
-            <div class="card">
-              <h3>Installation</h3>
-              <div class="codeblock">conda create -n router-tuning python=3.10 -y
+          <div class="fig">
+            <img src="figures/main_results.png" alt="Main benchmark results of Router-Tuning">
+            <div class="fig-cap">Figure 1 — Efficiency vs. quality tradeoff across benchmarks. Router-Tuning (RT) vs. full-parameter baselines.</div>
+          </div>
+        </div>
+
+        <div class="result-block">
+          <h3>Expert Routing Analysis</h3>
+          <p>
+            Router specialization becomes clearer after tuning: the model learns more stable
+            token-to-layer routing patterns, enabling dynamic-depth execution with lower unnecessary computation.
+          </p>
+          <div class="fig">
+            <img src="figures/expert_rt.png" alt="Expert-level routing behavior analysis">
+            <div class="fig-cap">Figure 2 — Routing pattern visualization before and after Router-Tuning.</div>
+          </div>
+        </div>
+
+        <div class="result-block">
+          <h3>LoRA Compatibility</h3>
+          <p>
+            Router-Tuning composes naturally with LoRA-based adaptation, enabling lightweight
+            deployment recipes without full-model retraining.
+          </p>
+          <div class="fig">
+            <img src="figures/lora_rt.png" alt="LoRA and Router-Tuning combined results">
+            <div class="fig-cap">Figure 3 — LoRA + Router-Tuning combined results. Efficiency-performance balance under joint adaptation.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Repo Layout -->
+      <section class="sec" id="repo">
+        <span class="sec-label">Codebase</span>
+        <h2>Repository Layout</h2>
+        <div class="file-tree">
+<span class="path">entrypoints/finetune/finetune_router_tuning.py</span>  <span class="comment"># main training entrypoint</span>
+<span class="path">scripts/finetune_router_tuning.sh</span>                  <span class="comment"># launcher: accelerate + DeepSpeed</span>
+<span class="path">entrypoints/data/reformat_datasets.py</span>              <span class="comment"># convert raw datasets → messages format</span>
+<span class="path">entrypoints/data/mix_datasets.py</span>                   <span class="comment"># build mixed instruction-tuning data</span>
+<span class="path">utils/pipeline/customized_trainer.py</span>               <span class="comment"># router-focused trainer logic</span>
+<span class="path">configs/accelerate/</span>                                 <span class="comment"># distributed training launcher configs</span>
+<span class="path">configs/deepspeed/</span>                                  <span class="comment"># DeepSpeed runtime configs</span>
+        </div>
+      </section>
+
+      <!-- Quick Start -->
+      <section class="sec" id="quickstart">
+        <span class="sec-label">Reproduction</span>
+        <h2>Quick Start</h2>
+
+        <div class="code-tabs">
+          <div class="code-card">
+            <div class="code-card-hd">⚙ Installation</div>
+            <div class="code-card-bd">
+              <pre><code>conda create -n router-tuning python=3.10 -y
 conda activate router-tuning
 
-git clone https://github.com/CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths.git
+git clone https://github.com/CASE-Lab-UMD/\
+  Router-Tuning-Mixture-of-Depths.git
 cd Router-Tuning-Mixture-of-Depths
 
-pip install -r requirements.txt</div>
+pip install -r requirements.txt</code></pre>
             </div>
-            <div class="card">
-              <h3>Prepare Data</h3>
-              <p>Put raw datasets under <code>data/raw/</code> using the expected subdirectory names:</p>
+          </div>
+
+          <div class="code-card">
+            <div class="code-card-hd">🗂 Prepare Data</div>
+            <div class="code-card-bd">
               <ul>
                 <li><code>vicuna_sharegpt</code></li>
                 <li><code>evol_instruct</code></li>
@@ -457,87 +619,130 @@ pip install -r requirements.txt</div>
                 <li><code>evol_code_alpaca</code></li>
                 <li><code>alpaca</code></li>
               </ul>
-              <div class="codeblock">python entrypoints/data/reformat_datasets.py \
+              <pre><code>python entrypoints/data/reformat_datasets.py \
   --raw_data_root ./data/raw \
   --save_path ./data/reformatted
 
 python entrypoints/data/mix_datasets.py \
   --reformatted_dir ./data/reformatted \
-  --save_path ./data/mixed</div>
+  --save_path ./data/mixed</code></pre>
             </div>
           </div>
-          <div class="split" style="margin-top: 16px;">
-            <div class="card">
-              <h3>Run Router-Tuning</h3>
-              <div class="codeblock">bash scripts/finetune_router_tuning.sh</div>
-              <p>Preferred model loading is Hugging Face first, with <code>Qwen/Qwen2.5-7B</code> as the default base model.</p>
-            </div>
-            <div class="card">
-              <h3>Hugging Face Example</h3>
-              <div class="codeblock">MODEL_NAME_OR_PATH="Qwen/Qwen2.5-7B" \
+
+          <div class="code-card">
+            <div class="code-card-hd">🚀 Run Training</div>
+            <div class="code-card-bd">
+              <pre><code>bash scripts/finetune_router_tuning.sh</code></pre>
+              <pre style="margin-top:1px"><code># Hugging Face model + multi-GPU
+MODEL_NAME_OR_PATH="Qwen/Qwen2.5-7B" \
 RUN_NAME="qwen2.5-7b" \
 NUM_PROCESSES=4 PORT=29501 \
-bash scripts/finetune_router_tuning.sh</div>
+bash scripts/finetune_router_tuning.sh</code></pre>
             </div>
           </div>
+        </div>
+      </section>
 
-          <div class="split" style="margin-top: 16px;">
-            <div class="card">
-              <h3>Training Knobs</h3>
-              <ul>
-                <li><code>model_name_or_path</code>: Hugging Face model ID or local model path</li>
-                <li><code>run_name</code>: output folder alias</li>
-                <li><code>trust_remote_code</code>: defaults to <code>False</code></li>
-                <li><code>router_layers</code>: number of deeper routed layers</li>
-                <li><code>target_capacity</code>: target activation ratio for regularization</li>
-                <li><code>granularity</code>: <code>attn/mlp/block</code> x <code>sequence/token</code></li>
-              </ul>
-            </div>
-            <div class="card">
-              <h3>Repro Checklist</h3>
-              <ul>
-                <li>Python 3.10 environment with <code>pip install -r requirements.txt</code></li>
-                <li>Valid Hugging Face model ID or normal local model path</li>
-                <li>Prepared data in <code>data/reformatted/*/data.jsonl</code> or <code>data/mixed/data.jsonl</code></li>
-                <li><code>accelerate</code> config matched to your hardware</li>
-                <li><code>NUM_PROCESSES</code> and GPU memory consistent with <code>max_seq_length</code></li>
-              </ul>
-            </div>
+      <!-- Training Knobs -->
+      <section class="sec" id="knobs">
+        <span class="sec-label">Configuration</span>
+        <h2>Training Knobs</h2>
+        <p>All fields below are set via environment variables or directly in <code>finetune_router_tuning.sh</code>.</p>
+        <div class="table-wrap">
+          <table class="knobs-table">
+            <thead>
+              <tr><th>Parameter</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="param">model_name_or_path</td><td>Hugging Face model ID (preferred) or local model path</td></tr>
+              <tr><td class="param">run_name</td><td>Output folder alias; defaults to <code>basename(model_name_or_path)</code></td></tr>
+              <tr><td class="param">trust_remote_code</td><td>Defaults to <code>False</code>; enable only for architectures that require it</td></tr>
+              <tr><td class="param">data_type</td><td>One dataset under <code>data/reformatted/</code> or use <code>mixed</code></td></tr>
+              <tr><td class="param">max_train_samples</td><td>Training subset size for quick experiments</td></tr>
+              <tr><td class="param">router_layers</td><td>Number of deeper layers enabled for router tuning</td></tr>
+              <tr><td class="param">target_capacity</td><td>Optional target activation ratio for router regularization</td></tr>
+              <tr><td class="param">granularity</td><td><code>attn_sequence</code> · <code>attn_token</code> · <code>mlp_sequence</code> · <code>mlp_token</code> · <code>block_sequence</code> · <code>block_token</code></td></tr>
+              <tr><td class="param">router_only</td><td>Enable router-only training (default <code>True</code>)</td></tr>
+              <tr><td class="param">learning_rate</td><td>Optimizer learning rate</td></tr>
+              <tr><td class="param">weight_decay</td><td>L2 regularization coefficient</td></tr>
+              <tr><td class="param">num_epochs</td><td>Number of training epochs</td></tr>
+              <tr><td class="param">NUM_PROCESSES</td><td>Number of GPU processes for distributed launch</td></tr>
+              <tr><td class="param">PORT</td><td>Distributed master port</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Evaluation -->
+      <section class="sec" id="eval">
+        <span class="sec-label">Benchmarking</span>
+        <h2>Evaluation</h2>
+        <p>
+          Evaluation is compatible with
+          <a href="https://github.com/EleutherAI/lm-evaluation-harness">EleutherAI / lm-evaluation-harness</a>.
+          For strict reproduction used in earlier experiments, see
+          <a href="https://github.com/s1ghhh/lm-evaluation-harness">s1ghhh / lm-evaluation-harness</a>.
+        </p>
+      </section>
+
+      <!-- Repro Checklist -->
+      <section class="sec" id="repro">
+        <span class="sec-label">Before You Run</span>
+        <h2>Repro Checklist</h2>
+        <ul class="checklist">
+          <li>Python 3.10 environment with <code>pip install -r requirements.txt</code> completed successfully.</li>
+          <li>Valid <code>model_name_or_path</code>: preferably a Hugging Face model ID or a normal local model path.</li>
+          <li>Reformatted/mixed data exists at <code>data/reformatted/*/data.jsonl</code> or <code>data/mixed/data.jsonl</code>.</li>
+          <li><code>accelerate</code> config selected in <code>scripts/finetune_router_tuning.sh</code> matches your hardware.</li>
+          <li><code>NUM_PROCESSES</code> and GPU memory are consistent with <code>max_seq_length</code> and batch setup.</li>
+        </ul>
+      </section>
+
+      <!-- Citation -->
+      <section class="sec" id="citation">
+        <span class="sec-label">Reference</span>
+        <h2>Citation</h2>
+        <div class="cite-box">
+          <div class="cite-hd">
+            <span>BibTeX</span>
+            <button class="copy-btn" id="copy-btn">Copy</button>
           </div>
-        </section>
+          <pre><code id="bibtex">@misc{he2024routertuningsimpleeffectiveapproach,
+  title         = {Router-Tuning: A Simple and Effective Approach
+                   for Enabling Dynamic-Depth in Transformers},
+  author        = {Shwai He and Tao Ge and Guoheng Sun and
+                   Bowei Tian and Xiaoyang Wang and Dong Yu},
+  year          = {2024},
+  eprint        = {2410.13184},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL},
+  url           = {https://arxiv.org/abs/2410.13184}
+}</code></pre>
+        </div>
+      </section>
 
-        <section class="section" id="evaluation">
-          <h2>Evaluation</h2>
-          <p>
-            Evaluation is compatible with
-            <a href="https://github.com/EleutherAI/lm-evaluation-harness">EleutherAI/lm-evaluation-harness</a>.
-            For strict reproduction used in earlier experiments, see
-            <a href="https://github.com/s1ghhh/lm-evaluation-harness">s1ghhh/lm-evaluation-harness</a>.
-          </p>
-        </section>
-
-        <section class="section" id="citation">
-          <h2>Citation</h2>
-          <div class="codeblock">@misc{he2024routertuningsimpleeffectiveapproach,
-  title={Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers},
-  author={Shwai He and Tao Ge and Guoheng Sun and Bowei Tian and Xiaoyang Wang and Dong Yu},
-  year={2024},
-  eprint={2410.13184},
-  archivePrefix={arXiv},
-  primaryClass={cs.CL},
-  url={https://arxiv.org/abs/2410.13184}
-}</div>
-          <div class="meta">
-            <a href="https://github.com/CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths">GitHub Repository</a>
-            <span>•</span>
-            <a href="https://arxiv.org/abs/2410.13184">Paper</a>
-            <span>•</span>
-            <a href="mailto:shwaihe@umd.edu">Contact</a>
-          </div>
-        </section>
-      </div>
-
-      <div class="footer">Router-Tuning project page.</div>
     </main>
-  </body>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <span class="left">Router-Tuning &mdash; EMNLP 2025 &mdash; <a href="mailto:shwaihe@umd.edu" style="color:inherit;border-bottom:1px solid var(--border)">shwaihe@umd.edu</a></span>
+    <div class="right">
+      <a href="https://arxiv.org/abs/2410.13184">arXiv</a>
+      <a href="https://aclanthology.org/2025.emnlp-main.99">ACL Anthology</a>
+      <a href="https://github.com/CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths">GitHub</a>
+    </div>
+  </footer>
+</div>
+
+<script>
+  document.getElementById('copy-btn').addEventListener('click', function() {
+    navigator.clipboard.writeText(document.getElementById('bibtex').textContent).then(() => {
+      this.textContent = 'Copied!';
+      setTimeout(() => this.textContent = 'Copy', 1600);
+    });
+  });
+</script>
+
+</body>
 </html>
