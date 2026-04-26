@@ -95,7 +95,7 @@
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 
     .hero h1 {
-      font-size: clamp(26px, 4vw, 48px);
+      font-size: clamp(22px, 3vw, 38px);
       font-weight: 800; letter-spacing: -.04em; line-height: 1.1;
       max-width: 860px; margin: 0 auto 20px;
     }
@@ -267,13 +267,14 @@
     .code-card-bd li + li { margin-top: 2px; }
     pre {
       margin: 0; padding: 16px 18px;
-      background: #1e293b; border-radius: 0;
+      background: #1a2233; border-radius: 0;
       overflow-x: auto;
     }
     pre code {
       font-family: "JetBrains Mono", monospace;
       font-size: 12.5px; line-height: 1.75;
-      color: #94d4b0; white-space: pre;
+      color: #e2e8f0; white-space: pre;
+      background: transparent; padding: 0; border-radius: 0;
     }
     .code-card-hd + .code-card-bd pre { border-top: none; }
 
@@ -376,7 +377,7 @@
     <a href="#results">Results</a>
     <a href="#repo">Repo</a>
     <a href="#quickstart">Quick Start</a>
-    <a href="#knobs">Config</a>
+
     <a href="#eval">Evaluation</a>
     <a href="#citation">Citation</a>
     <a class="cta" href="https://github.com/CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths">&#xe000; GitHub</a>
@@ -388,7 +389,7 @@
   <header class="hero">
     <div class="venue-tag">EMNLP 2025 Main Conference</div>
 
-    <h1>Router-Tuning: A Simple and Effective Approach<br>for <em>Dynamic-Depth</em> in Transformers</h1>
+    <h1>Router-Tuning: A Simple and Effective Approach for <em>Dynamic-Depth</em> in Transformers</h1>
 
     <p class="hero-sub">
       Fine-tune only router-related parameters to enable dynamic-depth inference —
@@ -439,7 +440,7 @@
       <a href="#results">Results</a>
       <a href="#repo">Repo Layout</a>
       <a href="#quickstart">Quick Start</a>
-      <a href="#knobs">Training Config</a>
+
       <a href="#eval">Evaluation</a>
       <a href="#repro">Repro Checklist</a>
       <a href="#citation">Citation</a>
@@ -643,35 +644,6 @@ bash scripts/finetune_router_tuning.sh</code></pre>
         </div>
       </section>
 
-      <!-- Training Knobs -->
-      <section class="sec" id="knobs">
-        <span class="sec-label">Configuration</span>
-        <h2>Training Knobs</h2>
-        <p>All fields below are set via environment variables or directly in <code>finetune_router_tuning.sh</code>.</p>
-        <div class="table-wrap">
-          <table class="knobs-table">
-            <thead>
-              <tr><th>Parameter</th><th>Description</th></tr>
-            </thead>
-            <tbody>
-              <tr><td class="param">model_name_or_path</td><td>Hugging Face model ID (preferred) or local model path</td></tr>
-              <tr><td class="param">run_name</td><td>Output folder alias; defaults to <code>basename(model_name_or_path)</code></td></tr>
-              <tr><td class="param">trust_remote_code</td><td>Defaults to <code>False</code>; enable only for architectures that require it</td></tr>
-              <tr><td class="param">data_type</td><td>One dataset under <code>data/reformatted/</code> or use <code>mixed</code></td></tr>
-              <tr><td class="param">max_train_samples</td><td>Training subset size for quick experiments</td></tr>
-              <tr><td class="param">router_layers</td><td>Number of deeper layers enabled for router tuning</td></tr>
-              <tr><td class="param">target_capacity</td><td>Optional target activation ratio for router regularization</td></tr>
-              <tr><td class="param">granularity</td><td><code>attn_sequence</code> · <code>attn_token</code> · <code>mlp_sequence</code> · <code>mlp_token</code> · <code>block_sequence</code> · <code>block_token</code></td></tr>
-              <tr><td class="param">router_only</td><td>Enable router-only training (default <code>True</code>)</td></tr>
-              <tr><td class="param">learning_rate</td><td>Optimizer learning rate</td></tr>
-              <tr><td class="param">weight_decay</td><td>L2 regularization coefficient</td></tr>
-              <tr><td class="param">num_epochs</td><td>Number of training epochs</td></tr>
-              <tr><td class="param">NUM_PROCESSES</td><td>Number of GPU processes for distributed launch</td></tr>
-              <tr><td class="param">PORT</td><td>Distributed master port</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
 
       <!-- Evaluation -->
       <section class="sec" id="eval">
