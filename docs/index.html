@@ -238,79 +238,12 @@
     .result-block { margin-bottom: 36px; }
     .result-block:last-child { margin-bottom: 0; }
 
-    /* Repo layout */
-
-    /* Steps layout (Quick Start) */
-    .steps { margin-top: 20px; border: 1px solid var(--border); border-radius: var(--r2); overflow: hidden; box-shadow: var(--shadow-sm); }
-    .step {
-      display: flex; gap: 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .step:last-child { border-bottom: none; }
-    .step-label {
-      flex-shrink: 0; width: 160px; padding: 20px 20px;
-      background: var(--bg2); border-right: 1px solid var(--border);
-      display: flex; flex-direction: column; gap: 6px;
-    }
-    .step-num {
-      width: 26px; height: 26px; border-radius: 50%;
-      background: var(--green-bg); border: 1.5px solid var(--green-bd);
-      color: var(--green); font-size: 12px; font-weight: 700;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .step-title { font-size: 13px; font-weight: 600; color: var(--text); }
-    .step-body { flex: 1; padding: 0; overflow: hidden; }
-    .step-body pre {
-      margin: 0; border-radius: 0; border: none;
-      background: #1e2a3a;
-    }
-    .step-body pre + pre { border-top: 1px solid rgba(255,255,255,0.06); }
-    .step-body ul {
-      padding: 16px 20px 12px 36px;
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 2px 24px;
-    }
-    .step-body li { font-size: 13px; color: var(--muted); line-height: 1.8; }
-
-    pre {
-      margin: 0; padding: 16px 20px;
-      background: #1e2a3a; border-radius: var(--r);
-      overflow-x: auto;
-    }
-    pre code {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 12.5px; line-height: 1.75;
-      color: #e2e8f0; white-space: pre;
-      background: transparent; padding: 0; border-radius: 0;
-    }
-
     /* Citation code block — light style */
     .cite-box { border-radius: var(--r2); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow-sm); }
     .cite-box pre {
       background: var(--bg2); border-radius: 0; border: none; padding: 20px 22px;
     }
-    .cite-box pre code { color: var(--text); font-size: 13px; }
-
-    /* Checklist */
-    .checklist { list-style: none; padding: 0; margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
-    .checklist li {
-      display: flex; align-items: flex-start; gap: 10px;
-      padding: 12px 16px; border-radius: var(--r);
-      background: var(--bg2); border: 1px solid var(--border);
-      font-size: 14px; color: var(--muted); line-height: 1.6;
-    }
-    .checklist li::before {
-      content: ""; flex-shrink: 0;
-      width: 18px; height: 18px; margin-top: 1px;
-      border-radius: 5px; border: 1.5px solid var(--green-bd);
-      background: var(--green-bg);
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 10 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4l3 3 5-6' stroke='%23059669' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: center; background-size: 10px 8px;
-    }
-    .checklist li code {
-      font-family: "JetBrains Mono", monospace; font-size: 11.5px;
-      background: var(--bg3); padding: 1px 5px; border-radius: 4px;
-      color: var(--text);
-    }
+    .cite-box pre code { color: var(--text); font-size: 13px; background: transparent; padding: 0; border-radius: 0; }
 
     /* Citation */
     .cite-hd {
@@ -367,9 +300,6 @@
     <a href="#method">Method</a>
     <a href="#results">Results</a>
 
-    <a href="#quickstart">Quick Start</a>
-
-    <a href="#eval">Evaluation</a>
     <a href="#citation">Citation</a>
     <a class="cta" href="https://github.com/CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths">&#xe000; GitHub</a>
   </div>
@@ -430,10 +360,6 @@
       <a href="#method">Method</a>
       <a href="#results">Results</a>
 
-      <a href="#quickstart">Quick Start</a>
-
-      <a href="#eval">Evaluation</a>
-      <a href="#repro">Repro Checklist</a>
       <a href="#citation">Citation</a>
     </aside>
 
@@ -567,95 +493,6 @@
 
       <!-- Repo Layout -->
 
-      <!-- Quick Start -->
-      <section class="sec" id="quickstart">
-        <span class="sec-label">Reproduction</span>
-        <h2>Quick Start</h2>
-
-        <div class="steps">
-          <div class="step">
-            <div class="step-label">
-              <div class="step-num">1</div>
-              <div class="step-title">Installation</div>
-            </div>
-            <div class="step-body">
-              <pre><code>conda create -n router-tuning python=3.10 -y
-conda activate router-tuning
-
-git clone https://github.com/CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths.git
-cd Router-Tuning-Mixture-of-Depths
-
-pip install -r requirements.txt</code></pre>
-            </div>
-          </div>
-
-          <div class="step">
-            <div class="step-label">
-              <div class="step-num">2</div>
-              <div class="step-title">Prepare Data</div>
-            </div>
-            <div class="step-body">
-              <ul>
-                <li><code>vicuna_sharegpt</code></li>
-                <li><code>evol_instruct</code></li>
-                <li><code>slim_orca</code></li>
-                <li><code>meta_math_qa</code></li>
-                <li><code>evol_code_alpaca</code></li>
-                <li><code>alpaca</code></li>
-              </ul>
-              <pre><code>python entrypoints/data/reformat_datasets.py \
-  --raw_data_root ./data/raw \
-  --save_path ./data/reformatted
-
-python entrypoints/data/mix_datasets.py \
-  --reformatted_dir ./data/reformatted \
-  --save_path ./data/mixed</code></pre>
-            </div>
-          </div>
-
-          <div class="step">
-            <div class="step-label">
-              <div class="step-num">3</div>
-              <div class="step-title">Run Training</div>
-            </div>
-            <div class="step-body">
-              <pre><code>bash scripts/finetune_router_tuning.sh
-
-# Hugging Face model + multi-GPU override
-MODEL_NAME_OR_PATH="Qwen/Qwen2.5-7B" \
-RUN_NAME="qwen2.5-7b" \
-NUM_PROCESSES=4 PORT=29501 \
-bash scripts/finetune_router_tuning.sh</code></pre>
-            </div>
-          </div>
-        </div>
-      </section>
-
-
-      <!-- Evaluation -->
-      <section class="sec" id="eval">
-        <span class="sec-label">Benchmarking</span>
-        <h2>Evaluation</h2>
-        <p>
-          Evaluation is compatible with
-          <a href="https://github.com/EleutherAI/lm-evaluation-harness">EleutherAI / lm-evaluation-harness</a>.
-          For strict reproduction used in earlier experiments, see
-          <a href="https://github.com/s1ghhh/lm-evaluation-harness">s1ghhh / lm-evaluation-harness</a>.
-        </p>
-      </section>
-
-      <!-- Repro Checklist -->
-      <section class="sec" id="repro">
-        <span class="sec-label">Before You Run</span>
-        <h2>Repro Checklist</h2>
-        <ul class="checklist">
-          <li>Python 3.10 environment with <code>pip install -r requirements.txt</code> completed successfully.</li>
-          <li>Valid <code>model_name_or_path</code>: preferably a Hugging Face model ID or a normal local model path.</li>
-          <li>Reformatted/mixed data exists at <code>data/reformatted/*/data.jsonl</code> or <code>data/mixed/data.jsonl</code>.</li>
-          <li><code>accelerate</code> config selected in <code>scripts/finetune_router_tuning.sh</code> matches your hardware.</li>
-          <li><code>NUM_PROCESSES</code> and GPU memory are consistent with <code>max_seq_length</code> and batch setup.</li>
-        </ul>
-      </section>
 
       <!-- Citation -->
       <section class="sec" id="citation">
