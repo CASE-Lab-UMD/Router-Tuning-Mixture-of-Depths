@@ -239,15 +239,6 @@
     .result-block:last-child { margin-bottom: 0; }
 
     /* Repo layout */
-    .file-tree {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 13px; line-height: 1.9;
-      padding: 20px 22px; border-radius: var(--r2);
-      background: var(--bg2); border: 1px solid var(--border);
-      color: var(--muted); margin-top: 16px;
-    }
-    .file-tree .path { color: var(--green); }
-    .file-tree .comment { color: var(--dim); }
 
     /* Steps layout (Quick Start) */
     .steps { margin-top: 20px; border: 1px solid var(--border); border-radius: var(--r2); overflow: hidden; box-shadow: var(--shadow-sm); }
@@ -375,7 +366,7 @@
     <a href="#why">Motivation</a>
     <a href="#method">Method</a>
     <a href="#results">Results</a>
-    <a href="#repo">Repo</a>
+
     <a href="#quickstart">Quick Start</a>
 
     <a href="#eval">Evaluation</a>
@@ -438,7 +429,7 @@
       <a href="#why">Motivation</a>
       <a href="#method">Method</a>
       <a href="#results">Results</a>
-      <a href="#repo">Repo Layout</a>
+
       <a href="#quickstart">Quick Start</a>
 
       <a href="#eval">Evaluation</a>
@@ -575,19 +566,6 @@
       </section>
 
       <!-- Repo Layout -->
-      <section class="sec" id="repo">
-        <span class="sec-label">Codebase</span>
-        <h2>Repository Layout</h2>
-        <div class="file-tree">
-<span class="path">entrypoints/finetune/finetune_router_tuning.py</span>  <span class="comment"># main training entrypoint</span>
-<span class="path">scripts/finetune_router_tuning.sh</span>                  <span class="comment"># launcher: accelerate + DeepSpeed</span>
-<span class="path">entrypoints/data/reformat_datasets.py</span>              <span class="comment"># convert raw datasets → messages format</span>
-<span class="path">entrypoints/data/mix_datasets.py</span>                   <span class="comment"># build mixed instruction-tuning data</span>
-<span class="path">utils/pipeline/customized_trainer.py</span>               <span class="comment"># router-focused trainer logic</span>
-<span class="path">configs/accelerate/</span>                                 <span class="comment"># distributed training launcher configs</span>
-<span class="path">configs/deepspeed/</span>                                  <span class="comment"># DeepSpeed runtime configs</span>
-        </div>
-      </section>
 
       <!-- Quick Start -->
       <section class="sec" id="quickstart">
