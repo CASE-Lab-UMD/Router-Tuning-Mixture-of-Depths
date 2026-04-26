@@ -249,25 +249,40 @@
     .file-tree .path { color: var(--green); }
     .file-tree .comment { color: var(--dim); }
 
-    /* Code blocks */
-    .code-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap: 14px; margin-top: 16px; }
-    .code-card {
-      border-radius: var(--r2); border: 1px solid var(--border);
-      background: var(--bg); overflow: hidden; box-shadow: var(--shadow-sm);
+    /* Steps layout (Quick Start) */
+    .steps { margin-top: 20px; border: 1px solid var(--border); border-radius: var(--r2); overflow: hidden; box-shadow: var(--shadow-sm); }
+    .step {
+      display: flex; gap: 0;
+      border-bottom: 1px solid var(--border);
     }
-    .code-card-hd {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 16px; border-bottom: 1px solid var(--border);
-      background: var(--bg2);
-      font-size: 12px; font-weight: 600; color: var(--muted);
+    .step:last-child { border-bottom: none; }
+    .step-label {
+      flex-shrink: 0; width: 160px; padding: 20px 20px;
+      background: var(--bg2); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 6px;
     }
-    .code-card-bd { padding: 0; }
-    .code-card-bd ul { padding: 14px 14px 14px 28px; }
-    .code-card-bd li { font-size: 13px; color: var(--muted); line-height: 1.75; }
-    .code-card-bd li + li { margin-top: 2px; }
+    .step-num {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: var(--green-bg); border: 1.5px solid var(--green-bd);
+      color: var(--green); font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .step-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .step-body { flex: 1; padding: 0; overflow: hidden; }
+    .step-body pre {
+      margin: 0; border-radius: 0; border: none;
+      background: #1e2a3a;
+    }
+    .step-body pre + pre { border-top: 1px solid rgba(255,255,255,0.06); }
+    .step-body ul {
+      padding: 16px 20px 12px 36px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 2px 24px;
+    }
+    .step-body li { font-size: 13px; color: var(--muted); line-height: 1.8; }
+
     pre {
-      margin: 0; padding: 16px 18px;
-      background: #1a2233; border-radius: 0;
+      margin: 0; padding: 16px 20px;
+      background: #1e2a3a; border-radius: var(--r);
       overflow-x: auto;
     }
     pre code {
@@ -276,27 +291,13 @@
       color: #e2e8f0; white-space: pre;
       background: transparent; padding: 0; border-radius: 0;
     }
-    .code-card-hd + .code-card-bd pre { border-top: none; }
 
-    /* Knobs table */
-    .knobs-table { width: 100%; margin-top: 14px; border-collapse: collapse; }
-    .knobs-table th {
-      text-align: left; padding: 8px 14px;
-      font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-      color: var(--dim); background: var(--bg2);
-      border-bottom: 1px solid var(--border);
+    /* Citation code block — light style */
+    .cite-box { border-radius: var(--r2); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow-sm); }
+    .cite-box pre {
+      background: var(--bg2); border-radius: 0; border: none; padding: 20px 22px;
     }
-    .knobs-table td {
-      padding: 9px 14px; font-size: 13px; color: var(--muted);
-      border-bottom: 1px solid var(--border); vertical-align: top;
-    }
-    .knobs-table tr:last-child td { border-bottom: none; }
-    .knobs-table tr:hover td { background: var(--bg2); }
-    .knobs-table .param {
-      font-family: "JetBrains Mono", monospace; font-size: 12px;
-      color: var(--green); white-space: nowrap;
-    }
-    .table-wrap { border-radius: var(--r2); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow-sm); }
+    .cite-box pre code { color: var(--text); font-size: 13px; }
 
     /* Checklist */
     .checklist { list-style: none; padding: 0; margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
@@ -321,7 +322,6 @@
     }
 
     /* Citation */
-    .cite-box { border-radius: var(--r2); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow-sm); }
     .cite-hd {
       display: flex; align-items: center; justify-content: space-between;
       padding: 10px 16px; background: var(--bg2); border-bottom: 1px solid var(--border);
@@ -594,24 +594,29 @@
         <span class="sec-label">Reproduction</span>
         <h2>Quick Start</h2>
 
-        <div class="code-tabs">
-          <div class="code-card">
-            <div class="code-card-hd">⚙ Installation</div>
-            <div class="code-card-bd">
+        <div class="steps">
+          <div class="step">
+            <div class="step-label">
+              <div class="step-num">1</div>
+              <div class="step-title">Installation</div>
+            </div>
+            <div class="step-body">
               <pre><code>conda create -n router-tuning python=3.10 -y
 conda activate router-tuning
 
-git clone https://github.com/CASE-Lab-UMD/\
-  Router-Tuning-Mixture-of-Depths.git
+git clone https://github.com/CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths.git
 cd Router-Tuning-Mixture-of-Depths
 
 pip install -r requirements.txt</code></pre>
             </div>
           </div>
 
-          <div class="code-card">
-            <div class="code-card-hd">🗂 Prepare Data</div>
-            <div class="code-card-bd">
+          <div class="step">
+            <div class="step-label">
+              <div class="step-num">2</div>
+              <div class="step-title">Prepare Data</div>
+            </div>
+            <div class="step-body">
               <ul>
                 <li><code>vicuna_sharegpt</code></li>
                 <li><code>evol_instruct</code></li>
@@ -630,11 +635,15 @@ python entrypoints/data/mix_datasets.py \
             </div>
           </div>
 
-          <div class="code-card">
-            <div class="code-card-hd">🚀 Run Training</div>
-            <div class="code-card-bd">
-              <pre><code>bash scripts/finetune_router_tuning.sh</code></pre>
-              <pre style="margin-top:1px"><code># Hugging Face model + multi-GPU
+          <div class="step">
+            <div class="step-label">
+              <div class="step-num">3</div>
+              <div class="step-title">Run Training</div>
+            </div>
+            <div class="step-body">
+              <pre><code>bash scripts/finetune_router_tuning.sh
+
+# Hugging Face model + multi-GPU override
 MODEL_NAME_OR_PATH="Qwen/Qwen2.5-7B" \
 RUN_NAME="qwen2.5-7b" \
 NUM_PROCESSES=4 PORT=29501 \
