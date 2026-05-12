@@ -50,15 +50,15 @@
       border-bottom: 1px solid var(--border);
     }
     .nav-inner {
-      width: min(1100px, calc(100% - 32px));
+      width: min(1160px, calc(100% - 32px));
       margin: 0 auto;
       display: flex; align-items: center; gap: 2px;
-      padding: 8px 0;
+      padding: 10px 0;
       overflow-x: auto;
     }
     .nav-inner a {
       padding: 5px 11px; border-radius: 8px;
-      font-size: 13px; font-weight: 500; color: var(--muted);
+      font-size: 15px; font-weight: 650; color: var(--muted);
       white-space: nowrap;
       transition: color .15s, background .15s;
     }
@@ -71,20 +71,20 @@
     .nav-inner .cta:hover { background: #d1fae5; }
 
     /* ── Page container ── */
-    .wrap { width: min(1100px, calc(100% - 32px)); margin: 0 auto; }
+    .wrap { width: min(1160px, calc(100% - 32px)); margin: 0 auto; }
 
     /* ══ HERO ══ */
     .hero {
-      padding: 72px 0 56px;
+      padding: 82px 0 62px;
       text-align: center;
       border-bottom: 1px solid var(--border);
     }
     .venue-tag {
       display: inline-flex; align-items: center; gap: 6px;
-      padding: 5px 14px; border-radius: 999px;
+      padding: 7px 16px; border-radius: 999px;
       background: var(--green-bg); border: 1px solid var(--green-bd);
-      color: var(--green); font-size: 12px; font-weight: 700;
-      letter-spacing: .08em; text-transform: uppercase;
+      color: var(--green); font-size: 17px; font-weight: 800;
+      letter-spacing: 0; text-transform: uppercase;
       margin-bottom: 22px;
     }
     .venue-tag::before {
@@ -95,31 +95,48 @@
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 
     .hero h1 {
-      font-size: clamp(22px, 3vw, 38px);
-      font-weight: 800; letter-spacing: -.04em; line-height: 1.1;
-      max-width: 860px; margin: 0 auto 20px;
+      font-size: clamp(40px, 5.1vw, 68px);
+      font-weight: 850; letter-spacing: -.04em; line-height: 1.02;
+      max-width: 1120px; margin: 0 auto 22px;
     }
     .hero h1 em { font-style: normal; color: var(--green); }
 
     .hero-sub {
-      font-size: 17px; color: var(--muted); line-height: 1.75;
-      max-width: 680px; margin: 0 auto 28px;
+      font-size: 21px; color: var(--muted); line-height: 1.65;
+      max-width: 900px; margin: 0 auto 28px;
     }
 
     .authors {
       display: flex; flex-wrap: wrap; justify-content: center;
       gap: 0; margin-bottom: 28px;
-      font-size: 15px; color: var(--muted);
+      font-size: 17px; color: var(--muted);
     }
     .authors a { color: var(--text); font-weight: 500; border-bottom: 1px solid var(--border2); transition: color .15s, border-color .15s; }
     .authors a:hover { color: var(--green); border-color: var(--green); }
     .authors .sep { padding: 0 5px; }
+    .authors sup {
+      margin-left: 2px;
+      color: var(--green);
+      font-size: .68em;
+      font-weight: 800;
+    }
+    .affiliations {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 18px;
+      margin: -16px 0 28px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+    .affiliations sup {
+      color: var(--green);
+      font-weight: 800;
+      margin-right: 2px;
+    }
 
     .hero-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 52px; }
     .btn {
       display: inline-flex; align-items: center; gap: 6px;
       padding: 9px 18px; border-radius: 10px;
-      font-size: 14px; font-weight: 600;
+      font-size: 15px; font-weight: 700;
       border: 1px solid var(--border2); background: var(--bg);
       color: var(--text); box-shadow: var(--shadow-sm);
       transition: box-shadow .15s, transform .1s, border-color .15s;
@@ -130,7 +147,7 @@
     .btn svg { flex-shrink: 0; }
 
     .teaser {
-      max-width: 920px; margin: 0 auto;
+      max-width: 980px; margin: 0 auto;
       border-radius: var(--r2); overflow: hidden;
       border: 1px solid var(--border);
       box-shadow: var(--shadow-lg);
@@ -140,7 +157,7 @@
     /* ══ LAYOUT ══ */
     .page-body {
       display: grid;
-      grid-template-columns: 220px 1fr;
+      grid-template-columns: 230px 1fr;
       gap: 0;
       align-items: start;
     }
@@ -152,44 +169,44 @@
       border-right: 1px solid var(--border);
     }
     .toc-title {
-      font-size: 11px; font-weight: 700;
+      font-size: 13px; font-weight: 800;
       letter-spacing: .1em; text-transform: uppercase;
       color: var(--dim); margin-bottom: 10px; padding-left: 24px;
     }
     .toc a {
       display: block; padding: 6px 24px;
-      font-size: 13px; color: var(--muted);
+      font-size: 15px; color: var(--muted);
       border-left: 2px solid transparent;
       transition: color .15s, border-color .15s;
     }
     .toc a:hover { color: var(--green); border-left-color: var(--green); }
 
     /* ── Content ── */
-    .content { padding: 48px 0 48px 48px; }
+    .content { padding: 54px 0 54px 54px; }
 
     .sec { margin-bottom: 64px; }
     .sec:last-child { margin-bottom: 0; }
 
     .sec-label {
       display: inline-block;
-      font-size: 11px; font-weight: 700;
+      font-size: 15px; font-weight: 800;
       letter-spacing: .1em; text-transform: uppercase;
       color: var(--dim); margin-bottom: 8px;
     }
     .sec h2 {
-      font-size: clamp(20px, 2.5vw, 30px);
+      font-size: clamp(30px, 3vw, 42px);
       font-weight: 800; letter-spacing: -.03em; margin-bottom: 14px;
     }
     .sec h3 {
-      font-size: 17px; font-weight: 700; letter-spacing: -.02em; margin-bottom: 8px;
+      font-size: 21px; font-weight: 750; letter-spacing: -.02em; margin-bottom: 8px;
     }
     .sec p {
-      color: var(--muted); font-size: 15px; line-height: 1.8; margin-bottom: 12px;
+      color: var(--muted); font-size: 17px; line-height: 1.75; margin-bottom: 12px;
     }
     .sec p:last-child { margin-bottom: 0; }
     .sec p a { color: var(--indigo); border-bottom: 1px solid var(--ind-bd); }
     .sec p a:hover { color: var(--green); border-color: var(--green-bd); }
-    .sec li { color: var(--muted); font-size: 15px; line-height: 1.8; }
+    .sec li { color: var(--muted); font-size: 17px; line-height: 1.75; }
     .sec li + li { margin-top: 2px; }
 
     /* News */
@@ -199,8 +216,8 @@
       padding: 12px 16px; border-radius: var(--r);
       background: var(--bg2); border: 1px solid var(--border);
     }
-    .news-date { flex-shrink: 0; font-size: 12px; font-weight: 700; color: var(--green); font-family: "JetBrains Mono", monospace; }
-    .news-body { font-size: 14px; color: var(--muted); }
+    .news-date { flex-shrink: 0; font-size: 13px; font-weight: 700; color: var(--green); font-family: "JetBrains Mono", monospace; }
+    .news-body { font-size: 16px; color: var(--muted); }
     .news-body strong { color: var(--text); }
 
     /* Motivation callout */
@@ -210,8 +227,8 @@
       border: 1px solid var(--border); background: var(--bg2);
     }
     .callout-icon { font-size: 20px; margin-bottom: 8px; }
-    .callout h4 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
-    .callout p { font-size: 13px; color: var(--muted); line-height: 1.65; margin: 0; }
+    .callout h4 { font-size: 17px; font-weight: 750; margin-bottom: 6px; }
+    .callout p { font-size: 15px; color: var(--muted); line-height: 1.65; margin: 0; }
 
     /* Method cards */
     .method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap: 14px; margin-top: 16px; }
@@ -226,14 +243,14 @@
     }
     .method-card:nth-child(1)::after { background: linear-gradient(90deg, var(--green), #34d399); }
     .method-card:nth-child(2)::after { background: linear-gradient(90deg, var(--indigo), #818cf8); }
-    .method-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
-    .method-card p { font-size: 14px; color: var(--muted); line-height: 1.7; margin: 0; }
+    .method-card h3 { font-size: 18px; font-weight: 750; margin-bottom: 8px; }
+    .method-card p { font-size: 16px; color: var(--muted); line-height: 1.7; margin: 0; }
     .method-card p + p { margin-top: 8px; }
 
     /* Figures */
     .fig { margin-top: 16px; border-radius: var(--r2); overflow: hidden; border: 1px solid var(--border); background: var(--bg2); box-shadow: var(--shadow-sm); }
     .fig img { width: 100%; }
-    .fig-cap { padding: 10px 16px; font-size: 13px; color: var(--dim); border-top: 1px solid var(--border); font-style: italic; }
+    .fig-cap { padding: 12px 18px; font-size: 15px; color: var(--dim); border-top: 1px solid var(--border); font-style: italic; }
 
     .result-block { margin-bottom: 36px; }
     .result-block:last-child { margin-bottom: 0; }
@@ -243,18 +260,18 @@
     .cite-box pre {
       background: var(--bg2); border-radius: 0; border: none; padding: 20px 22px;
     }
-    .cite-box pre code { color: var(--text); font-size: 13px; background: transparent; padding: 0; border-radius: 0; }
+    .cite-box pre code { color: var(--text); font-size: 14px; background: transparent; padding: 0; border-radius: 0; }
 
     /* Citation */
     .cite-hd {
       display: flex; align-items: center; justify-content: space-between;
       padding: 10px 16px; background: var(--bg2); border-bottom: 1px solid var(--border);
     }
-    .cite-hd span { font-size: 13px; font-weight: 600; color: var(--muted); }
+    .cite-hd span { font-size: 15px; font-weight: 650; color: var(--muted); }
     .copy-btn {
       padding: 4px 12px; border-radius: 7px;
       background: var(--bg); border: 1px solid var(--border);
-      color: var(--muted); font-size: 12px; font-weight: 500;
+      color: var(--muted); font-size: 13px; font-weight: 600;
       cursor: pointer; transition: background .15s, color .15s, border-color .15s;
       font-family: inherit;
     }
@@ -262,7 +279,7 @@
 
     /* Inline code */
     code {
-      font-family: "JetBrains Mono", monospace; font-size: 12px;
+      font-family: "JetBrains Mono", monospace; font-size: 13px;
       background: var(--bg3); padding: 1px 5px; border-radius: 4px; color: var(--text);
     }
 
@@ -318,12 +335,16 @@
     </p>
 
     <div class="authors">
-      <a href="https://shwai-he.github.io/">Shwai He</a><span class="sep">,&nbsp;</span>
-      <a href="https://getao.github.io/">Tao Ge</a><span class="sep">,&nbsp;</span>
-      <a href="https://s1gh.alphaxiv.io/">Guoheng Sun</a><span class="sep">,&nbsp;</span>
-      <a href="https://bowei.netlify.app/#about">Bowei Tian</a><span class="sep">,&nbsp;</span>
-      <a href="https://xyang0.github.io/">Xiaoyang Wang</a><span class="sep">,&nbsp;</span>
-      <a href="https://sites.google.com/view/dongyu888/">Dong Yu</a>
+      <a href="https://shwai-he.github.io/">Shwai He</a><sup>1</sup><span class="sep">,&nbsp;</span>
+      <a href="https://getao.github.io/">Tao Ge</a><sup>2</sup><span class="sep">,&nbsp;</span>
+      <a href="https://s1gh.alphaxiv.io/">Guoheng Sun</a><sup>1</sup><span class="sep">,&nbsp;</span>
+      <a href="https://bowei.netlify.app/#about">Bowei Tian</a><sup>1</sup><span class="sep">,&nbsp;</span>
+      <a href="https://xyang0.github.io/">Xiaoyang Wang</a><sup>2</sup><span class="sep">,&nbsp;</span>
+      <a href="https://sites.google.com/view/dongyu888/">Dong Yu</a><sup>2</sup>
+    </div>
+    <div class="affiliations">
+      <span><sup>1</sup>University of Maryland, College Park</span>
+      <span><sup>2</sup>Tencent AI Lab, Bellevue, WA</span>
     </div>
 
     <div class="hero-links">
