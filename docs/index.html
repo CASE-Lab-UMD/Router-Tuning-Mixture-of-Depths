@@ -226,7 +226,20 @@
       padding: 18px 20px; border-radius: var(--r);
       border: 1px solid var(--border); background: var(--bg2);
     }
-    .callout-icon { font-size: 20px; margin-bottom: 8px; }
+    .callout-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      margin-bottom: 10px;
+      border-radius: 999px;
+      background: var(--green-bg);
+      color: var(--green);
+      font-size: 14px;
+      font-weight: 800;
+      font-family: "JetBrains Mono", monospace;
+    }
     .callout h4 { font-size: 17px; font-weight: 750; margin-bottom: 6px; }
     .callout p { font-size: 15px; color: var(--muted); line-height: 1.65; margin: 0; }
 
@@ -390,17 +403,13 @@
       <!-- Introduction -->
       <section class="sec" id="intro">
         <span class="sec-label">Overview</span>
-        <h2>Introduction</h2>
+        <h2>Router tuning in one pass</h2>
         <p>
-          This is the official implementation of
-          <strong><a href="https://arxiv.org/abs/2410.13184">Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers</a></strong>,
-          accepted at <strong>EMNLP 2025</strong> (main conference).
-          We provide a practical framework for efficient dynamic-depth training and inference in Transformers.
+          Router-Tuning is a lightweight recipe for enabling dynamic-depth inference in Transformers.
+          It fine-tunes only router-related parameters, leaving the backbone model frozen.
         </p>
         <p>
-          Router-Tuning enables dynamic-depth inference by fine-tuning only router-related parameters.
-          Compared with standard full-model dynamic-depth tuning, it significantly reduces training cost
-          while keeping model quality competitive.
+          Compared with full-model dynamic-depth tuning, this keeps adaptation cost low while preserving the efficiency-quality tradeoff needed for deployment.
         </p>
       </section>
 
@@ -432,12 +441,12 @@
         </p>
         <div class="callout-grid">
           <div class="callout">
-            <div class="callout-icon">💸</div>
+            <div class="callout-icon">01</div>
             <h4>High Training Cost</h4>
             <p>Existing methods usually tune the whole model, causing expensive full-parameter dynamic-depth adaptation.</p>
           </div>
           <div class="callout">
-            <div class="callout-icon">📉</div>
+            <div class="callout-icon">02</div>
             <h4>Quality Degradation</h4>
             <p>Aggressive skipping can hurt quality if routing is not well calibrated, especially with higher compute budgets.</p>
           </div>
@@ -471,15 +480,13 @@
         <span class="sec-label">Experiments</span>
         <h2>Results</h2>
         <p>
-          Router-Tuning consistently improves the efficiency-quality tradeoff over full-parameter
-          dynamic-depth tuning baselines, while keeping routing behavior more stable and interpretable.
+          Router-Tuning improves the efficiency-quality tradeoff over full-parameter dynamic-depth baselines while keeping routing behavior stable.
         </p>
 
         <div class="result-block">
           <h3>Main Benchmark Results</h3>
           <p>
-            Router-Tuning reaches notable speedup while keeping quality degradation small —
-            outperforming full-parameter dynamic-depth tuning baselines across all evaluated settings.
+            Router-Tuning achieves strong speedups with small quality degradation across evaluated settings.
           </p>
           <div class="fig">
             <img src="figures/main_results.png" alt="Main benchmark results of Router-Tuning">
