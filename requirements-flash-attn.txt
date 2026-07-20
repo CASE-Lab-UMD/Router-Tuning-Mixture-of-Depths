@@ -1,6 +1,0 @@
-# Install only after requirements.txt so torch is already available.
-# A CUDA toolkit with nvcc must be discoverable through CUDA_HOME:
-#   python -c "import torch; print(torch.__version__, torch.version.cuda)"
-#   nvcc --version
-#   pip install --no-build-isolation -r requirements-flash-attn.txt
-flash-attn==2.6.3

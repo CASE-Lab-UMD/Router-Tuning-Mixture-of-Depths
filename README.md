@@ -105,7 +105,7 @@ wheel".
 
 ```bash
 # Optional: install only after the base environment, including torch, is ready.
-pip install --no-build-isolation -r requirements-flash-attn.txt
+pip install --no-build-isolation flash-attn==2.6.3
 ```
 
 The dependency snapshot used by the original repository records:

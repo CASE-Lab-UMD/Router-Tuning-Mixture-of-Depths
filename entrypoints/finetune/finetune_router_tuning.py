@@ -448,7 +448,7 @@ def main():
                 logger.warning(
                     "FlashAttention 2 was requested but is unavailable in this environment. "
                     "Falling back to the model's default attention implementation. "
-                    "Install requirements-flash-attn.txt with --no-build-isolation to enable it."
+                    "Install flash-attn==2.6.3 with --no-build-isolation to enable it."
                 )
 
         model = AutoModelForCausalLM.from_pretrained(
