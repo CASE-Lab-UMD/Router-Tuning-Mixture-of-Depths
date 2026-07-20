@@ -28,6 +28,11 @@ from transformers import (
     set_seed,
 )
 from transformers.trainer_utils import get_last_checkpoint
+from transformers.utils import is_flash_attn_2_available
+
+ROOT_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+if ROOT_PATH not in sys.path:
+    sys.path.insert(0, ROOT_PATH)
 
 from utils.model import apply_router_tuning_patch, supports_router_tuning_patch
 from utils.pipeline.customized_trainer import CustomizedTrainer
@@ -144,8 +149,13 @@ class ModelArguments:
         default=None, metadata={"help": "Pretrained tokenizer name or path if not the same as model_name"}
     )
     use_flash_attn: bool = field(
-        default=True,
-        metadata={"help": "Whether to use flash attention in the model training"},
+        default=False,
+        metadata={
+            "help": (
+                "Use FlashAttention 2 when it is installed and supported. "
+                "Otherwise the model falls back to the Transformers default attention implementation."
+            )
+        },
     )
     cache_dir: Optional[str] = field(
         default=None,
@@ -430,6 +440,17 @@ def main():
             if model_args.torch_dtype in ["auto", None]
             else getattr(torch, model_args.torch_dtype)
         )
+        attention_kwargs = {}
+        if model_args.use_flash_attn:
+            if is_flash_attn_2_available():
+                attention_kwargs["attn_implementation"] = "flash_attention_2"
+            else:
+                logger.warning(
+                    "FlashAttention 2 was requested but is unavailable in this environment. "
+                    "Falling back to the model's default attention implementation. "
+                    "Install requirements-flash-attn.txt with --no-build-isolation to enable it."
+                )
+
         model = AutoModelForCausalLM.from_pretrained(
             model_args.model_name_or_path,
             from_tf=str(model_args.model_name_or_path).endswith(".ckpt"),
@@ -440,7 +461,7 @@ def main():
             trust_remote_code=model_args.trust_remote_code,
             torch_dtype=torch_dtype,
             low_cpu_mem_usage=model_args.low_cpu_mem_usage,
-            use_flash_attention_2=True if model_args.use_flash_attn else False,
+            **attention_kwargs,
         )
         
     else:
@@ -479,6 +500,13 @@ def main():
         model.resize_token_embeddings(len(tokenizer))
 
     # Preprocessing the datasets.
+    if data_args.max_train_samples is not None and not data_args.streaming:
+        preprocessing_limit = data_args.max_train_samples
+        if training_args.do_eval:
+            preprocessing_limit += 100
+        preprocessing_limit = min(len(raw_datasets["train"]), preprocessing_limit)
+        raw_datasets["train"] = raw_datasets["train"].select(range(preprocessing_limit))
+
     if "prompt" in raw_datasets["train"].column_names and "completion" in raw_datasets["train"].column_names:
         encode_function = partial(
             encode_with_prompt_completion_format,
@@ -502,12 +530,14 @@ def main():
                 batched=False,
                 num_proc=data_args.preprocessing_num_workers,
                 load_from_cache_file=not data_args.overwrite_cache,
+                remove_columns=raw_datasets["train"].column_names,
                 desc="Tokenizing and reformatting instruction data",
             )
         else:
             lm_datasets = raw_datasets.map(
                 encode_function,
                 batched=False,
+                remove_columns=raw_datasets["train"].column_names,
             )
         lm_datasets.set_format(type="pt")
         lm_datasets = lm_datasets.filter(lambda example: (example['labels'] != -100).any())
@@ -546,6 +576,10 @@ def main():
     # initalize a trainer
     # here we use a custom trainer that moves the model to CPU when saving the checkpoint in FSDP mode
     # we can switch to the default trainer after moving to deepspeed (let's don't change too much for now)
+    # The runtime wrapper accepts **kwargs, so Trainer cannot infer the original
+    # model input columns from its signature. Preprocessing already removes all
+    # non-model columns, making it safe to preserve the encoded inputs here.
+    training_args.remove_unused_columns = False
     trainer = CustomizedTrainer(
         model=model,
         args=training_args,
@@ -571,7 +605,7 @@ def main():
         
     for name, param in model.named_parameters():
         if "router" in name: 
-            print(name, param)
+            logger.info("Router parameter %s shape=%s", name, tuple(param.shape))
         
     # Training
     if training_args.do_train:

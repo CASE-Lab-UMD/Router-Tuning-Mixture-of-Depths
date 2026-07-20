@@ -98,6 +98,86 @@ cd Router-Tuning-Mixture-of-Depths
 pip install -r requirements.txt
 ```
 
+`flash-attn` is optional and is intentionally installed in a second step. Its
+build process imports PyTorch, so installing it in the same isolated pip
+transaction as PyTorch can fail while pip is "getting requirements to build
+wheel".
+
+```bash
+# Optional: install only after the base environment, including torch, is ready.
+pip install --no-build-isolation -r requirements-flash-attn.txt
+```
+
+The dependency snapshot used by the original repository records:
+
+- Python 3.10
+- PyTorch 2.1.1
+- Transformers 4.40.1
+- FlashAttention 2.6.3
+
+The original CUDA toolkit/driver minor version was not recorded in this
+repository. Choose the PyTorch build matching the CUDA driver on the target
+machine, verify `python -c "import torch; print(torch.cuda.is_available(),
+torch.version.cuda)"`, and only then install FlashAttention.
+
+A clean environment validated on an NVIDIA L40S on July 20, 2026 is provided
+in `requirements-repro.txt`:
+
+- Python 3.10.20
+- PyTorch 2.1.1+cu121
+- CUDA runtime 12.1
+- Transformers 4.40.1
+- FlashAttention 2.6.3
+- NumPy 1.26.4
+- pip 24.2
+- setuptools 69.5.1
+
+PyTorch 2.1.1 is not compatible with the latest packaging stack in every
+configuration. In particular, use `numpy<2` and `setuptools<70`. The optional
+FlashAttention installation also needs a discoverable CUDA toolkit and `nvcc`
+during package metadata/build setup.
+
+On a machine where a CUDA toolkit is already loaded:
+
+```bash
+bash scripts/setup_repro_env.sh
+bash scripts/smoke_test_router_tuning.sh
+```
+
+Two-GPU DeepSpeed smoke test on this Slurm cluster:
+
+```bash
+srun --partition=beacon --qos=medium \
+  --gres=gpu:nvidia_l40s:2 \
+  --cpus-per-task=8 \
+  --mem=64G \
+  --time=00:15:00 \
+  bash scripts/smoke_test_deepspeed_2gpu.sh
+```
+
+This uses BF16, FlashAttention 2, NCCL, and the checked-in DeepSpeed
+configuration with ZeRO Stage 1. DeepSpeed requires `CUDA_HOME` even when its
+optional CUDA operators are not being compiled. The cluster smoke script loads
+`cuda/13.1.1` when no CUDA module is active and keeps the Triton autotune cache
+on node-local temporary storage.
+
+To create only the base environment and use the default attention
+implementation:
+
+```bash
+INSTALL_FLASH_ATTN=0 bash scripts/setup_repro_env.sh
+```
+
+FlashAttention is not required for correctness. The launcher uses the model's
+default Transformers attention implementation unless explicitly enabled:
+
+```bash
+USE_FLASH_ATTN=True bash scripts/finetune_router_tuning.sh
+```
+
+If FlashAttention is requested but unavailable, the training entrypoint logs a
+warning and falls back to the model's default attention implementation.
+
 ## 🚀 Quick Start
 ### 1) 🧹 Prepare Data
 Put raw datasets under `data/raw/` using the expected subdirectory names:
@@ -159,6 +239,8 @@ bash scripts/finetune_router_tuning.sh
 Distributed launch overrides:
 - `NUM_PROCESSES`: number of GPU processes.
 - `PORT`: distributed master port.
+- `USE_FLASH_ATTN`: set to `True` to request optional FlashAttention 2; defaults
+  to `False` and safely falls back when unavailable.
 
 ## 🧪 Evaluation
 Evaluation is compatible with [EleutherAI/lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness).

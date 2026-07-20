@@ -23,6 +23,7 @@ LEARNING_RATE=1e-5
 WEIGHT_DECAY=0.
 NUM_EPOCHS=1
 TRUST_REMOTE_CODE="${TRUST_REMOTE_CODE:-False}"
+USE_FLASH_ATTN="${USE_FLASH_ATTN:-False}"
 ROUTER_ONLY=True
 
 CONFIG_FILE="${ROOT_PATH}/configs/accelerate/deepspeed_llama_router_tuning.yaml"
@@ -46,6 +47,11 @@ mkdir -p "${OUTPUT_DIR}"
 EXTRA_ROUTER_ARGS=()
 if [[ -n "${TARGET_CAPACITY}" ]]; then
   EXTRA_ROUTER_ARGS+=(--target_capacity "${TARGET_CAPACITY}")
+fi
+
+ATTENTION_ARGS=()
+if [[ "${USE_FLASH_ATTN,,}" == "true" ]]; then
+  ATTENTION_ARGS+=(--use_flash_attn)
 fi
 
 NUM_NODES=1
@@ -103,6 +109,6 @@ accelerate launch \
   --trust_remote_code "${TRUST_REMOTE_CODE}" \
   --overwrite_output_dir \
   --max_train_samples "${MAX_TRAIN_SAMPLES}" \
-  --use_flash_attn \
+  "${ATTENTION_ARGS[@]}" \
   "${EXTRA_ROUTER_ARGS[@]}" \
   --do_train

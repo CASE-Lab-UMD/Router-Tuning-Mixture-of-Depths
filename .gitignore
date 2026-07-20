@@ -9,10 +9,17 @@ __pycache__/
 .ruff_cache/
 
 .venv/
+.venv-router-tuning/
 venv/
 env/
+.tools/
+.uv-cache/
+.pip-cache/
+.hf-cache/
+.triton-cache/
 
 trained_models/
+smoke_results/
 runs/
 *.log
 /old
