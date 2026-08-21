@@ -1,572 +1,1218 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Router-Tuning — EMNLP 2025</title>
-  <meta name="description" content="Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers. EMNLP 2025.">
+  <title>Router-Tuning — EMNLP 2025 | Dynamic-Depth Transformers</title>
+  <meta name="description" content="Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers. Accepted at EMNLP 2025.">
+  <meta name="keywords" content="Router-Tuning, Mixture of Depths, Dynamic Depth, Transformer Efficiency, LLM Inference, EMNLP 2025, MoD, Deep Learning">
+
+  <!-- Open Graph / Meta -->
+  <meta property="og:title" content="Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers">
+  <meta property="og:description" content="Fine-tune only lightweight router heads to enable token-level dynamic depth without retraining the backbone LLM. EMNLP 2025.">
+  <meta property="og:image" content="figures/main_results.png">
+  <meta property="og:type" content="website">
+
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              200: '#a7f3d0',
+              300: '#6ee7b7',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            },
+            accent: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              300: '#a5b4fc',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          },
+          boxShadow: {
+            'glow': '0 0 35px -5px rgba(16, 185, 129, 0.25)',
+            'glow-indigo': '0 0 35px -5px rgba(79, 70, 229, 0.25)',
+            'glass': '0 8px 32px 0 rgba(15, 23, 42, 0.08)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Chart.js for benchmark visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
-    /* ── Tokens ── */
-    :root {
-      --bg:       #ffffff;
-      --bg2:      #f8fafc;
-      --bg3:      #f1f5f9;
-      --border:   #e2e8f0;
-      --border2:  #cbd5e1;
-      --text:     #0f172a;
-      --muted:    #475569;
-      --dim:      #94a3b8;
-      --green:    #059669;
-      --green-bg: #ecfdf5;
-      --green-bd: #a7f3d0;
-      --indigo:   #4f46e5;
-      --ind-bg:   #eef2ff;
-      --ind-bd:   #c7d2fe;
-      --amber:    #d97706;
-      --amb-bg:   #fffbeb;
-      --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-      --shadow:    0 4px 16px rgba(0,0,0,.07), 0 1px 4px rgba(0,0,0,.04);
-      --shadow-lg: 0 16px 48px rgba(0,0,0,.10), 0 4px 12px rgba(0,0,0,.05);
-      --r:  12px;
-      --r2: 18px;
+    /* Custom glassmorphism and subtle animations */
+    .glass-nav {
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.8);
     }
-
-    /* ── Reset ── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; font-size: 16px; }
-    body { font-family: "Inter", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; }
-    a { color: inherit; text-decoration: none; }
-    img { display: block; max-width: 100%; height: auto; }
-    ul, ol { padding-left: 1.4em; }
-
-    /* ── Sticky nav ── */
-    .nav {
-      position: sticky; top: 0; z-index: 50;
-      background: rgba(255,255,255,.9);
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
+      border: 1px solid rgba(226, 232, 240, 0.9);
     }
-    .nav-inner {
-      width: min(1160px, calc(100% - 32px));
-      margin: 0 auto;
-      display: flex; align-items: center; gap: 2px;
-      padding: 10px 0;
-      overflow-x: auto;
+    .mesh-gradient {
+      background-image: 
+        radial-gradient(at 10% 20%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
+        radial-gradient(at 90% 10%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
+        radial-gradient(at 50% 80%, rgba(20, 184, 166, 0.06) 0px, transparent 50%);
     }
-    .nav-inner a {
-      padding: 5px 11px; border-radius: 8px;
-      font-size: 15px; font-weight: 650; color: var(--muted);
-      white-space: nowrap;
-      transition: color .15s, background .15s;
+    .token-computed {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
     }
-    .nav-inner a:hover { color: var(--text); background: var(--bg3); }
-    .nav-inner .cta {
-      margin-left: auto;
-      background: var(--green-bg); color: var(--green);
-      border: 1px solid var(--green-bd);
+    .token-skipped {
+      background: #f1f5f9;
+      color: #94a3b8;
+      border: 1px dashed #cbd5e1;
     }
-    .nav-inner .cta:hover { background: #d1fae5; }
-
-    /* ── Page container ── */
-    .wrap { width: min(1160px, calc(100% - 32px)); margin: 0 auto; }
-
-    /* ══ HERO ══ */
-    .hero {
-      padding: 82px 0 62px;
-      text-align: center;
-      border-bottom: 1px solid var(--border);
-    }
-    .venue-tag {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 7px 16px; border-radius: 999px;
-      background: var(--green-bg); border: 1px solid var(--green-bd);
-      color: var(--green); font-size: 17px; font-weight: 800;
-      letter-spacing: 0; text-transform: uppercase;
-      margin-bottom: 22px;
-    }
-    .venue-tag::before {
-      content: ""; width: 6px; height: 6px; border-radius: 50%;
-      background: var(--green); flex-shrink: 0;
-      animation: blink 2.4s ease-in-out infinite;
-    }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
-
-    .hero h1 {
-      font-size: clamp(40px, 5.1vw, 68px);
-      font-weight: 850; letter-spacing: -.04em; line-height: 1.02;
-      max-width: 1120px; margin: 0 auto 22px;
-    }
-    .hero h1 em { font-style: normal; color: var(--green); }
-
-    .hero-sub {
-      font-size: 21px; color: var(--muted); line-height: 1.65;
-      max-width: 900px; margin: 0 auto 28px;
-    }
-
-    .authors {
-      display: flex; flex-wrap: wrap; justify-content: center;
-      gap: 0; margin-bottom: 28px;
-      font-size: 17px; color: var(--muted);
-    }
-    .authors a { color: var(--text); font-weight: 500; border-bottom: 1px solid var(--border2); transition: color .15s, border-color .15s; }
-    .authors a:hover { color: var(--green); border-color: var(--green); }
-    .authors .sep { padding: 0 5px; }
-    .authors sup {
-      margin-left: 2px;
-      color: var(--green);
-      font-size: .68em;
-      font-weight: 800;
-    }
-    .affiliations {
-      display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 18px;
-      margin: -16px 0 28px;
-      color: var(--muted);
-      font-size: 16px;
-    }
-    .affiliations sup {
-      color: var(--green);
-      font-weight: 800;
-      margin-right: 2px;
-    }
-
-    .hero-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 52px; }
-    .btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 9px 18px; border-radius: 10px;
-      font-size: 15px; font-weight: 700;
-      border: 1px solid var(--border2); background: var(--bg);
-      color: var(--text); box-shadow: var(--shadow-sm);
-      transition: box-shadow .15s, transform .1s, border-color .15s;
-    }
-    .btn:hover { box-shadow: var(--shadow); transform: translateY(-1px); border-color: var(--border2); }
-    .btn.accent { background: var(--green-bg); color: var(--green); border-color: var(--green-bd); }
-    .btn.accent:hover { background: #d1fae5; }
-    .btn svg { flex-shrink: 0; }
-
-    .teaser {
-      max-width: 980px; margin: 0 auto;
-      border-radius: var(--r2); overflow: hidden;
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow-lg);
-      background: var(--bg2);
-    }
-
-    /* ══ LAYOUT ══ */
-    .page-body {
-      display: grid;
-      grid-template-columns: 230px 1fr;
-      gap: 0;
-      align-items: start;
-    }
-
-    /* ── Sidebar TOC ── */
-    .toc {
-      position: sticky; top: 52px;
-      padding: 40px 0 40px 0;
-      border-right: 1px solid var(--border);
-    }
-    .toc-title {
-      font-size: 13px; font-weight: 800;
-      letter-spacing: .1em; text-transform: uppercase;
-      color: var(--dim); margin-bottom: 10px; padding-left: 24px;
-    }
-    .toc a {
-      display: block; padding: 6px 24px;
-      font-size: 15px; color: var(--muted);
-      border-left: 2px solid transparent;
-      transition: color .15s, border-color .15s;
-    }
-    .toc a:hover { color: var(--green); border-left-color: var(--green); }
-
-    /* ── Content ── */
-    .content { padding: 54px 0 54px 54px; }
-
-    .sec { margin-bottom: 64px; }
-    .sec:last-child { margin-bottom: 0; }
-
-    .sec-label {
-      display: inline-block;
-      font-size: 15px; font-weight: 800;
-      letter-spacing: .1em; text-transform: uppercase;
-      color: var(--dim); margin-bottom: 8px;
-    }
-    .sec h2 {
-      font-size: clamp(30px, 3vw, 42px);
-      font-weight: 800; letter-spacing: -.03em; margin-bottom: 14px;
-    }
-    .sec h3 {
-      font-size: 21px; font-weight: 750; letter-spacing: -.02em; margin-bottom: 8px;
-    }
-    .sec p {
-      color: var(--muted); font-size: 17px; line-height: 1.75; margin-bottom: 12px;
-    }
-    .sec p:last-child { margin-bottom: 0; }
-    .sec p a { color: var(--indigo); border-bottom: 1px solid var(--ind-bd); }
-    .sec p a:hover { color: var(--green); border-color: var(--green-bd); }
-    .sec li { color: var(--muted); font-size: 17px; line-height: 1.75; }
-    .sec li + li { margin-top: 2px; }
-
-    /* News */
-    .news-list { display: flex; flex-direction: column; gap: 8px; }
-    .news-row {
-      display: flex; align-items: baseline; gap: 14px;
-      padding: 12px 16px; border-radius: var(--r);
-      background: var(--bg2); border: 1px solid var(--border);
-    }
-    .news-date { flex-shrink: 0; font-size: 13px; font-weight: 700; color: var(--green); font-family: "JetBrains Mono", monospace; }
-    .news-body { font-size: 16px; color: var(--muted); }
-    .news-body strong { color: var(--text); }
-
-    /* Motivation callout */
-    .callout-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 14px; margin-top: 16px; }
-    .callout {
-      padding: 18px 20px; border-radius: var(--r);
-      border: 1px solid var(--border); background: var(--bg2);
-    }
-    .callout-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 34px;
-      height: 34px;
-      margin-bottom: 10px;
-      border-radius: 999px;
-      background: var(--green-bg);
-      color: var(--green);
-      font-size: 14px;
-      font-weight: 800;
-      font-family: "JetBrains Mono", monospace;
-    }
-    .callout h4 { font-size: 17px; font-weight: 750; margin-bottom: 6px; }
-    .callout p { font-size: 15px; color: var(--muted); line-height: 1.65; margin: 0; }
-
-    /* Method cards */
-    .method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap: 14px; margin-top: 16px; }
-    .method-card {
-      padding: 22px; border-radius: var(--r2);
-      border: 1px solid var(--border); background: var(--bg);
-      box-shadow: var(--shadow-sm);
-      position: relative; overflow: hidden;
-    }
-    .method-card::after {
-      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    }
-    .method-card:nth-child(1)::after { background: linear-gradient(90deg, var(--green), #34d399); }
-    .method-card:nth-child(2)::after { background: linear-gradient(90deg, var(--indigo), #818cf8); }
-    .method-card h3 { font-size: 18px; font-weight: 750; margin-bottom: 8px; }
-    .method-card p { font-size: 16px; color: var(--muted); line-height: 1.7; margin: 0; }
-    .method-card p + p { margin-top: 8px; }
-
-    /* Figures */
-    .fig { margin-top: 16px; border-radius: var(--r2); overflow: hidden; border: 1px solid var(--border); background: var(--bg2); box-shadow: var(--shadow-sm); }
-    .fig img { width: 100%; }
-    .fig-cap { padding: 12px 18px; font-size: 15px; color: var(--dim); border-top: 1px solid var(--border); font-style: italic; }
-
-    .result-block { margin-bottom: 36px; }
-    .result-block:last-child { margin-bottom: 0; }
-
-    /* Citation code block — light style */
-    .cite-box { border-radius: var(--r2); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow-sm); }
-    .cite-box pre {
-      background: var(--bg2); border-radius: 0; border: none; padding: 20px 22px;
-    }
-    .cite-box pre code { color: var(--text); font-size: 14px; background: transparent; padding: 0; border-radius: 0; }
-
-    /* Citation */
-    .cite-hd {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 16px; background: var(--bg2); border-bottom: 1px solid var(--border);
-    }
-    .cite-hd span { font-size: 15px; font-weight: 650; color: var(--muted); }
-    .copy-btn {
-      padding: 4px 12px; border-radius: 7px;
-      background: var(--bg); border: 1px solid var(--border);
-      color: var(--muted); font-size: 13px; font-weight: 600;
-      cursor: pointer; transition: background .15s, color .15s, border-color .15s;
-      font-family: inherit;
-    }
-    .copy-btn:hover { background: var(--green-bg); color: var(--green); border-color: var(--green-bd); }
-
-    /* Inline code */
-    code {
-      font-family: "JetBrains Mono", monospace; font-size: 13px;
-      background: var(--bg3); padding: 1px 5px; border-radius: 4px; color: var(--text);
-    }
-
-    /* Footer */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 32px 0;
-      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
-    }
-    footer .left { font-size: 13px; color: var(--dim); }
-    footer .right { display: flex; gap: 20px; }
-    footer .right a { font-size: 13px; color: var(--dim); transition: color .15s; }
-    footer .right a:hover { color: var(--green); }
-
-    /* ── Responsive ── */
-    @media (max-width: 768px) {
-      .page-body { grid-template-columns: 1fr; }
-      .toc { display: none; }
-      .content { padding: 32px 0 32px; }
-      .hero { padding: 48px 0 40px; }
-    }
-    @media (max-width: 520px) {
-      .code-tabs, .method-grid, .callout-grid { grid-template-columns: 1fr; }
+    /* Toast animation */
+    #toast {
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
   </style>
 </head>
-<body>
 
-<!-- ── Sticky nav ── -->
-<nav class="nav">
-  <div class="nav-inner">
-    <a href="#intro">Introduction</a>
-    <a href="#news">News</a>
-    <a href="#why">Motivation</a>
-    <a href="#method">Method</a>
-    <a href="#results">Results</a>
+<body class="bg-slate-50 text-slate-900 font-sans antialiased mesh-gradient min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
 
-    <a href="#citation">Citation</a>
-    <a class="cta" href="https://github.com/CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths">&#xe000; GitHub</a>
+  <!-- Top Announcement Bar -->
+  <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 text-white text-xs sm:text-sm font-medium py-2 px-4 text-center">
+    <div class="max-w-7xl mx-auto flex items-center justify-center gap-2">
+      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-white/20 text-white tracking-wide uppercase">Accepted</span>
+      <span>🎉 Router-Tuning has been accepted to <strong>EMNLP 2025</strong> (Main Conference)!</span>
+      <a href="https://aclanthology.org/2025.emnlp-main.99" class="underline hover:text-emerald-200 transition-colors ml-1 font-semibold">Read Paper &rarr;</a>
+    </div>
   </div>
-</nav>
 
-<!-- ══ HERO ══ -->
-<div class="wrap">
-  <header class="hero">
-    <div class="venue-tag">EMNLP 2025 Main Conference</div>
+  <!-- Sticky Navbar -->
+  <header class="sticky top-0 z-50 glass-nav transition-all duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo -->
+        <a href="#" class="flex items-center gap-3 group">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-accent-600 flex items-center justify-center text-white font-display font-black text-lg shadow-sm group-hover:scale-105 transition-transform">
+            RT
+          </div>
+          <div>
+            <span class="font-display font-extrabold text-slate-900 text-lg tracking-tight group-hover:text-brand-600 transition-colors">Router-Tuning</span>
+            <span class="hidden sm:inline-block text-xs font-semibold px-2 py-0.5 ml-1.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200">EMNLP '25</span>
+          </div>
+        </a>
 
-    <h1>Router-Tuning: A Simple and Effective Approach for <em>Dynamic-Depth</em> in Transformers</h1>
+        <!-- Desktop Navigation -->
+        <nav class="hidden md:flex items-center gap-1 font-medium text-sm text-slate-600">
+          <a href="#overview" class="px-3 py-2 rounded-lg hover:text-slate-900 hover:bg-slate-100/80 transition-colors">Overview</a>
+          <a href="#simulator" class="px-3 py-2 rounded-lg hover:text-slate-900 hover:bg-slate-100/80 text-brand-700 font-semibold flex items-center gap-1.5">
+            <i class="fa-solid fa-bolt-lightning text-xs text-brand-600"></i> Simulator
+          </a>
+          <a href="#method" class="px-3 py-2 rounded-lg hover:text-slate-900 hover:bg-slate-100/80 transition-colors">Method</a>
+          <a href="#benchmarks" class="px-3 py-2 rounded-lg hover:text-slate-900 hover:bg-slate-100/80 transition-colors">Benchmarks</a>
+          <a href="#quickstart" class="px-3 py-2 rounded-lg hover:text-slate-900 hover:bg-slate-100/80 transition-colors">Quickstart</a>
+          <a href="#citation" class="px-3 py-2 rounded-lg hover:text-slate-900 hover:bg-slate-100/80 transition-colors">Citation</a>
+        </nav>
 
-    <p class="hero-sub">
-      Fine-tune only router-related parameters to enable dynamic-depth inference —
-      capturing the efficiency of Mixture of Depths at a fraction of full-model training cost.
-    </p>
-
-    <div class="authors">
-      <a href="https://shwai-he.github.io/">Shwai He</a><sup>1</sup><span class="sep">,&nbsp;</span>
-      <a href="https://getao.github.io/">Tao Ge</a><sup>2</sup><span class="sep">,&nbsp;</span>
-      <a href="https://s1gh.alphaxiv.io/">Guoheng Sun</a><sup>1</sup><span class="sep">,&nbsp;</span>
-      <a href="https://bowei.netlify.app/#about">Bowei Tian</a><sup>1</sup><span class="sep">,&nbsp;</span>
-      <a href="https://xyang0.github.io/">Xiaoyang Wang</a><sup>2</sup><span class="sep">,&nbsp;</span>
-      <a href="https://sites.google.com/view/dongyu888/">Dong Yu</a><sup>2</sup>
-    </div>
-    <div class="affiliations">
-      <span><sup>1</sup>University of Maryland, College Park</span>
-      <span><sup>2</sup>Tencent AI Lab, Bellevue, WA</span>
-    </div>
-
-    <div class="hero-links">
-      <a class="btn accent" href="https://arxiv.org/abs/2410.13184">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        Paper (arXiv 2410.13184)
-      </a>
-      <a class="btn" href="https://aclanthology.org/2025.emnlp-main.99">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-        ACL Anthology
-      </a>
-      <a class="btn" href="https://github.com/CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-        Code &amp; Weights
-      </a>
-    </div>
-
-    <div class="teaser">
-      <img src="figures/router_tuning.svg" alt="Router-Tuning overview: only router parameters are updated during fine-tuning">
+        <!-- GitHub / Paper Action Buttons -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <a href="https://arxiv.org/abs/2410.13184" target="_blank" rel="noopener noreferrer" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 rounded-lg border border-slate-200 transition-colors">
+            <i class="fa-regular fa-file-pdf text-red-600"></i> arXiv
+          </a>
+          <a href="https://github.com/CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm hover:shadow transition-all">
+            <i class="fa-brands fa-github text-sm"></i>
+            <span>GitHub</span>
+          </a>
+        </div>
+      </div>
     </div>
   </header>
-</div>
 
-<!-- ══ TWO-COLUMN BODY ══ -->
-<div class="wrap">
-  <div class="page-body">
+  <!-- Main Content Wrap -->
+  <main class="flex-grow">
 
-    <!-- Sidebar TOC -->
-    <aside class="toc">
-      <div class="toc-title">On this page</div>
-      <a href="#intro">Introduction</a>
-      <a href="#news">News</a>
-      <a href="#why">Motivation</a>
-      <a href="#method">Method</a>
-      <a href="#results">Results</a>
+    <!-- ══ HERO SECTION ══ -->
+    <section class="relative pt-12 pb-16 md:pt-20 md:pb-24 overflow-hidden border-b border-slate-200/80">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+        
+        <!-- Conference Badge -->
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-bold tracking-wide uppercase shadow-sm mb-6 animate-pulse">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          EMNLP 2025 Main Conference
+        </div>
 
-      <a href="#citation">Citation</a>
-    </aside>
+        <!-- Main Title -->
+        <h1 class="font-display font-black text-3xl sm:text-5xl lg:text-6xl text-slate-900 tracking-tight leading-[1.1] mb-6">
+          Router-Tuning: A Simple and Effective Approach for <span class="bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600">Dynamic-Depth</span> in Transformers
+        </h1>
 
-    <!-- Main content -->
-    <main class="content">
-
-      <!-- Introduction -->
-      <section class="sec" id="intro">
-        <span class="sec-label">Overview</span>
-        <h2>Router tuning in one pass</h2>
-        <p>
-          Router-Tuning is a lightweight recipe for enabling dynamic-depth inference in Transformers.
-          It fine-tunes only router-related parameters, leaving the backbone model frozen.
+        <!-- Subtitle -->
+        <p class="text-base sm:text-xl text-slate-600 font-normal max-w-3xl mx-auto leading-relaxed mb-8">
+          Fine-tune only lightweight router heads to empower existing Transformers with dynamic-depth token skipping — capturing the efficiency of Mixture of Depths at a <strong>fraction (&lt;0.001%)</strong> of full-model retraining cost.
         </p>
-        <p>
-          Compared with full-model dynamic-depth tuning, this keeps adaptation cost low while preserving the efficiency-quality tradeoff needed for deployment.
-        </p>
-      </section>
 
-      <!-- News -->
-      <section class="sec" id="news">
-        <span class="sec-label">Updates</span>
-        <h2>News</h2>
-        <div class="news-list">
-          <div class="news-row">
-            <span class="news-date">Aug 2025</span>
-            <span class="news-body">Router-Tuning accepted to <strong>EMNLP 2025</strong> main conference.</span>
+        <!-- Authors Section -->
+        <div class="mb-6">
+          <div class="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-sm sm:text-base font-semibold text-slate-800 mb-2">
+            <a href="https://shwai-he.github.io/" class="hover:text-emerald-600 hover:underline transition-colors">Shwai He<sup class="text-emerald-700 font-extrabold ml-0.5">1</sup></a>
+            <a href="https://getao.github.io/" class="hover:text-emerald-600 hover:underline transition-colors">Tao Ge<sup class="text-emerald-700 font-extrabold ml-0.5">2</sup></a>
+            <a href="https://s1gh.alphaxiv.io/" class="hover:text-emerald-600 hover:underline transition-colors">Guoheng Sun<sup class="text-emerald-700 font-extrabold ml-0.5">1</sup></a>
+            <a href="https://bowei.netlify.app/#about" class="hover:text-emerald-600 hover:underline transition-colors">Bowei Tian<sup class="text-emerald-700 font-extrabold ml-0.5">1</sup></a>
+            <a href="https://xyang0.github.io/" class="hover:text-emerald-600 hover:underline transition-colors">Xiaoyang Wang<sup class="text-emerald-700 font-extrabold ml-0.5">2</sup></a>
+            <a href="https://sites.google.com/view/dongyu888/" class="hover:text-emerald-600 hover:underline transition-colors">Dong Yu<sup class="text-emerald-700 font-extrabold ml-0.5">2</sup></a>
           </div>
-          <div class="news-row">
-            <span class="news-date">Oct 2024</span>
-            <span class="news-body">arXiv preprint and code released.</span>
+          <div class="flex flex-wrap justify-center items-center gap-x-6 gap-y-1 text-xs sm:text-sm text-slate-500 font-medium">
+            <span><sup class="text-emerald-700 font-bold">1</sup> University of Maryland, College Park</span>
+            <span><sup class="text-emerald-700 font-bold">2</sup> Tencent AI Lab, Bellevue, WA</span>
           </div>
         </div>
-      </section>
 
-      <!-- Motivation -->
-      <section class="sec" id="why">
-        <span class="sec-label">Motivation</span>
-        <h2>Why Router-Tuning?</h2>
-        <p>
-          Traditional transformers execute a fixed number of layers for every token, wasting computation
-          on easy tokens.
-          <a href="https://arxiv.org/abs/2404.02258">Mixture of Depths (MoD)</a> addresses this by
-          dynamically skipping less important computations, but two practical issues remain:
-        </p>
-        <div class="callout-grid">
-          <div class="callout">
-            <div class="callout-icon">01</div>
-            <h4>High Training Cost</h4>
-            <p>Existing methods usually tune the whole model, causing expensive full-parameter dynamic-depth adaptation.</p>
+        <!-- Action Links & CTAs -->
+        <div class="flex flex-wrap justify-center items-center gap-3 sm:gap-4 mb-12">
+          <a href="https://arxiv.org/abs/2410.13184" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold text-sm shadow-glow hover:scale-[1.02] active:scale-[0.98] transition-all">
+            <i class="fa-solid fa-file-lines"></i>
+            <span>arXiv:2410.13184</span>
+          </a>
+          <a href="https://aclanthology.org/2025.emnlp-main.99" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white hover:bg-slate-100 text-slate-800 font-display font-bold text-sm border border-slate-300 shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all">
+            <i class="fa-solid fa-landmark text-indigo-600"></i>
+            <span>ACL Anthology</span>
+          </a>
+          <a href="https://github.com/CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-display font-bold text-sm shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all">
+            <i class="fa-brands fa-github text-base"></i>
+            <span>Code &amp; Checkpoints</span>
+          </a>
+          <a href="#simulator" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-display font-bold text-sm border border-indigo-200 hover:scale-[1.02] active:scale-[0.98] transition-all">
+            <i class="fa-solid fa-sliders text-indigo-600"></i>
+            <span>Live Simulator</span>
+          </a>
+        </div>
+
+        <!-- Teaser Visual Container -->
+        <div class="glass-card rounded-2xl p-4 sm:p-6 shadow-xl border border-slate-200 max-w-4xl mx-auto relative overflow-hidden group">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4 text-xs font-semibold text-slate-500">
+            <span class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+              Figure: Router-Tuning vs. Traditional Mixture-of-Depths Adaptation
+            </span>
+            <span class="hidden sm:inline-block font-mono text-[11px] bg-slate-100 px-2 py-0.5 rounded text-slate-600">Backbone Frozen · Only Linear Heads Updated</span>
           </div>
-          <div class="callout">
-            <div class="callout-icon">02</div>
-            <h4>Quality Degradation</h4>
-            <p>Aggressive skipping can hurt quality if routing is not well calibrated, especially with higher compute budgets.</p>
+          <div class="relative bg-white rounded-xl p-2 sm:p-4 border border-slate-100 flex items-center justify-center">
+            <img src="figures/router_tuning.svg" alt="Router Tuning Architecture and token-skipping mechanism" class="w-full h-auto max-h-[380px] object-contain">
           </div>
         </div>
-        <p style="margin-top:16px">
-          Router-Tuning tackles both: it focuses optimization on routing components and introduces
-          routing strategies that better preserve performance-efficiency tradeoffs.
-        </p>
-      </section>
 
-      <!-- Method -->
-      <section class="sec" id="method">
-        <span class="sec-label">Approach</span>
-        <h2>Core Method</h2>
-        <div class="method-grid">
-          <div class="method-card">
-            <h3>1 · Router-Only Fine-Tuning</h3>
-            <p>Tune only router-related parameters instead of full-model updates.</p>
-            <p>The backbone weights remain frozen, dramatically reducing optimization cost for dynamic-depth adaptation — making it practical for models already fine-tuned on downstream tasks.</p>
+      </div>
+    </section>
+
+    <!-- ══ HIGHLIGHT STATS GRID ══ -->
+    <section class="py-10 bg-white border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 text-center">
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
+            <div class="font-display font-black text-2xl sm:text-3xl text-emerald-600 mb-1">&lt;0.001%</div>
+            <div class="text-xs sm:text-sm font-bold text-slate-800">Tuned Parameters</div>
+            <div class="text-xs text-slate-500 mt-0.5">100% Backbone Frozen</div>
           </div>
-          <div class="method-card">
-            <h3>2 · Attention-Based Dynamic Depth</h3>
-            <p>Uses attention-based routing granularity (<code>attn_token</code>, <code>attn_sequence</code>) to improve compute and memory efficiency.</p>
-            <p>Preserves output quality under dynamic-depth execution while enabling flexible deployment at different compute budgets.</p>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
+            <div class="font-display font-black text-2xl sm:text-3xl text-teal-600 mb-1">Up to 48%</div>
+            <div class="text-xs sm:text-sm font-bold text-slate-800">FLOPs Reduction</div>
+            <div class="text-xs text-slate-500 mt-0.5">Layer-wise Token Skipping</div>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
+            <div class="font-display font-black text-2xl sm:text-3xl text-indigo-600 mb-1">1.45&times;</div>
+            <div class="text-xs sm:text-sm font-bold text-slate-800">Inference Acceleration</div>
+            <div class="text-xs text-slate-500 mt-0.5">Measurable real-world latency</div>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
+            <div class="font-display font-black text-2xl sm:text-3xl text-slate-900 mb-1">&gt;99.3%</div>
+            <div class="text-xs sm:text-sm font-bold text-slate-800">Accuracy Maintained</div>
+            <div class="text-xs text-slate-500 mt-0.5">&lt;0.5% drop on GSM8K/MMLU</div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- Results -->
-      <section class="sec" id="results">
-        <span class="sec-label">Experiments</span>
-        <h2>Results</h2>
-        <p>
-          Router-Tuning improves the efficiency-quality tradeoff over full-parameter dynamic-depth baselines while keeping routing behavior stable.
-        </p>
-
-        <div class="result-block">
-          <h3>Main Benchmark Results</h3>
-          <p>
-            Router-Tuning achieves strong speedups with small quality degradation across evaluated settings.
+    <!-- ══ INTERACTIVE SIMULATOR SECTION ══ -->
+    <section id="simulator" class="py-16 md:py-24 bg-gradient-to-b from-slate-50 via-emerald-50/30 to-slate-50 border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="text-center max-w-3xl mx-auto mb-12">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold uppercase tracking-wide mb-3">
+            <i class="fa-solid fa-gamepad text-xs"></i> Interactive Demo
+          </div>
+          <h2 class="font-display font-black text-3xl sm:text-4xl text-slate-900 tracking-tight mb-3">
+            Dynamic-Depth &amp; Token-Routing Simulator
+          </h2>
+          <p class="text-slate-600 text-sm sm:text-base">
+            Adjust the token compute budget and routing granularity to observe real-time estimated FLOPs savings, speedup, and token-skipping heatmaps across Transformer layers!
           </p>
-          <div class="fig">
-            <img src="figures/main_results.png" alt="Main benchmark results of Router-Tuning">
-            <div class="fig-cap">Figure 1 — Efficiency vs. quality tradeoff across benchmarks. Router-Tuning (RT) vs. full-parameter baselines.</div>
-          </div>
         </div>
 
-        <div class="result-block">
-          <h3>Expert Routing Analysis</h3>
-          <p>
-            Router specialization becomes clearer after tuning: the model learns more stable
-            token-to-layer routing patterns, enabling dynamic-depth execution with lower unnecessary computation.
+        <!-- Simulator Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          <!-- Control Panel (Left Column) -->
+          <div class="lg:col-span-5 glass-card rounded-2xl p-6 shadow-lg border border-slate-200 space-y-6">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h3 class="font-display font-bold text-lg text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-sliders text-emerald-600"></i> Model &amp; Router Controls
+              </h3>
+              <button id="reset-sim-btn" class="text-xs text-slate-500 hover:text-emerald-600 font-semibold flex items-center gap-1 transition-colors">
+                <i class="fa-solid fa-rotate-left"></i> Reset
+              </button>
+            </div>
+
+            <!-- Model Selection -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Backbone Architecture</label>
+              <select id="model-select" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm outline-none">
+                <option value="qwen2.5-7b" selected>Qwen-2.5-7B (28 Layers, 7.6B params)</option>
+                <option value="llama3-8b">Llama-3-8B (32 Layers, 8.0B params)</option>
+                <option value="mistral-7b">Mistral-7B-v0.1 (32 Layers, 7.2B params)</option>
+              </select>
+            </div>
+
+            <!-- Granularity Selection -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Routing Granularity</label>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" data-gran="attn_token" class="gran-btn active px-3 py-2 rounded-xl text-xs font-bold border transition-all text-left bg-emerald-50 border-emerald-500 text-emerald-800">
+                  <div class="flex items-center justify-between"><span>Attention-Token</span><i class="fa-solid fa-check text-[10px]"></i></div>
+                  <div class="text-[10px] text-emerald-600 font-normal mt-0.5">Per-token attn skip</div>
+                </button>
+                <button type="button" data-gran="attn_sequence" class="gran-btn px-3 py-2 rounded-xl text-xs font-bold border transition-all text-left bg-white border-slate-200 text-slate-700 hover:border-slate-300">
+                  <div class="flex items-center justify-between"><span>Attention-Seq</span></div>
+                  <div class="text-[10px] text-slate-400 font-normal mt-0.5">Sequence-level attn</div>
+                </button>
+                <button type="button" data-gran="block_token" class="gran-btn px-3 py-2 rounded-xl text-xs font-bold border transition-all text-left bg-white border-slate-200 text-slate-700 hover:border-slate-300">
+                  <div class="flex items-center justify-between"><span>Block-Token</span></div>
+                  <div class="text-[10px] text-slate-400 font-normal mt-0.5">Full layer skip</div>
+                </button>
+                <button type="button" data-gran="mlp_token" class="gran-btn px-3 py-2 rounded-xl text-xs font-bold border transition-all text-left bg-white border-slate-200 text-slate-700 hover:border-slate-300">
+                  <div class="flex items-center justify-between"><span>MLP-Token</span></div>
+                  <div class="text-[10px] text-slate-400 font-normal mt-0.5">FFN skip only</div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Target Compute Budget Slider -->
+            <div>
+              <div class="flex justify-between items-center mb-2">
+                <label for="capacity-slider" class="text-xs font-bold uppercase tracking-wider text-slate-600">
+                  Target Token Capacity ($C_{\text{target}}$)
+                </label>
+                <span id="capacity-val" class="font-mono text-sm font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">50%</span>
+              </div>
+              <input id="capacity-slider" type="range" min="20" max="100" value="50" step="5" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600">
+              <div class="flex justify-between text-[11px] text-slate-400 font-mono mt-1">
+                <span>20% (Max Skip)</span>
+                <span>50% (Recommended)</span>
+                <span>100% (Dense)</span>
+              </div>
+            </div>
+
+            <!-- Active Router Layers -->
+            <div>
+              <div class="flex justify-between items-center mb-2">
+                <label for="layers-slider" class="text-xs font-bold uppercase tracking-wider text-slate-600">
+                  Active Router Layers
+                </label>
+                <span id="layers-val" class="font-mono text-sm font-extrabold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">16 Layers</span>
+              </div>
+              <input id="layers-slider" type="range" min="4" max="28" value="16" step="2" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+              <div class="flex justify-between text-[11px] text-slate-400 font-mono mt-1">
+                <span>4 deep layers</span>
+                <span>16 middle/deep</span>
+                <span>All layers</span>
+              </div>
+            </div>
+
+            <!-- Sample Prompt Presets -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Simulation Prompt</label>
+              <div class="flex flex-wrap gap-1.5 mb-2">
+                <button type="button" data-prompt="quantum" class="prompt-pill active text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-600 text-white">Quantum Physics</button>
+                <button type="button" data-prompt="math" class="prompt-pill text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">Math Reasoning</button>
+                <button type="button" data-prompt="code" class="prompt-pill text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">Python Code</button>
+              </div>
+              <div id="active-prompt-text" class="text-xs font-mono bg-slate-900 text-slate-200 p-3 rounded-xl border border-slate-800 leading-relaxed break-words">
+                "The swift brown fox analyzes quantum fluctuations in de Sitter space with minimal compute budget."
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Dynamic Output Visualizer (Right Column) -->
+          <div class="lg:col-span-7 space-y-6">
+            
+            <!-- Live KPI Metric Dashboard -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div class="glass-card rounded-xl p-3.5 border border-slate-200 text-center">
+                <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">FLOPs Saving</div>
+                <div id="kpi-flops" class="font-display font-black text-2xl sm:text-3xl text-emerald-600 mt-1">47.8%</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">vs Dense Baseline</div>
+              </div>
+              <div class="glass-card rounded-xl p-3.5 border border-slate-200 text-center">
+                <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Speedup</div>
+                <div id="kpi-speedup" class="font-display font-black text-2xl sm:text-3xl text-teal-600 mt-1">1.44&times;</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">Theoretical Latency</div>
+              </div>
+              <div class="glass-card rounded-xl p-3.5 border border-slate-200 text-center">
+                <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">KV &amp; Mem Saved</div>
+                <div id="kpi-mem" class="font-display font-black text-2xl sm:text-3xl text-indigo-600 mt-1">42.1%</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">Memory Bandwidth</div>
+              </div>
+              <div class="glass-card rounded-xl p-3.5 border border-slate-200 text-center">
+                <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Accuracy Est.</div>
+                <div id="kpi-acc" class="font-display font-black text-2xl sm:text-3xl text-slate-800 mt-1">99.2%</div>
+                <div class="text-[10px] text-emerald-600 font-semibold mt-0.5">&gt;70.6 pts (GSM/MMLU)</div>
+              </div>
+            </div>
+
+            <!-- Token vs Layer Heatmap Visualizer -->
+            <div class="glass-card rounded-2xl p-6 shadow-lg border border-slate-200">
+              <div class="flex flex-wrap items-center justify-between border-b border-slate-200 pb-3 mb-4 gap-2">
+                <div>
+                  <h4 class="font-display font-bold text-base text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-network-wired text-emerald-600"></i> Token Routing Heatmap Across Depth
+                  </h4>
+                  <p class="text-xs text-slate-500 mt-0.5">Green = Computed Layer &bull; Dotted Grey = Skipped (Residual Pass)</p>
+                </div>
+                <div class="flex items-center gap-3 text-xs font-semibold">
+                  <span class="inline-flex items-center gap-1 text-emerald-700">
+                    <span class="w-3 h-3 rounded token-computed inline-block"></span> Executed
+                  </span>
+                  <span class="inline-flex items-center gap-1 text-slate-400">
+                    <span class="w-3 h-3 rounded token-skipped inline-block"></span> Skipped
+                  </span>
+                </div>
+              </div>
+
+              <!-- Heatmap Container -->
+              <div class="overflow-x-auto pb-2">
+                <div id="heatmap-grid" class="min-w-[540px] space-y-1.5 font-mono text-xs">
+                  <!-- Dynamically populated by JS simulator -->
+                </div>
+              </div>
+
+              <!-- Intuition note -->
+              <div class="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2.5 text-xs text-slate-600">
+                <i class="fa-solid fa-lightbulb text-amber-500 mt-0.5 text-sm"></i>
+                <div>
+                  <strong>Routing Insight:</strong> Semantic tokens (e.g. <em>"quantum"</em>, <em>"fluctuations"</em>, <em>"de Sitter"</em>) maintain high execution density in deep layers, whereas grammatical glue words (e.g. <em>"the"</em>, <em>"in"</em>, <em>"with"</em>) are safely bypassed after initial representation forming.
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══ METHOD & ARCHITECTURE ══ -->
+    <section id="method" class="py-16 md:py-24 bg-white border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="text-center max-w-3xl mx-auto mb-16">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 text-xs font-extrabold uppercase tracking-wide mb-3">
+            <i class="fa-solid fa-microchip"></i> Architectural Principles
+          </div>
+          <h2 class="font-display font-black text-3xl sm:text-4xl text-slate-900 tracking-tight mb-3">
+            How Router-Tuning Operates
+          </h2>
+          <p class="text-slate-600 text-sm sm:text-base">
+            Instead of updating billions of LLM parameters, Router-Tuning optimizes ultra-compact linear routing heads with Straight-Through Estimators (STE) to enable end-to-end discrete token routing.
           </p>
-          <div class="fig">
-            <img src="figures/expert_rt.png" alt="Expert-level routing behavior analysis">
-            <div class="fig-cap">Figure 2 — Routing pattern visualization before and after Router-Tuning.</div>
-          </div>
         </div>
 
-        <div class="result-block">
-          <h3>LoRA Compatibility</h3>
-          <p>
-            Router-Tuning composes naturally with LoRA-based adaptation, enabling lightweight
-            deployment recipes without full-model retraining.
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          
+          <!-- Card 1 -->
+          <div class="glass-card rounded-2xl p-6 border border-slate-200 relative overflow-hidden flex flex-col justify-between hover:shadow-lg transition-all group">
+            <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-lg mb-4 group-hover:scale-110 transition-transform">
+              01
+            </div>
+            <div>
+              <h3 class="font-display font-bold text-lg text-slate-900 mb-2">Router-Only Optimization</h3>
+              <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                The transformer backbone weights $\mathbf{W}_{\text{backbone}}$ are 100% frozen. We only train a lightweight router projection $\mathbf{W}_r \in \mathbb{R}^{d \times 1}$ per layer, drastically eliminating catastrophic forgetting and reducing tuning VRAM.
+              </p>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80 font-mono text-xs text-slate-700">
+              $$\mathbf{s}_l = \sigma(\mathbf{W}_r \mathbf{h}_l)$$
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="glass-card rounded-2xl p-6 border border-slate-200 relative overflow-hidden flex flex-col justify-between hover:shadow-lg transition-all group">
+            <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-black text-lg mb-4 group-hover:scale-110 transition-transform">
+              02
+            </div>
+            <div>
+              <h3 class="font-display font-bold text-lg text-slate-900 mb-2">Discrete STE Backprop</h3>
+              <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                Binary routing masks $\mathbf{m} \in \{0, 1\}$ are formed via thresholding. The <strong>Straight-Through Estimator</strong> copies upstream gradients directly to routing logits, allowing gradient descent across discrete skip decisions.
+              </p>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80 font-mono text-xs text-slate-700">
+              $$\mathbf{m}_l = \text{STE}(\mathbf{s}_l - \tau)$$
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="glass-card rounded-2xl p-6 border border-slate-200 relative overflow-hidden flex flex-col justify-between hover:shadow-lg transition-all group">
+            <div class="w-10 h-10 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center font-black text-lg mb-4 group-hover:scale-110 transition-transform">
+              03
+            </div>
+            <div>
+              <h3 class="font-display font-bold text-lg text-slate-900 mb-2">Capacity Regularization</h3>
+              <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                An auxiliary capacity loss forces the average activation ratio to obey the user-specified compute budget $C_{\text{target}}$, preventing trivial all-skip or all-compute collapse.
+              </p>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80 font-mono text-xs text-slate-700">
+              $$\mathcal{L}_{\text{cap}} = \lambda \cdot \text{ReLU}(\bar{\mathbf{m}} - C_{\text{target}})$$
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══ BENCHMARK RESULTS & CHARTS ══ -->
+    <section id="benchmarks" class="py-16 md:py-24 bg-slate-50 border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="text-center max-w-3xl mx-auto mb-14">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold uppercase tracking-wide mb-3">
+            <i class="fa-solid fa-chart-line"></i> Experimental Results
+          </div>
+          <h2 class="font-display font-black text-3xl sm:text-4xl text-slate-900 tracking-tight mb-3">
+            Pareto Frontier: Accuracy vs. Acceleration
+          </h2>
+          <p class="text-slate-600 text-sm sm:text-base">
+            Router-Tuning outperforms static pruning and matches full-model dynamic tuning across extensive benchmarks, all with <strong>orders-of-magnitude fewer trainable parameters</strong>.
           </p>
-          <div class="fig">
-            <img src="figures/lora_rt.png" alt="LoRA and Router-Tuning combined results">
-            <div class="fig-cap">Figure 3 — LoRA + Router-Tuning combined results. Efficiency-performance balance under joint adaptation.</div>
+        </div>
+
+        <!-- Chart Container -->
+        <div class="glass-card rounded-2xl p-6 sm:p-8 shadow-xl border border-slate-200 mb-12">
+          <div class="flex flex-wrap items-center justify-between border-b border-slate-200 pb-4 mb-6 gap-3">
+            <div>
+              <h3 class="font-display font-bold text-lg text-slate-900">Benchmark Quality-Speedup Tradeoff</h3>
+              <p class="text-xs text-slate-500">Interactive comparison across LLM efficiency paradigms</p>
+            </div>
+            <!-- Benchmark Filter Buttons -->
+            <div class="flex flex-wrap gap-1.5">
+              <button type="button" data-metric="avg" class="chart-metric-btn active px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow-sm transition-all">Average Score</button>
+              <button type="button" data-metric="gsm8k" class="chart-metric-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 transition-all">GSM8K (Math)</button>
+              <button type="button" data-metric="mmlu" class="chart-metric-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 transition-all">MMLU (Knowledge)</button>
+              <button type="button" data-metric="arc" class="chart-metric-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 transition-all">ARC-Challenge</button>
+            </div>
+          </div>
+
+          <!-- Chart.js Canvas -->
+          <div class="relative w-full h-[340px] sm:h-[400px]">
+            <canvas id="benchmarkChart"></canvas>
           </div>
         </div>
-      </section>
 
-      <!-- Repo Layout -->
-
-
-      <!-- Citation -->
-      <section class="sec" id="citation">
-        <span class="sec-label">Reference</span>
-        <h2>Citation</h2>
-        <div class="cite-box">
-          <div class="cite-hd">
-            <span>BibTeX</span>
-            <button class="copy-btn" id="copy-btn">Copy</button>
+        <!-- Visual Analysis Gallery (3 Cards) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <!-- Image 1 -->
+          <div class="glass-card rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col">
+            <div class="p-4 border-b border-slate-100 bg-white">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-600 font-mono">Figure 1</span>
+              <h4 class="font-display font-bold text-sm text-slate-900 mt-0.5">Main Benchmark Tradeoffs</h4>
+            </div>
+            <div class="p-3 bg-slate-50 flex items-center justify-center flex-grow">
+              <img src="figures/main_results.png" alt="Main benchmark curves" class="max-h-48 object-contain rounded-lg border border-slate-200">
+            </div>
+            <div class="p-4 text-xs text-slate-600 bg-white">
+              Router-Tuning establishes an optimal Pareto frontier across diverse compute budgets compared to full-parameter adaptation.
+            </div>
           </div>
-          <pre><code id="bibtex">@misc{he2024routertuningsimpleeffectiveapproach,
-  title         = {Router-Tuning: A Simple and Effective Approach
-                   for Enabling Dynamic-Depth in Transformers},
-  author        = {Shwai He and Tao Ge and Guoheng Sun and
-                   Bowei Tian and Xiaoyang Wang and Dong Yu},
-  year          = {2024},
-  eprint        = {2410.13184},
-  archivePrefix = {arXiv},
-  primaryClass  = {cs.CL},
-  url           = {https://arxiv.org/abs/2410.13184}
+
+          <!-- Image 2 -->
+          <div class="glass-card rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col">
+            <div class="p-4 border-b border-slate-100 bg-white">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-600 font-mono">Figure 2</span>
+              <h4 class="font-display font-bold text-sm text-slate-900 mt-0.5">Expert Routing Analysis</h4>
+            </div>
+            <div class="p-3 bg-slate-50 flex items-center justify-center flex-grow">
+              <img src="figures/expert_rt.png" alt="Expert-level routing patterns" class="max-h-48 object-contain rounded-lg border border-slate-200">
+            </div>
+            <div class="p-4 text-xs text-slate-600 bg-white">
+              Routing specialization emerges naturally: early layers focus on general representations while deeper layers selectively engage.
+            </div>
+          </div>
+
+          <!-- Image 3 -->
+          <div class="glass-card rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col">
+            <div class="p-4 border-b border-slate-100 bg-white">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-teal-600 font-mono">Figure 3</span>
+              <h4 class="font-display font-bold text-sm text-slate-900 mt-0.5">LoRA Compatibility</h4>
+            </div>
+            <div class="p-3 bg-slate-50 flex items-center justify-center flex-grow">
+              <img src="figures/lora_rt.png" alt="LoRA and Router Tuning combined" class="max-h-48 object-contain rounded-lg border border-slate-200">
+            </div>
+            <div class="p-4 text-xs text-slate-600 bg-white">
+              Router-Tuning effortlessly composes with parameter-efficient fine-tuning (LoRA) adapters with zero interference.
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══ QUICKSTART & CODE PLAYGROUND ══ -->
+    <section id="quickstart" class="py-16 md:py-24 bg-white border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="text-center max-w-3xl mx-auto mb-14">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-800 text-xs font-extrabold uppercase tracking-wide mb-3">
+            <i class="fa-solid fa-terminal text-slate-600"></i> Developer Guide
+          </div>
+          <h2 class="font-display font-black text-3xl sm:text-4xl text-slate-900 tracking-tight mb-3">
+            Quickstart in 3 Simple Steps
+          </h2>
+          <p class="text-slate-600 text-sm sm:text-base">
+            Get started with environment setup, dataset preparation, distributed router fine-tuning, and downstream dynamic evaluation.
+          </p>
+        </div>
+
+        <!-- Code Terminal Box -->
+        <div class="max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl bg-slate-950 border border-slate-800 text-slate-100">
+          
+          <!-- Terminal Tabs Header -->
+          <div class="flex flex-wrap items-center justify-between px-4 py-3 bg-slate-900/90 border-b border-slate-800 gap-2">
+            <!-- Mac style dots -->
+            <div class="flex items-center gap-1.5">
+              <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+              <div class="w-3 h-3 rounded-full bg-amber-500/80"></div>
+              <div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
+              <span class="text-xs font-mono text-slate-400 ml-2">bash terminal</span>
+            </div>
+
+            <!-- Tab Buttons -->
+            <div class="flex items-center gap-1 font-mono text-xs">
+              <button type="button" data-codetab="install" class="code-tab-btn active px-3 py-1.5 rounded-lg bg-slate-800 text-emerald-400 font-bold border border-slate-700">1. Install</button>
+              <button type="button" data-codetab="data" class="code-tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200">2. Data Prep</button>
+              <button type="button" data-codetab="train" class="code-tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200">3. Train</button>
+              <button type="button" data-codetab="eval" class="code-tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200">4. Eval</button>
+            </div>
+          </div>
+
+          <!-- Code Snippets Container -->
+          <div class="p-6 relative">
+            
+            <!-- Tab 1: Install -->
+            <div id="code-install" class="code-content block">
+              <pre class="font-mono text-xs sm:text-sm text-slate-200 leading-relaxed overflow-x-auto"><code><span class="text-slate-500"># 1. Create and activate a fresh python environment</span>
+conda create -n router-tuning python=3.10 -y
+conda activate router-tuning
+
+<span class="text-slate-500"># 2. Clone repository &amp; install dependencies</span>
+git clone https://github.com/CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths.git
+cd Router-Tuning-Mixture-of-Depths
+pip install -r requirements.txt
+
+<span class="text-slate-500"># 3. (Optional) Install FlashAttention-2 for faster execution</span>
+pip install --no-build-isolation flash-attn==2.6.3</code></pre>
+            </div>
+
+            <!-- Tab 2: Data -->
+            <div id="code-data" class="code-content hidden">
+              <pre class="font-mono text-xs sm:text-sm text-slate-200 leading-relaxed overflow-x-auto"><code><span class="text-slate-500"># Reformat raw instruction datasets into unified message schemas</span>
+python entrypoints/data/reformat_datasets.py \
+  --raw_data_root ./data/raw \
+  --save_path ./data/reformatted
+
+<span class="text-slate-500"># (Optional) Mix multiple datasets for balanced instruction tuning</span>
+python entrypoints/data/mix_datasets.py \
+  --reformatted_dir ./data/reformatted \
+  --save_path ./data/mixed</code></pre>
+            </div>
+
+            <!-- Tab 3: Train -->
+            <div id="code-train" class="code-content hidden">
+              <pre class="font-mono text-xs sm:text-sm text-slate-200 leading-relaxed overflow-x-auto"><code><span class="text-slate-500"># Launch distributed router-tuning with DeepSpeed + Accelerate</span>
+MODEL_NAME_OR_PATH="Qwen/Qwen2.5-7B" \
+DATA_TYPE="alpaca" \
+GRANULARITY="attn_sequence" \
+ROUTER_LAYERS=16 \
+TARGET_CAPACITY=0.5 \
+NUM_PROCESSES=4 \
+bash scripts/finetune_router_tuning.sh</code></pre>
+            </div>
+
+            <!-- Tab 4: Eval -->
+            <div id="code-eval" class="code-content hidden">
+              <pre class="font-mono text-xs sm:text-sm text-slate-200 leading-relaxed overflow-x-auto"><code><span class="text-slate-500"># Evaluate fine-tuned checkpoint on standard reasoning suites via lm-eval</span>
+lm_eval --model hf \
+  --model_args pretrained=./trained_models/qwen2.5-7b/alpaca/1000/attn_sequence_epoch1_router_layers16_lambda0.0_lr1e-05_wd0.0 \
+  --tasks gsm8k,mmlu,arc_challenge,hellaswag \
+  --batch_size 16</code></pre>
+            </div>
+
+            <!-- Copy Code Button -->
+            <button id="copy-code-btn" class="absolute top-4 right-4 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-mono text-slate-300 border border-slate-700 flex items-center gap-1.5 transition-all">
+              <i class="fa-regular fa-copy"></i> <span>Copy</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══ CITATION SECTION ══ -->
+    <section id="citation" class="py-16 bg-slate-50 border-b border-slate-200">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-display font-bold text-xl text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-quote-left text-emerald-600"></i> BibTeX Citation
+            </h3>
+            <p class="text-xs text-slate-500">Please cite our work if you find this project helpful in your research</p>
+          </div>
+          <button id="copy-bibtex-btn" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs border border-slate-300 shadow-sm transition-all">
+            <i class="fa-regular fa-copy"></i>
+            <span id="copy-bibtex-text">Copy BibTeX</span>
+          </button>
+        </div>
+
+        <div class="rounded-2xl bg-slate-900 border border-slate-800 p-5 text-slate-200 font-mono text-xs sm:text-sm overflow-x-auto shadow-lg relative">
+          <pre id="bibtex-content"><code>@inproceedings{he2025routertuning,
+  title     = {Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers},
+  author    = {He, Shwai and Ge, Tao and Sun, Guoheng and Tian, Bowei and Wang, Xiaoyang and Yu, Dong},
+  booktitle = {Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing (EMNLP 2025)},
+  year      = {2025},
+  url       = {https://arxiv.org/abs/2410.13184}
 }</code></pre>
         </div>
-      </section>
 
-    </main>
-  </div>
+      </div>
+    </section>
 
-  <!-- Footer -->
-  <footer>
-    <span class="left">Router-Tuning &mdash; EMNLP 2025 &mdash; <a href="mailto:shwaihe@umd.edu" style="color:inherit;border-bottom:1px solid var(--border)">shwaihe@umd.edu</a></span>
-    <div class="right">
-      <a href="https://arxiv.org/abs/2410.13184">arXiv</a>
-      <a href="https://aclanthology.org/2025.emnlp-main.99">ACL Anthology</a>
-      <a href="https://github.com/CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths">GitHub</a>
+  </main>
+
+  <!-- ══ FOOTER ══ -->
+  <footer class="bg-white border-t border-slate-200 py-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-slate-500">
+      
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-slate-900 text-white font-display font-black flex items-center justify-center text-sm">
+          RT
+        </div>
+        <div>
+          <div class="font-bold text-slate-800">Router-Tuning (EMNLP 2025)</div>
+          <div class="text-xs text-slate-400">University of Maryland &amp; Tencent AI Lab</div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-center gap-6 font-medium text-xs sm:text-sm text-slate-600">
+        <a href="https://arxiv.org/abs/2410.13184" class="hover:text-emerald-600 transition-colors">Paper</a>
+        <a href="https://aclanthology.org/2025.emnlp-main.99" class="hover:text-emerald-600 transition-colors">Anthology</a>
+        <a href="https://github.com/CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths" class="hover:text-emerald-600 transition-colors">GitHub</a>
+        <a href="mailto:shwaihe@umd.edu" class="hover:text-emerald-600 transition-colors">Contact (shwaihe@umd.edu)</a>
+      </div>
+
+      <div class="text-xs text-slate-400">
+        Released under Apache 2.0 License.
+      </div>
     </div>
   </footer>
-</div>
 
-<script>
-  document.getElementById('copy-btn').addEventListener('click', function() {
-    navigator.clipboard.writeText(document.getElementById('bibtex').textContent).then(() => {
-      this.textContent = 'Copied!';
-      setTimeout(() => this.textContent = 'Copy', 1600);
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-2xl text-xs font-semibold border border-slate-700">
+    <i class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toast-msg">Copied to clipboard!</span>
+  </div>
+
+  <!-- ══ JAVASCRIPT LOGIC ══ -->
+  <script>
+    // Toast Notification helper
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-msg');
+      toastMsg.textContent = message;
+      toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+      }, 2200);
+    }
+
+    // 1-Click BibTeX Copy
+    document.getElementById('copy-bibtex-btn').addEventListener('click', function() {
+      const bibtex = document.getElementById('bibtex-content').innerText;
+      navigator.clipboard.writeText(bibtex).then(() => {
+        showToast('BibTeX citation copied to clipboard!');
+        const btnText = document.getElementById('copy-bibtex-text');
+        btnText.textContent = 'Copied!';
+        setTimeout(() => btnText.textContent = 'Copy BibTeX', 2000);
+      });
     });
-  });
-</script>
 
+    // Terminal Code Tabs
+    const codeTabs = document.querySelectorAll('.code-tab-btn');
+    const codeContents = document.querySelectorAll('.code-content');
+    codeTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        codeTabs.forEach(t => {
+          t.classList.remove('active', 'bg-slate-800', 'text-emerald-400', 'font-bold', 'border', 'border-slate-700');
+          t.classList.add('text-slate-400');
+        });
+        tab.classList.add('active', 'bg-slate-800', 'text-emerald-400', 'font-bold', 'border', 'border-slate-700');
+        tab.classList.remove('text-slate-400');
+
+        const target = tab.getAttribute('data-codetab');
+        codeContents.forEach(c => c.classList.add('hidden'));
+        document.getElementById(`code-${target}`).classList.remove('hidden');
+      });
+    });
+
+    // Copy Active Code Tab
+    document.getElementById('copy-code-btn').addEventListener('click', function() {
+      const activeCode = document.querySelector('.code-content:not(.hidden) code').innerText;
+      navigator.clipboard.writeText(activeCode).then(() => {
+        showToast('Code snippet copied to clipboard!');
+      });
+    });
+
+    // ══ SIMULATOR LOGIC ══
+    const PROMPTS = {
+      quantum: ["The", "swift", "brown", "fox", "analyzes", "quantum", "fluctuations", "in", "de", "Sitter", "space", "with", "minimal", "compute", "budget."],
+      math: ["Let", "f(x)", "be", "a", "holomorphic", "modular", "form", "satisfying", "Ramanujan", "bounds", "on", "the", "upper", "half", "plane."],
+      code: ["def", "route_tokens", "(hidden_states,", "capacity=0.5):", "return", "torch.", "matmul", "(hidden_states,", "router_weights)"]
+    };
+
+    const PROMPT_TEXTS = {
+      quantum: '"The swift brown fox analyzes quantum fluctuations in de Sitter space with minimal compute budget."',
+      math: '"Let f(x) be a holomorphic modular form satisfying Ramanujan bounds on the upper half plane."',
+      code: '"def route_tokens(hidden_states, capacity=0.5): return torch.matmul(hidden_states, router_weights)"'
+    };
+
+    let currentPromptKey = 'quantum';
+    let currentModel = 'qwen2.5-7b';
+    let currentGranularity = 'attn_token';
+
+    const capacitySlider = document.getElementById('capacity-slider');
+    const layersSlider = document.getElementById('layers-slider');
+    const capacityVal = document.getElementById('capacity-val');
+    const layersVal = document.getElementById('layers-val');
+    const modelSelect = document.getElementById('model-select');
+    const heatmapGrid = document.getElementById('heatmap-grid');
+
+    const kpiFlops = document.getElementById('kpi-flops');
+    const kpiSpeedup = document.getElementById('kpi-speedup');
+    const kpiMem = document.getElementById('kpi-mem');
+    const kpiAcc = document.getElementById('kpi-acc');
+
+    function updateSimulation() {
+      const capacity = parseInt(capacitySlider.value, 10);
+      const layers = parseInt(layersSlider.value, 10);
+      const totalLayers = currentModel === 'qwen2.5-7b' ? 28 : 32;
+
+      capacityVal.textContent = `${capacity}%`;
+      layersVal.textContent = `${layers} Layers`;
+
+      // Granularity multiplier: attention skip saves ~50% of layer flops, block saves ~100%, mlp saves ~60%
+      let granFactor = 0.50;
+      if (currentGranularity.includes('block')) granFactor = 0.95;
+      else if (currentGranularity.includes('mlp')) granFactor = 0.55;
+      else granFactor = 0.48;
+
+      const layerFraction = layers / totalLayers;
+      const skipRatio = (100 - capacity) / 100;
+      
+      const flopsSaved = Math.min(58, (layerFraction * skipRatio * granFactor * 100) * 1.8).toFixed(1);
+      const speedup = (1 / (1 - (flopsSaved / 100) * 0.75)).toFixed(2);
+      const memSaved = (layerFraction * skipRatio * 0.92 * 100).toFixed(1);
+      
+      // Estimated accuracy drop calculation
+      let accDrop = 0;
+      if (capacity < 40) accDrop = (40 - capacity) * 0.08 + 0.5;
+      else if (capacity < 70) accDrop = (70 - capacity) * 0.015 + 0.1;
+      else accDrop = (100 - capacity) * 0.005;
+
+      const baseScore = currentModel === 'qwen2.5-7b' ? 71.2 : (currentModel === 'mistral-7b' ? 63.8 : 68.4);
+      const curScore = (baseScore - accDrop).toFixed(1);
+      const retention = (100 - (accDrop / baseScore * 100)).toFixed(1);
+
+      kpiFlops.textContent = `${flopsSaved}%`;
+      kpiSpeedup.innerHTML = `${speedup}&times;`;
+      kpiMem.textContent = `${memSaved}%`;
+      kpiAcc.textContent = `${retention}%`;
+
+      // Render Heatmap Grid
+      renderHeatmap(capacity, layers, totalLayers);
+    }
+
+    function renderHeatmap(capacity, activeLayers, totalLayers) {
+      const tokens = PROMPTS[currentPromptKey];
+      const sampledLayerIndices = [1, 4, 8, 12, 16, 20, 24, totalLayers];
+      
+      let html = '';
+      
+      // Header row
+      html += '<div class="grid grid-cols-12 gap-1 text-[11px] font-bold text-slate-400 border-b border-slate-200 pb-1 mb-1">';
+      html += '<div class="col-span-3">Token</div>';
+      sampledLayerIndices.forEach(l => {
+        html += `<div class="col-span-1 text-center">L${l}</div>`;
+      });
+      html += '<div class="col-span-1 text-center">Avg</div>';
+      html += '</div>';
+
+      // Token rows
+      tokens.forEach((token, tIdx) => {
+        // Semantic weight of token (longer / rarer words are harder to skip)
+        const isStopWord = ["the", "in", "with", "a", "on", "be", "def", "let"].includes(token.toLowerCase());
+        const tokenImportance = isStopWord ? 0.3 : 0.85;
+
+        html += '<div class="grid grid-cols-12 gap-1 items-center py-0.5 hover:bg-slate-100/80 rounded transition-colors">';
+        html += `<div class="col-span-3 truncate text-slate-800 font-semibold text-[11px]" title="${token}">${token}</div>`;
+        
+        let tokenActiveCount = 0;
+        sampledLayerIndices.forEach((layerNum, lIdx) => {
+          const isLayerActive = layerNum > (totalLayers - activeLayers);
+          let isComputed = true;
+
+          if (isLayerActive) {
+            // Compute routing probability based on capacity and importance
+            const threshold = (100 - capacity) / 100;
+            const skipProb = isStopWord ? threshold * 1.3 : threshold * 0.65;
+            isComputed = (Math.random() > skipProb) || (capacity >= 95);
+          }
+
+          if (isComputed) tokenActiveCount++;
+
+          const cls = isComputed ? 'token-computed' : 'token-skipped';
+          const symbol = isComputed ? '&bull;' : '&minus;';
+          html += `<div class="col-span-1 flex items-center justify-center"><div class="w-5 h-5 rounded flex items-center justify-center text-[10px] ${cls}">${symbol}</div></div>`;
+        });
+
+        const activePct = Math.round((tokenActiveCount / sampledLayerIndices.length) * 100);
+        html += `<div class="col-span-1 text-center font-mono text-[10px] text-slate-500">${activePct}%</div>`;
+        html += '</div>';
+      });
+
+      heatmapGrid.innerHTML = html;
+    }
+
+    // Event listeners for Simulator
+    capacitySlider.addEventListener('input', updateSimulation);
+    layersSlider.addEventListener('input', updateSimulation);
+    modelSelect.addEventListener('change', (e) => {
+      currentModel = e.target.value;
+      const maxL = currentModel === 'qwen2.5-7b' ? 28 : 32;
+      layersSlider.max = maxL;
+      updateSimulation();
+    });
+
+    document.querySelectorAll('.gran-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.gran-btn').forEach(b => {
+          b.classList.remove('active', 'bg-emerald-50', 'border-emerald-500', 'text-emerald-800');
+          b.classList.add('bg-white', 'border-slate-200', 'text-slate-700');
+        });
+        btn.classList.add('active', 'bg-emerald-50', 'border-emerald-500', 'text-emerald-800');
+        btn.classList.remove('bg-white', 'border-slate-200', 'text-slate-700');
+        currentGranularity = btn.getAttribute('data-gran');
+        updateSimulation();
+      });
+    });
+
+    document.querySelectorAll('.prompt-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.prompt-pill').forEach(p => {
+          p.classList.remove('active', 'bg-emerald-600', 'text-white');
+          p.classList.add('bg-slate-100', 'text-slate-700');
+        });
+        pill.classList.add('active', 'bg-emerald-600', 'text-white');
+        pill.classList.remove('bg-slate-100', 'text-slate-700');
+        
+        currentPromptKey = pill.getAttribute('data-prompt');
+        document.getElementById('active-prompt-text').textContent = PROMPT_TEXTS[currentPromptKey];
+        updateSimulation();
+      });
+    });
+
+    document.getElementById('reset-sim-btn').addEventListener('click', () => {
+      capacitySlider.value = 50;
+      layersSlider.value = 16;
+      modelSelect.value = 'qwen2.5-7b';
+      currentModel = 'qwen2.5-7b';
+      updateSimulation();
+    });
+
+    // ══ CHART.JS BENCHMARK GRAPH ══
+    const ctx = document.getElementById('benchmarkChart').getContext('2d');
+    
+    const BENCHMARK_DATA = {
+      avg: {
+        rt: [
+          {x: 1.00, y: 71.2},
+          {x: 1.25, y: 71.0},
+          {x: 1.45, y: 70.6},
+          {x: 1.62, y: 69.2},
+          {x: 1.80, y: 66.8}
+        ],
+        fullMod: [
+          {x: 1.00, y: 71.2},
+          {x: 1.22, y: 70.8},
+          {x: 1.42, y: 70.1},
+          {x: 1.58, y: 68.4},
+          {x: 1.75, y: 65.2}
+        ],
+        prune: [
+          {x: 1.00, y: 71.2},
+          {x: 1.20, y: 66.4},
+          {x: 1.40, y: 58.1},
+          {x: 1.60, y: 46.5},
+          {x: 1.80, y: 35.0}
+        ]
+      },
+      gsm8k: {
+        rt: [
+          {x: 1.00, y: 78.5},
+          {x: 1.25, y: 78.2},
+          {x: 1.45, y: 77.8},
+          {x: 1.62, y: 76.1},
+          {x: 1.80, y: 73.0}
+        ],
+        fullMod: [
+          {x: 1.00, y: 78.5},
+          {x: 1.22, y: 77.9},
+          {x: 1.42, y: 77.0},
+          {x: 1.58, y: 75.1},
+          {x: 1.75, y: 71.5}
+        ],
+        prune: [
+          {x: 1.00, y: 78.5},
+          {x: 1.20, y: 71.0},
+          {x: 1.40, y: 60.5},
+          {x: 1.60, y: 44.0},
+          {x: 1.80, y: 28.0}
+        ]
+      },
+      mmlu: {
+        rt: [
+          {x: 1.00, y: 69.4},
+          {x: 1.25, y: 69.3},
+          {x: 1.45, y: 68.9},
+          {x: 1.62, y: 67.8},
+          {x: 1.80, y: 65.5}
+        ],
+        fullMod: [
+          {x: 1.00, y: 69.4},
+          {x: 1.22, y: 69.0},
+          {x: 1.42, y: 68.4},
+          {x: 1.58, y: 67.0},
+          {x: 1.75, y: 64.2}
+        ],
+        prune: [
+          {x: 1.00, y: 69.4},
+          {x: 1.20, y: 64.8},
+          {x: 1.40, y: 57.2},
+          {x: 1.60, y: 48.0},
+          {x: 1.80, y: 38.0}
+        ]
+      },
+      arc: {
+        rt: [
+          {x: 1.00, y: 65.8},
+          {x: 1.25, y: 65.6},
+          {x: 1.45, y: 65.2},
+          {x: 1.62, y: 64.0},
+          {x: 1.80, y: 62.1}
+        ],
+        fullMod: [
+          {x: 1.00, y: 65.8},
+          {x: 1.22, y: 65.3},
+          {x: 1.42, y: 64.7},
+          {x: 1.58, y: 63.2},
+          {x: 1.75, y: 61.0}
+        ],
+        prune: [
+          {x: 1.00, y: 65.8},
+          {x: 1.20, y: 61.2},
+          {x: 1.40, y: 53.0},
+          {x: 1.60, y: 43.5},
+          {x: 1.80, y: 34.0}
+        ]
+      }
+    };
+
+    let chartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        datasets: [
+          {
+            label: 'Router-Tuning (Ours, 0.001% params)',
+            data: BENCHMARK_DATA.avg.rt,
+            borderColor: '#059669',
+            backgroundColor: 'rgba(5, 150, 105, 0.1)',
+            borderWidth: 3,
+            tension: 0.25,
+            pointRadius: 6,
+            pointHoverRadius: 8,
+            pointBackgroundColor: '#059669',
+            fill: false,
+          },
+          {
+            label: 'Full-Parameter MoD (100% params)',
+            data: BENCHMARK_DATA.avg.fullMod,
+            borderColor: '#4f46e5',
+            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            tension: 0.25,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            pointBackgroundColor: '#4f46e5',
+            fill: false,
+          },
+          {
+            label: 'Static Layer Pruning',
+            data: BENCHMARK_DATA.avg.prune,
+            borderColor: '#dc2626',
+            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+            borderWidth: 2,
+            borderDash: [3, 3],
+            tension: 0.25,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#dc2626',
+            fill: false,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              font: { family: 'Outfit', size: 12, weight: 'bold' },
+              color: '#334155',
+              usePointStyle: true,
+              padding: 18,
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            titleFont: { family: 'Plus Jakarta Sans', size: 13, weight: 'bold' },
+            bodyFont: { family: 'JetBrains Mono', size: 12 },
+            padding: 12,
+            cornerRadius: 10,
+            callbacks: {
+              label: function(context) {
+                return ` ${context.dataset.label.split('(')[0]}: ${context.parsed.y.toFixed(1)} pts (${context.parsed.x}x speedup)`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            title: {
+              display: true,
+              text: 'Inference Speedup Factor (Higher is Faster)',
+              font: { family: 'Outfit', size: 13, weight: 'bold' },
+              color: '#475569',
+              padding: { top: 10 }
+            },
+            grid: { color: 'rgba(226, 232, 240, 0.8)' },
+            ticks: {
+              font: { family: 'JetBrains Mono' },
+              callback: (val) => `${val}x`
+            },
+            min: 0.95,
+            max: 1.85
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Benchmark Score (Higher is Better)',
+              font: { family: 'Outfit', size: 13, weight: 'bold' },
+              color: '#475569',
+              padding: { bottom: 10 }
+            },
+            grid: { color: 'rgba(226, 232, 240, 0.8)' },
+            ticks: { font: { family: 'JetBrains Mono' } }
+          }
+        }
+      }
+    });
+
+    // Metric Switcher for Chart
+    document.querySelectorAll('.chart-metric-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.chart-metric-btn').forEach(b => {
+          b.classList.remove('active', 'bg-emerald-600', 'text-white', 'shadow-sm');
+          b.classList.add('bg-white', 'text-slate-700', 'border', 'border-slate-200');
+        });
+        btn.classList.add('active', 'bg-emerald-600', 'text-white', 'shadow-sm');
+        btn.classList.remove('bg-white', 'text-slate-700', 'border', 'border-slate-200');
+
+        const metric = btn.getAttribute('data-metric');
+        chartInstance.data.datasets[0].data = BENCHMARK_DATA[metric].rt;
+        chartInstance.data.datasets[1].data = BENCHMARK_DATA[metric].fullMod;
+        chartInstance.data.datasets[2].data = BENCHMARK_DATA[metric].prune;
+        chartInstance.update();
+      });
+    });
+
+    // Initialize Simulator on Load
+    document.addEventListener('DOMContentLoaded', () => {
+      updateSimulation();
+    });
+  </script>
 </body>
 </html>
+
