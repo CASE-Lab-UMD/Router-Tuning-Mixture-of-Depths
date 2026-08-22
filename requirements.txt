@@ -61,7 +61,7 @@ multidict==6.1.0
 multiprocess==0.70.16
 networkx
 ninja==1.11.1.1
-nltk==3.9.1
+nltk==3.10.3
 numexpr==2.10.1
 numpy<2
 nvidia-ml-py==12.560.30
