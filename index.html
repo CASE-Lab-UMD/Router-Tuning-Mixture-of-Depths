@@ -365,7 +365,7 @@
                 <button type="button" data-prompt="math" class="prompt-pill text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">Math Reasoning</button>
                 <button type="button" data-prompt="code" class="prompt-pill text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">Python Code</button>
               </div>
-              <div id="active-prompt-text" class="text-xs font-mono bg-slate-900 text-slate-200 p-3 rounded-xl border border-slate-800 leading-relaxed break-words">
+              <div id="active-prompt-text" class="text-xs font-mono bg-slate-900 text-slate-800 p-3 rounded-xl border border-slate-200 leading-relaxed break-words">
                 "The swift brown fox analyzes quantum fluctuations in de Sitter space with minimal compute budget."
               </div>
             </div>
@@ -618,10 +618,10 @@
         </div>
 
         <!-- Code Terminal Box -->
-        <div class="max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl bg-slate-950 border border-slate-800 text-slate-100">
+        <div class="max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl bg-slate-50 border border-slate-200 text-slate-800">
           
           <!-- Terminal Tabs Header -->
-          <div class="flex flex-wrap items-center justify-between px-4 py-3 bg-slate-900/90 border-b border-slate-800 gap-2">
+          <div class="flex flex-wrap items-center justify-between px-4 py-3 bg-slate-100 border-b border-slate-200 gap-2">
             <!-- Mac style dots -->
             <div class="flex items-center gap-1.5">
               <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
@@ -644,7 +644,7 @@
             
             <!-- Tab 1: Install -->
             <div id="code-install" class="code-content block">
-              <pre class="font-mono text-xs sm:text-sm text-slate-200 leading-relaxed overflow-x-auto"><code><span class="text-slate-500"># 1. Create and activate a fresh python environment</span>
+              <pre class="font-mono text-xs sm:text-sm text-slate-800 leading-relaxed overflow-x-auto"><code><span class="text-slate-500"># 1. Create and activate a fresh python environment</span>
 conda create -n router-tuning python=3.10 -y
 conda activate router-tuning
 
@@ -659,7 +659,7 @@ pip install --no-build-isolation flash-attn==2.6.3</code></pre>
 
             <!-- Tab 2: Data -->
             <div id="code-data" class="code-content hidden">
-              <pre class="font-mono text-xs sm:text-sm text-slate-200 leading-relaxed overflow-x-auto"><code><span class="text-slate-500"># Reformat raw instruction datasets into unified message schemas</span>
+              <pre class="font-mono text-xs sm:text-sm text-slate-800 leading-relaxed overflow-x-auto"><code><span class="text-slate-500"># Reformat raw instruction datasets into unified message schemas</span>
 python entrypoints/data/reformat_datasets.py \
   --raw_data_root ./data/raw \
   --save_path ./data/reformatted
@@ -672,7 +672,7 @@ python entrypoints/data/mix_datasets.py \
 
             <!-- Tab 3: Train -->
             <div id="code-train" class="code-content hidden">
-              <pre class="font-mono text-xs sm:text-sm text-slate-200 leading-relaxed overflow-x-auto"><code><span class="text-slate-500"># Launch distributed router-tuning with DeepSpeed + Accelerate</span>
+              <pre class="font-mono text-xs sm:text-sm text-slate-800 leading-relaxed overflow-x-auto"><code><span class="text-slate-500"># Launch distributed router-tuning with DeepSpeed + Accelerate</span>
 MODEL_NAME_OR_PATH="Qwen/Qwen2.5-7B" \
 DATA_TYPE="alpaca" \
 GRANULARITY="attn_sequence" \
@@ -684,7 +684,7 @@ bash scripts/finetune_router_tuning.sh</code></pre>
 
             <!-- Tab 4: Eval -->
             <div id="code-eval" class="code-content hidden">
-              <pre class="font-mono text-xs sm:text-sm text-slate-200 leading-relaxed overflow-x-auto"><code><span class="text-slate-500"># Evaluate fine-tuned checkpoint on standard reasoning suites via lm-eval</span>
+              <pre class="font-mono text-xs sm:text-sm text-slate-800 leading-relaxed overflow-x-auto"><code><span class="text-slate-500"># Evaluate fine-tuned checkpoint on standard reasoning suites via lm-eval</span>
 lm_eval --model hf \
   --model_args pretrained=./trained_models/qwen2.5-7b/alpaca/1000/attn_sequence_epoch1_router_layers16_lambda0.0_lr1e-05_wd0.0 \
   --tasks gsm8k,mmlu,arc_challenge,hellaswag \
@@ -719,7 +719,7 @@ lm_eval --model hf \
           </button>
         </div>
 
-        <div class="rounded-2xl bg-slate-900 border border-slate-800 p-5 text-slate-200 font-mono text-xs sm:text-sm overflow-x-auto shadow-lg relative">
+        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-5 text-slate-200 font-mono text-xs sm:text-sm overflow-x-auto shadow-lg relative">
           <pre id="bibtex-content"><code>@inproceedings{he2025routertuning,
   title     = {Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers},
   author    = {He, Shwai and Ge, Tao and Sun, Guoheng and Tian, Bowei and Wang, Xiaoyang and Yu, Dong},
