@@ -1,0 +1,857 @@
+# ⚡ Router-Tuning (Mixture-of-Depths): 每日前沿文献关联与动态深度/Token 路由落地库 (2026-09)
+
+**Document ID:** `ROUTERTUNING-LIT-202609` | **Last Updated:** `2026-09-27` | **Target Path:** `docs/frontier_literature_connections_2026_09.md` | **Total Routed Papers:** `15`
+
+> [!IMPORTANT]
+> **🔗 跨仓库文献引用链闭环 (Cross-Repository Reference Chain Closure)**
+> 本文件由每日 AI 前沿论文精读流水线自动路由生成，专门收录与我们 **EMNLP 2025 代表作 (*Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers*, `CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths`)** 直接关联的动态 Token 级层跳过（Mixture-of-Depths）、层内可逆稀疏路由（`Token Sparse Attention`）、低秩 Lipschitz 路由器（`L2R`）、双阈值自适应激活（`CARE`）以及循环动态停止（`DeepLoop`, `Training-Free Looped`）最新 arXiv 论文笔记。
+> 每一篇收录文献均包含：**核心痛点、底层数学公式、ASCII 架构图、关键实测指标**，以及**与 `Router-Tuning-Mixture-of-Depths` 仓库具体代码模块和我们已发表代表作（Our Works）的双向锚定**。
+
+---
+
+## 🌟 1. 核心关联文献与本仓库模块映射速查表 (Executive Reference-to-Module Matrix)
+
+| 收录日期 | 论文标题与 arXiv 链接 | 关键实测收益 / 核心结论 | 锚定本仓库代码模块与文档路径 (`Target Module`) | 原始精读归档 |
+| :---: | :--- | :--- | :--- | :---: |
+| `2026-09-27` | [**L2R**](https://arxiv.org/abs/2601.21349) (`arXiv:2601.21349`) | **语言与视觉双模态全面验证**：在基于 **OLMoE** 的语言模型预训练/微调以及 **ImageNet** 视觉 MoE 骨干网络上，L2R 将路由器参数量削减 **60%–75%**，同时在相同激活专家预算下将下游任务困... | `router_tuning/` (Low-Rank + SIPS Lipschitz-Stabilized MoD Router Head) | [2026-09-27](https://github.com/Shwai-He/scholar-odyssey/blob/main/intelligence/papers/2026-09-27_ai_paper_notes.md) |
+| `2026-09-26` | [**🔄 LoopMoE**](https://arxiv.org/abs/2606.04438) (`arXiv:2606.04438`) | **等参数量与等 FLOPs 双向碾压**：在语言建模基准与常识推理任务上，循环 $K=2\sim 4$ 步的 `LoopMoE` 在相同活跃参数量下显著优于标准稠密 Looped 模型，且在相同总参数预算下逼近非共享深层 MoE... | `router_tuning/` (Dynamic Token Halting across Looped Transformer Steps) | [2026-09-26](https://github.com/Shwai-He/scholar-odyssey/blob/main/intelligence/papers/2026-09-26_ai_paper_notes.md) |
+| `2026-09-26` | [**🤖 VLA-Pruner**](https://arxiv.org/abs/2511.16449) (`arXiv:2511.16449`) | 在 OpenVLA 与主流机器人操控基准（LIBERO-Spatial / Object / Goal / Long）上，剔除 **50%–75% 视觉 Token** 仍保持与全量 Token 持平的任务成功率，端到端控制频率显... | `router_tuning/` (Dynamic Token Halting across Looped Transformer Steps) | [2026-09-26](https://github.com/Shwai-He/scholar-odyssey/blob/main/intelligence/papers/2026-09-26_ai_paper_notes.md) |
+| `2026-09-25` | [**Fully Looped Transformer**](https://arxiv.org/abs/2605.18797) (`arXiv:2605.18797`) | 在完全不增加任何额外参数（0 Extra Parameters）的条件下，Fully Looped Transformer 在 $K=8, 12$ 步循环预训练中完全消除了传统 Looped Transformer 的梯度尖峰（G... | `router_tuning/` (Dynamic Token Halting across Looped Transformer Steps) | [2026-09-25](https://github.com/Shwai-He/scholar-odyssey/blob/main/intelligence/papers/2026-09-25_ai_paper_notes.md) |
+| `2026-09-24` | [**LearnPruner**](https://arxiv.org/abs/2604.23950) (`arXiv:2604.23950`) | 在 **LLaVA-1.5/NeXT** 与 **Qwen2-VL** 上，LearnPruner 仅保留 **11.1%–16.7% 视觉 Token**，FLOPs 降低 **68%**，在 10 项多模态基准上的平均精度达到... | `router_tuning/` (`CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths`) | [2026-09-24](https://github.com/Shwai-He/scholar-odyssey/blob/main/intelligence/papers/2026-09-24_ai_paper_notes.md) |
+| `2026-09-24` | [**Training-Free Looped Transformers**](https://arxiv.org/abs/2605.23872) (`arXiv:2605.23872`) | 在完全零训练（Zero Finetuning）的 **Llama-3-8B** 与 **Mistral-7B** 上，对中段 6 层额外循环 $K=2$ 次，在 GSM8K、ARC-Challenge 与逻辑推理任务上直接获得... | `router_tuning/` (Dynamic Token Halting across Looped Transformer Steps) | [2026-09-24](https://github.com/Shwai-He/scholar-odyssey/blob/main/intelligence/papers/2026-09-24_ai_paper_notes.md) |
+| `2026-09-23` | [**StepKV**](https://arxiv.org/abs/2609.22158) (`arXiv:2609.22158`) | 在 **AIME 2025**、**MATH-500** 与 **GPQA-Diamond** 上，StepKV 在压缩 **65%–75% CoT KV 缓存** 的条件下，相比逐 Token 驱逐的 SnapKV / H2O... | `router_tuning/` (`CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths`) | [2026-09-23](https://github.com/Shwai-He/scholar-odyssey/blob/main/intelligence/papers/2026-09-23_ai_paper_notes.md) |
+| `2026-09-23` | [**HetDPT**](https://arxiv.org/abs/2607.03784) (`arXiv:2607.03784`) | 在 **DeiT**、**Swin** 与 **CLIP-ViT-L/14** 上，HetDPT 在相同 **1.5x–1.8x 硬件实测加速比** 下，比整块深度剪枝提升了 **`+1.9%` 至 `+3.2%`** 的 Ima... | `router_tuning/` (Decoupled Attention-MoD vs FFN-MoD Routing Budgets) | [2026-09-23](https://github.com/Shwai-He/scholar-odyssey/blob/main/intelligence/papers/2026-09-23_ai_paper_notes.md) |
+| `2026-09-23` | [**HiMoE-VLA**](https://arxiv.org/abs/2512.05693) (`arXiv:2512.05693`) | 在跨 50+ 任务的 Open-X Embodiment 与仿真套件上，HiMoE-VLA 比同激活参数量的稠密 VLA 与单层 MoE-VLA 平均成功率提升 **`+8.7%`**。 | `router_tuning/` (`CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths`) | [2026-09-23](https://github.com/Shwai-He/scholar-odyssey/blob/main/intelligence/papers/2026-09-23_ai_paper_notes.md) |
+| `2026-09-23` | [**D-Cut**](https://arxiv.org/abs/2607.14647) (`arXiv:2607.14647`) | 在 Batch Size = 16–64 的生产级投机解码服务中，D-Cut 将验证阶段算力开销削减 **38%**，端到端吞吐在 EAGLE-2 基线上进一步提升 **1.42x**。 | `router_tuning/` (Confidence-Margin Early Depth Termination) | [2026-09-23](https://github.com/Shwai-He/scholar-odyssey/blob/main/intelligence/papers/2026-09-23_ai_paper_notes.md) |
+| `2026-09-21` | [**DeepLoop**](https://arxiv.org/abs/2607.13491) (`arXiv:2607.13491`) | 在循环深度从 $K=2$ 扩展至 **$K=16$** 的语言与数学推理预训练中，标准 Pre-LN 循环架构在 $K \ge 6$ 时完全发散，而 **DeepLoop** 稳定收敛并实现随循环次数 $K$ 对数线性下降的测试集... | `router_tuning/` (Dynamic Token Halting across Looped Transformer Steps) | [2026-09-21](https://github.com/Shwai-He/scholar-odyssey/blob/main/intelligence/papers/2026-09-21_ai_paper_notes.md) |
+| `2026-09-21` | [**RotateK**](https://arxiv.org/abs/2605.19218) (`arXiv:2605.19218`) | 在 **LLaVA-NeXT**、**Qwen2-VL-7B** 与 **InternVL-2** 上，RotateK 剪除 **50%–60% 的 Key 通道**而无需微调，且与视觉 Token 剪枝（如 FastV / VL... | `router_tuning/` (`CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths`) | [2026-09-21](https://github.com/Shwai-He/scholar-odyssey/blob/main/intelligence/papers/2026-09-21_ai_paper_notes.md) |
+| `2026-09-21` | [**Token Sparse Attention**](https://arxiv.org/abs/2602.03216) (`arXiv:2602.03216`) | 在 64K–128K 多跳检索与大海捞针基准（RULER Multi-Hop Tracing）上，不可逆 Token 剪枝在 70% 稀疏度下准确率跌至 `31.2%`，而 **Token Sparse Attention** 保... | `router_tuning/` (Reversible Token Bypass vs Irreversible Drop in MoD) | [2026-09-21](https://github.com/Shwai-He/scholar-odyssey/blob/main/intelligence/papers/2026-09-21_ai_paper_notes.md) |
+| `2026-09-20` | [**CARE**](https://arxiv.org/abs/2607.26052) (`arXiv:2607.26052`) | 在多任务 MoE-LoRA 与稀疏 MoE 语言模型上，CARE 在削减 **32%–45% 平均专家激活 FLOPs** 的同时，在常识推理、代码与数学基准上全面持平甚至超越固定 Top-$k$ 基线（`+0.9%` 平均准确率... | `router_tuning/` (Cumulative Probability Nucleus + Marginal Jump Dynamic Depth Gate) | [2026-09-20](https://github.com/Shwai-He/scholar-odyssey/blob/main/intelligence/papers/2026-09-20_ai_paper_notes.md) |
+| `2026-09-18` | [**🧩 MoE-Tile**](https://arxiv.org/abs/2609.09112) (`arXiv:2609.09112`) | **硬件测试平台**：NVIDIA H100 80GB SXM5 与 B200 GPU 集群； | `router_tuning/` (`CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths`) | [2026-09-18](https://github.com/Shwai-He/scholar-odyssey/blob/main/intelligence/papers/2026-09-18_ai_paper_notes.md) |
+
+---
+
+## 📐 2. 逐篇论文深度机制解构、数学公式与本仓库落地指南 (Per-Paper Deep-Dive Cards)
+
+### 2.1 [2026-09-27] L2R: Low-Rank and Lipschitz-Controlled Routing for Mixture-of-Experts
+
+* **论文信息**：Minghao Yang, Ren Togo, Guang Li, Takahiro Ogawa, Miki Haseyama (`arXiv:2601.21349`, 2026-01)
+* **核心关键词**：MoE Routing Geometry、Low-Rank Latent Space、Lipschitz Continuity、Saturated Inner-Product Scoring (SIPS)、Multi-Anchor Routing
+
+#### 📐 架构与核心算法流程图 (ASCII Blueprint)
+
+```text
++-----------------------------------------------------------------------------------+
+|          L2R: Low-Rank & Lipschitz-Controlled MoE Routing Architecture            |
++-----------------------------------------------------------------------------------+
+|                                                                                   |
+|                        Token Hidden State h \in R^d                               |
+|                                     |                                             |
+|                                     v                                             |
+|        +---------------------------------------------------------+                |
+|        | 1. Shared Low-Rank Latent Projection (低秩路由子空间映射)|                |
+|        |    z = P h \in R^r   (r << d, orthogonalized P P^T = I_r)|                |
+|        |    Filters out high-dimensional isotropic noise         |                |
+|        +---------------------------------------------------------+                |
+|                                     |                                             |
+|                                     v                                             |
+|        +---------------------------------------------------------+                |
+|        | 2. Multi-Anchor Expert Prototypes (多锚点专家原型表示)   |                |
+|        |    Each Expert e has M low-rank anchors: {u_{e,m}}_{m=1}^M               |
+|        +---------------------------------------------------------+                |
+|                                     |                                             |
+|                                     v                                             |
+|        +---------------------------------------------------------+                |
+|        | 3. Saturated Inner-Product Scoring (SIPS Lipschitz 控制) |                |
+|        |    s_{e,m}(z) = \tau \cdot \tanh( <z, u_{e,m}> / (\tau \|z\|_\gamma) )   |
+|        |    Explicitly bounds || \nabla_h s_e(h) ||_2 <= L_lip    |                |
+|        +---------------------------------------------------------+                |
+|                                     |                                             |
+|                                     v                                             |
+|             SoftMax / Top-k Selection ---> Stable Expert Dispatch                 |
++-----------------------------------------------------------------------------------+
+```
+
+#### 🎯 背景与痛点 (Background & Pain Points)
+* **高维线性路由的三大几何病态**：标准稀疏 MoE 普遍采用单层线性投影 $s(h) = W_r h \in \mathbb{R}^N$ 作为路由器（Router）。作者从表示几何角度指出高维空间 $d \gg N$ 中的线性内积路由存在三大固有缺陷：
+  1. **维度失配与噪声过拟合（Representation Mismatch）**：Token 隐状态 $h \in \mathbb{R}^d$ 包含了大量与任务路由无关的词法/位置高频噪声，全维内积导致路由决策极易受正交噪声方向干扰。
+  2. **高维角度集中现象（Angular Concentration）**：随着层深增加，Transformer 隐状态落入狭窄的各向异性锥（Anisotropic Cone），不同专家路由向量与 $h$ 的余弦相似度高度趋同，导致门控分布扁平化或赢家通吃。
+  3. **范数敏感与 Lipschitz 失控（Scale Sensitivity）**：当隐状态范数 $\|h\|_2$ 在深层或长序列中剧烈膨胀时，未受控的内积 $w_e^\top h$ 会使 Softmax 进入指数饱和区，微小输入扰动即可引发离散 Top-$k$ 路由集合翻转（Routing Instability）。
+
+#### 💡 核心方法与数学公式 (Core Methodology & Math)
+1. **共享低秩潜空间路由投影（Low-Rank Latent Routing Space）**：
+   引入行正交低秩投影矩阵 $P \in \mathbb{R}^{r \times d}$（$r \ll d$，例如 $d=2048, r=64$），将隐状态 $h$ 压缩至低秩判别子空间：
+   $$z = P h \in \mathbb{R}^r, \qquad \mathcal{L}_{\text{orth}} = \| P P^\top - I_r \|_F^2$$
+2. **饱和内积打分与显式 Lipschitz 边界控制（Saturated Inner-Product Scoring, SIPS）**：
+   为消除隐状态径向范数 $\|h\|_2$ 暴涨导致的路由震荡，L2R 设计了带阻尼范数归一化与双曲正切饱和的打分算子：
+   $$\phi_{\text{SIPS}}(z, u_e) = \tau \cdot \tanh\left( \frac{\langle z, u_e \rangle}{\tau \left(\sqrt{\|z\|_2^2 + \epsilon^2}\right)^\gamma \left(\sqrt{\|u_e\|_2^2 + \epsilon^2}\right)^\gamma} \right)$$
+   其中 $\tau > 0$ 控制饱和软边界，$\gamma \in [0, 1]$ 控制径向尺度不变性强度（当 $\gamma=1$ 时退化为受控余弦路由）。利用 $\text{sech}^2(x) \le 1$ 及正交投影 $\|P\|_2 = 1$，可严格证明打分函数对原始输入 $h$ 的梯度范数（即局部 Lipschitz 常数）存在显式解析上界：
+   $$\left\| \nabla_h \phi_{\text{SIPS}}(P h, u_e) \right\|_2 \le \|P\|_2 \cdot \frac{\|u_e\|_2^{1-\gamma}}{\epsilon^\gamma} = L_{\text{lip}}$$
+   从而从数学上保证了有界输入扰动 $\|\delta h\|_2 \le \delta$ 不会引发路由分数的剧烈跳变。
+3. **多锚点专家表达（Multi-Anchor Routing）**：
+   由于单个专家往往需要处理多模态或多子类语义簇，在低秩空间 $\mathbb{R}^r$ 中为每个专家分配 $M$ 个子锚点 $\{u_{e,m}\}_{m=1}^M \subset \mathbb{R}^r$（参数量仅为 $N \times M \times r \ll N \times d$），通过 Log-Sum-Exp 软聚合计算专家总得分：
+   $$s_e(h) = \frac{1}{\beta} \log \sum_{m=1}^M \exp\Big( \beta \cdot \phi_{\text{SIPS}}(P h, u_{e,m}) \Big)$$
+
+#### 📊 关键实验与结论 (Key Experiments & Takeaways)
+* **语言与视觉双模态全面验证**：在基于 **OLMoE** 的语言模型预训练/微调以及 **ImageNet** 视觉 MoE 骨干网络上，L2R 将路由器参数量削减 **60%–75%**，同时在相同激活专家预算下将下游任务困惑度（PPL）降低 `0.42–0.68`，ImageNet Top-1 准确率提升 `+1.3%`。
+* **路由稳定性与负载均衡双升**：在对抗性高斯扰动测试下，L2R 的 Top-$k$ 路由翻转率（Routing Flip Rate）比标准线性 Router 降低 **47%**，专家负载熵（Routing Entropy）更加接近理想均匀分布，无需强依赖破坏主任务梯度的大权重 Load-Balancing 辅助损失。
+
+#### 🔗 与我们工作（Our Works）的直接关联与落地启发
+1. **与 *Router-Tuning* (EMNLP 2025) & *Capacity-Aware Inference* (ICLR 2026) 的直接耦合**：
+   * 我们在 *Router-Tuning* 中提出仅微调轻量路由器即可解锁深层稀疏网络潜力，但在极低资源或长上下文微调中，全维线性路由器容易过拟合表面范数特征。将 L2R 的 **SIPS + 低秩多锚点路由** 作为 *Router-Tuning* 的参数化形式，不仅能将可训练参数再降一个数量级，还能利用 Lipschitz 边界防止微调过程中的路由坍缩。
+2. **与 *Transformer-Geometry* (`arXiv:2609.15975`, EMNLP 2026) & `MerA` SVD 初始化的深刻同构**：
+   * L2R 发现的“径向范数敏感性（Scale Sensitivity）”与我们在 *Transformer-Geometry* 及 `ads-rsi`（定律 ADS-RSI-1：Scale-Cancellation）中揭示的**“深层残差流径向范数 $\|h\|_2$ 掩盖切向语义方向 $h / \|h\|_2$”**完全一致！此外，在将稠密模型或预训练线性路由器 $W_r \in \mathbb{R}^{N \times d}$ 转化为 L2R 路由器时，无需随机初始化 $P$，可直接调用我们的 **`MerA` 数据感知激活协方差 SVD（Activation-Covariance SVD）** 提取前 $r$ 个主奇异方向初始化 $P$，实现零冷启动抖动的低秩 Lipschitz 路由升级。
+
+---
+
+> [!TIP]
+> **🎯 `Router-Tuning-Mixture-of-Depths` 仓库代码级落地点 (`Target Module`)**：`router_tuning/` (Low-Rank + SIPS Lipschitz-Stabilized MoD Router Head)  
+> **📚 上游精读归档 (`Upstream Source`)**：`scholar-odyssey/intelligence/papers/2026-09-27_ai_paper_notes.md`
+
+
+---
+
+### 2.2 [2026-09-26] 🔄 *LoopMoE: Unifying Iterative Computation with Mixture-of-Experts for Language Modeling*
+> **聚焦领域**：Looped Transformers · Mixture of Experts (MoE) · Iterative Depth Scaling · Weight Sharing  
+> **arXiv**：[`arXiv:2606.04438`](https://arxiv.org/abs/2606.04438)
+
+```
+  输入表征 h^{(0)} ──► [ 循环步 t = 1..K : IterAdaLN(h, t) 轮次特征调制 ]
+                                       │
+                                       ▼
+                     [ 共享 MoE 路由层: Top-k 稀疏专家激活 + 跨循环容量均衡 ]
+                                       │
+                                       ▼
+                     [ 解耦总参数量 P 与单 Token 算力 FLOPs (同参数量 PPL 显著降低) ]
+```
+
+#### 🎯 背景与痛点剖析 (Problem Statement)
+* **权重复用与轮次角色分化的矛盾**：在 Looped Transformer 中，直接将同一组 Transformer 块重复循环 $K$ 次，虽然能以 $O(1)$ 参数开销换取 $O(K)$ 的等效推理深度，但会导致两个严重退化：（1）不同循环步 $t \in \{1, \dots, K\}$ 缺乏步间身份区分，引发梯度震荡与隐状态平行分量 $\Delta h_\parallel$ 爆炸；（2）若将循环架构直接与 MoE 结合，不同循环步会争抢同一批头部 Expert，导致严重的跨循环路由坍缩（Cross-Loop Routing Collapse）。
+
+#### 💡 核心方法与底层数学实现 (Mathematical Formulations)
+1. **迭代步自适应层归一化 (Iteration-Adaptive LayerNorm, `IterAdaLN`)**：
+   - 为第 $t$ 次循环引入轻量级步间嵌入向量 $e_t \in \mathbb{R}^d$，对共享主干的归一化层施加轮次特异性的仿射缩放与偏移调制：
+     $$\text{IterAdaLN}(h^{(t)}, t) = \big(1 + \gamma(e_t)\big) \odot \frac{h^{(t)} - \mu}{\sigma} + \beta(e_t)$$
+   - 通过仅占总参数量 $<0.1\%$ 的步间条件调制参数，赋予共享 MoE 块在不同循环深度下截然不同的几何变换角色。
+2. **跨循环容量感知负载均衡 (Iteration-Aware Capacity Balancing)**：
+   - 设第 $t$ 步第 $i$ 个专家的路由门控概率为 $p_i^{(t)}(x)$，论文将辅助负载均衡损失扩展至循环时间轴与批次维度的联合分布上，防止特定专家在连续多次循环中被重复饱和激活。
+
+#### 📊 关键实验与结论 (Experiments & Findings)
+* **等参数量与等 FLOPs 双向碾压**：在语言建模基准与常识推理任务上，循环 $K=2\sim 4$ 步的 `LoopMoE` 在相同活跃参数量下显著优于标准稠密 Looped 模型，且在相同总参数预算下逼近非共享深层 MoE 模型的困惑度（PPL）上限。
+
+#### 🔗 与我们工作（Our Works）的直接关联与落地启发 (Relevance & Synergy with Our Works)
+* **🎯 锚定代表作与在研主线**：
+  * [Paper #16: *Disentangling Representation Evolution in Transformers through Directional Decomposition* (EMNLP 2026, `arXiv:2609.15975`)]
+  * [Paper #11: *Capacity-Aware Inference: Mitigating the Straggler Effect in Mixture of Experts* (ICLR 2026)]
+  * [Paper #10: *Router-Tuning for Dynamic Mixture of Experts* (EMNLP 2025)]
+  * [Active Line: *Physical AI / VLA-Loop (Stage-Wise Multi-LoRA Residual Boost & Adaptive Layer Looping)*]
+* **🔬 机理对比与技术演进**：
+  * `LoopMoE` 采用 `IterAdaLN`（逐通道对角缩放 $\gamma(e_t)$）来区分不同循环轮次；而我们在 `VLA-Loop`（见 W39 研发笔记 9/22–9/23）中提出**用极小秩的 Stage-Wise LoRA 去编辑共享主干的每一次循环**，并进一步推进到了**逐层自适应决定是否 Loop**；
+  * 从我们 *Transformer-Geometry (EMNLP 26)* 的正交方向分解视角来看，`IterAdaLN` 仅在归一化后施加坐标轴缩放，主要调节平行缩放分量 $\Delta h_\parallel$；而我们的 **共享主干 + 轮次轻量 LoRA ($\Delta W_t = B_t A_t$)** 则能直接在子空间中引入低秩正交旋转分量 $\Delta h_\perp$，在表达能力上严格包含 `IterAdaLN`！
+* **💡 下一阶段研究（Next Research Directions）落地启发**：
+  * 在撰写 `Physical AI` (MLSys) 论文的 Loop 章节时，可将 `LoopMoE` 的 `IterAdaLN` 作为轻量轮次调制的文献对照基准，用实验展示我们 **“共享主干 + MERA 初始化的轮次小 LoRA + 逐层自适应 Loop 路由”** 相比单纯 LayerNorm 调制的显著几何表达优势。
+
+---
+
+> [!TIP]
+> **🎯 `Router-Tuning-Mixture-of-Depths` 仓库代码级落地点 (`Target Module`)**：`router_tuning/` (Dynamic Token Halting across Looped Transformer Steps)  
+> **📚 上游精读归档 (`Upstream Source`)**：`scholar-odyssey/intelligence/papers/2026-09-26_ai_paper_notes.md`
+
+
+---
+
+### 2.3 [2026-09-26] 🤖 *VLA-Pruner: Temporal-Aware Dual-Level Visual Token Pruning for Efficient Vision-Language-Action Inference*
+> **聚焦领域**：Vision-Language-Action (VLA) · Embodied AI · Visual Token Pruning · Temporal Consistency  
+> **arXiv**：[`arXiv:2511.16449`](https://arxiv.org/abs/2511.16449)
+
+```
+  连续控制帧视觉流 ──► [ 层级一 (Prefill): 跨模态指令-视觉语义重要度评估 ]
+                                           │
+                                           ▼
+                       [ 层级二 (Decode): 时域指数平滑动作相关性追踪 S_t = λS_{t-1} + (1-λ)A_t ]
+                                           │
+                                           ▼
+                       [ Combine-then-Filter 联合剪枝: 避免浅层误删关键操控锚点 ]
+```
+
+#### 🎯 背景与痛点剖析 (Problem Statement)
+* **“语义显著性”与“动作控制必要性”的错位（Semantic-Action Gap）**：在机械臂精细操控任务（如 LIBERO）中，单帧静态视觉编码器认为显著的背景物体，未必是当前动作步（Action Chunk）夹爪需要接触的目标；反之，若在浅层仅凭静态视觉注意力盲目丢弃大量 Patch Token，会导致深层 Action Expert 丢失空间几何锚点，引发轨迹剧烈抖动。
+
+#### 💡 核心方法与数学实现 (Mathematical Formulations)
+1. **双层重要度融合准则 (Combine-then-Filter Dual-Level Criterion)**：
+   - 同时提取语言指令在 Prefill 阶段对第 $i$ 个视觉 Token 的语义关注度 $I_{\text{sem}}^{(i)}$，以及解码器生成动作 Token 时的交叉注意力得分 $I_{\text{act}, t}^{(i)}$；
+2. **跨时间步动作相关性平滑 (Temporal Action Smoothing)**：
+   - 利用连续控制帧之间的时间连续性，引入历史动作注意力动量缓存：
+     $$\tilde{I}_{\text{act}, t}^{(i)} = \lambda \tilde{I}_{\text{act}, t-1}^{(i)} + (1 - \lambda) I_{\text{act}, t}^{(i)}$$
+   - 仅保留综合得分 $S_t^{(i)} = I_{\text{sem}}^{(i)} \cdot \tilde{I}_{\text{act}, t}^{(i)}$ 最高的视觉 Token 子集。
+
+#### 📊 关键实验与结论 (Experiments & Findings)
+* 在 OpenVLA 与主流机器人操控基准（LIBERO-Spatial / Object / Goal / Long）上，剔除 **50%–75% 视觉 Token** 仍保持与全量 Token 持平的任务成功率，端到端控制频率显著提升。
+
+#### 🔗 与我们工作（Our Works）的直接关联与落地启发 (Relevance & Synergy with Our Works)
+* **🎯 锚定代表作与在研主线**：
+  * [Active Line: *Physical AI (`VLADrop` / `DTR` / `HiSTrim` Exclude-Self Value-Space Perp KV256)*]
+  * [Paper #8: *Understanding and Harnessing Sparsity for Unified Multimodal Models* (TMLR 2026)]
+  * [Paper #9: *Uncovering the Redundancy in Transformers via Layer Dropping* (TMLR 2025)]
+* **🔬 机理对比与技术演进**：
+  * 我们在 W38 周记（9/15–9/17）中深刻总结了两条核心定律：（1）**Layer 0（纯 ID Embedding、尚未经过上下文交互）绝不能直接做激进 Token Drop**，必须在表征充分上下文化之后再按浅层保守、深层激进的曲线压缩；（2）**VLA 的鲁棒性来源于三个时间尺度的“伤口愈合（Wound Healing）”纠错通道**（步内注意力、步间去噪、episode 内周期性视觉重锚）；
+  * `VLA-Pruner` 的时域平滑动量 $\tilde{I}_{\text{act}, t}$ 恰恰显式利用了我们指出的第三层“episode 内时域连续重锚”特性！
+* **💡 下一阶段研究（Next Research Directions）落地启发**：
+  * 在 `Physical AI` (MLSys) 论文中，可将 `VLA-Pruner` 纳入 Related Work 与对比讨论，突出我们 **全栈四维协同压缩（数据 DTR + Token `HiSTrim` + 层 `VLADrop/Loop` + 步数 `SnapFlow` 单步蒸馏）** 相比单一视觉 Token 剪枝在真实硬件延迟（Batch=1 访存带宽瓶颈）上的系统级代差优势。
+
+---
+
+## 🔥 板块二：全球前沿热点精选 (Trending Frontier)
+
+---
+
+> [!TIP]
+> **🎯 `Router-Tuning-Mixture-of-Depths` 仓库代码级落地点 (`Target Module`)**：`router_tuning/` (Dynamic Token Halting across Looped Transformer Steps)  
+> **📚 上游精读归档 (`Upstream Source`)**：`scholar-odyssey/intelligence/papers/2026-09-26_ai_paper_notes.md`
+
+
+---
+
+### 2.4 [2026-09-25] Fully Looped Transformer: Stabilizing Looped Models via Attention Injection and Residual Scaling
+
+* **论文信息**：`arXiv:2605.18797` (2026-05)
+* **核心关键词**：Fully Looped Transformer、Attention Injection、Anchor KV Grounding、Gradient Oscillation Prevention
+
+#### 📐 架构与核心算法流程图 (ASCII Blueprint)
+
+```text
++-----------------------------------------------------------------------------------+
+|       Fully Looped Transformer with Parameter-Free Initial Attention Injection    |
++-----------------------------------------------------------------------------------+
+|                                                                                   |
+|  Initial Pass (k=0): Input Embedding H^{(0)} ---> Compute Anchor (K^{(0)}, V^{(0)})|
+|                                        |                                          |
+|                                        v                                          |
+|  Loop Iteration k = 1 .. K:                                                       |
+|  +-----------------------------------------------------------------------------+  |
+|  | 1. Anchor-Injected Multi-Head Attention (零参数初始锚点键值注入)            |  |
+|  |    \tilde{K}^{(k)} = (1 - \lambda_k) K^{(k)} + \lambda_k K^{(0)}            |  |
+|  |    \tilde{V}^{(k)} = (1 - \lambda_k) V^{(k)} + \lambda_k V^{(0)}            |  |
+|  |    Prevents representation drift & provides direct gradient highway to k=0  |  |
+|  +-----------------------------------------------------------------------------+  |
+|                                        |                                          |
+|                                        v                                          |
+|  +-----------------------------------------------------------------------------+  |
+|  | 2. Unit-Sphere / Variance-Preserving Residual Update                        |  |
+|  |    H^{(k+1)} = \text{Norm}\big( H^{(k)} + \frac{1}{\sqrt{K}} f_\theta(H^{(k)}, \tilde{K}^{(k)}, \tilde{V}^{(k)}) \big)|
+|  +-----------------------------------------------------------------------------+  |
++-----------------------------------------------------------------------------------+
+```
+
+#### 🎯 背景与痛点 (Background & Pain Points)
+* **深层循环中的“初始锚点遗忘”与反向传播雅可比谱半径失控**：当一个循环 Transformer 连续迭代 $K \ge 8$ 步时，第 $k$ 步的隐状态 $H^{(k)}$ 经过反复的非线性自注意力和 FFN 变换后，逐渐丢失了原始输入 Token 的精细词法锚点信息；同时在反向传播（BPTT）中，共享权重连乘 $\prod_{k=1}^K \big(I + \frac{\partial f_\theta}{\partial H^{(k)}}\big)$ 极易引发梯度震荡或消失。
+
+#### 💡 核心方法与数学公式 (Core Methodology & Math)
+1. **零参数初始注意力注入（Parameter-Free Attention Injection）**：
+   缓存首轮（$k=0$）计算得到的初始键值张量 $(K^{(0)}, V^{(0)})$。在后续任意第 $k \in \{1, \dots, K\}$ 次循环中，通过凸组合或拼接将初始锚点注入当前步的注意力键值中：
+   $$O^{(k)} = \text{Softmax}\left( \frac{Q^{(k)} \big( (1-\lambda) K^{(k)} + \lambda K^{(0)} \big)^\top}{\sqrt{d_k}} \right) \Big( (1-\lambda) V^{(k)} + \lambda V^{(0)} \Big)$$
+   这一设计在计算图上为每一个循环步 $k$ 建立了一条直通初始表征 $(K^{(0)}, V^{(0)})$ 的**一阶梯度短路高速通道（Direct Gradient Highway）**：
+   $$\frac{\partial \mathcal{L}}{\partial H^{(0)}} = \frac{\partial \mathcal{L}}{\partial H^{(K)}} \prod_{k=1}^K J_k + \lambda \sum_{k=1}^K \frac{\partial \mathcal{L}}{\partial O^{(k)}} \frac{\partial O^{(k)}}{\partial (K^{(0)}, V^{(0)})} \frac{\partial (K^{(0)}, V^{(0)})}{\partial H^{(0)}}$$
+   从而彻底消除了高循环步数下的梯度消失与震荡！
+
+#### 📊 关键实验与结论 (Key Experiments & Takeaways)
+* 在完全不增加任何额外参数（0 Extra Parameters）的条件下，Fully Looped Transformer 在 $K=8, 12$ 步循环预训练中完全消除了传统 Looped Transformer 的梯度尖峰（Gradient Spikes），验证集困惑度（PPL）降低 **`1.45`**，下游推理基准提升 **`+4.9%`**。
+
+#### 🔗 与我们工作（Our Works）的直接关联与落地启发
+* **直接印证我们 `vla-loop` 定律（Lightweight Dropped-Span VLM Cross-KV Grounding）！**
+  * 我们在 `vla-loop` 中发现，当动作专家循环迭代 $K=3,4$ 步时，若每一步都强绑回初始锚点 VLM Prefix KV（即此处的 $(K^{(0)}, V^{(0)})$），即可完美阻止循环轨迹漂移！该论文的梯度短路公式为我们 `vla-loop` 的 Cross-KV Grounding 提供了极其漂亮的反向传播雅可比谱稳定性证明。
+
+---
+
+> [!TIP]
+> **🎯 `Router-Tuning-Mixture-of-Depths` 仓库代码级落地点 (`Target Module`)**：`router_tuning/` (Dynamic Token Halting across Looped Transformer Steps)  
+> **📚 上游精读归档 (`Upstream Source`)**：`scholar-odyssey/intelligence/papers/2026-09-25_ai_paper_notes.md`
+
+
+---
+
+### 2.5 [2026-09-24] LearnPruner: Two-Stage Differentiable Visual Token Pruning for Large Vision-Language Models
+
+* **论文信息**：`arXiv:2604.23950` (2026-04)
+* **核心关键词**：Two-Stage Visual Token Pruning、Differentiable Gumbel/Sigmoid Masking、Shallow Deduplication & Deep Grounding
+
+#### 📐 架构与核心算法流程图 (ASCII Blueprint)
+
+```text
++-----------------------------------------------------------------------------------+
+|       LearnPruner: Two-Stage Differentiable Visual Token Pruning for LVLMs        |
++-----------------------------------------------------------------------------------+
+|                                                                                   |
+|  Visual Patch Tokens V^{(0)} (N_v = 576)                                          |
+|          |                                                                        |
+|          v                                                                        |
+|  +-----------------------------------------------------------------------------+  |
+|  | Stage 1 (Shallow Layer l_1): Vision-Intrinsic Redundancy Pruning            |  |
+|  |    Removes background & spatially homogeneous patches BEFORE cross-modal    |  |
+|  |    stabilizes -> Retains N_1 tokens                                         |  |
+|  +-----------------------------------------------------------------------------+  |
+|          |                                                                        |
+|          v                                                                        |
+|  +-----------------------------------------------------------------------------+  |
+|  | Stage 2 (Mid Layer l_2): Instruction-Grounded Cross-Modal Pruning           |  |
+|  |    Prunes task-irrelevant objects using stabilized text-to-vision attention |  |
+|  |    Differentiable Soft-to-Hard Attention Bias: A_{i,j} + \log m_j(\tau)     |  |
+|  +-----------------------------------------------------------------------------+  |
++-----------------------------------------------------------------------------------+
+```
+
+#### 🎯 背景与痛点 (Background & Pain Points)
+* **单阶段过早剪枝的“跨模态盲视”与过晚剪枝的“算力浪费”**：若在极浅层（如第 2 层）就仅凭文本指令去剪除大量视觉 Token，此时文本与视觉表征尚未完成跨模态对齐，极易误删目标物体；而若等到第 16 层才剪枝，前 16 层已经消耗了超过 50% 的全量视觉 FLOPs。
+
+#### 💡 核心方法与数学公式 (Core Methodology & Math)
+1. **浅层视觉内生去重 + 中层指令对齐聚焦的两阶段架构**：
+   在浅层 $l_1$，仅基于视觉自注意力与空间局部方差剔除纯背景冗余块（保留率 $\rho_1 \approx 50\%$）；在中层 $l_2$，利用已对齐的跨模态交互特征进一步筛选与指令强相关的核心块（保留率 $\rho_2 \approx 15\%$）。
+2. **注意力对数掩码软硬退火（Differentiable Log-Mask Annealing）**：
+   训练期将连续重要性得分 $s_j \in (0, 1)$ 通过温度 $\tau$ 转化为软掩码 $m_j(\tau) = \sigma\big((s_j - \theta_{\text{thr}})/\tau\big)$，并以对数偏置注入注意力矩阵：
+   $$\tilde{A}_{i, j} = \frac{m_j(\tau) \exp(q_i^\top k_j / \sqrt{d_k})}{\sum_{r} m_r(\tau) \exp(q_i^\top k_r / \sqrt{d_k})}$$
+   随着 $\tau \to 0^+$，$m_j(\tau) \to \{0, 1\}$，训练期软注意力平滑收敛至推理期的物理硬剔除，实现零训练-推理鸿沟。
+
+#### 📊 关键实验与结论 (Key Experiments & Takeaways)
+* 在 **LLaVA-1.5/NeXT** 与 **Qwen2-VL** 上，LearnPruner 仅保留 **11.1%–16.7% 视觉 Token**，FLOPs 降低 **68%**，在 10 项多模态基准上的平均精度达到全 Token 模型的 **99.6%**。
+
+#### 🔗 与我们工作（Our Works）的直接关联与落地启发
+* **与我们 *Sparsity for Unified Multimodal Models* (TMLR 2026) & *Demystifying When Pruning Works via Representation Hierarchies* (ICML 2026) 的完美契合**：验证了根据表征层级演化阶段（浅层模态内去重 vs. 中层跨模态语义聚焦）分阶段设置不同剪枝准则的必要性。
+
+---
+
+> [!TIP]
+> **🎯 `Router-Tuning-Mixture-of-Depths` 仓库代码级落地点 (`Target Module`)**：`router_tuning/` (`CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths`)  
+> **📚 上游精读归档 (`Upstream Source`)**：`scholar-odyssey/intelligence/papers/2026-09-24_ai_paper_notes.md`
+
+
+---
+
+### 2.6 [2026-09-24] Training-Free Looped Transformers: Test-Time Mid-Stack Layer Looping
+
+* **论文信息**：`arXiv:2605.23872` (2026-05)
+* **核心关键词**：Training-Free Looped Transformer、Test-Time Depth Scaling、Mid-Stack Fixed-Point Iteration
+
+#### 📐 架构与核心算法流程图 (ASCII Blueprint)
+
+```text
++-----------------------------------------------------------------------------------+
+|       Training-Free Looped Transformers: Test-Time Mid-Stack Layer Looping        |
++-----------------------------------------------------------------------------------+
+|                                                                                   |
+|  Frozen Checkpoint: [Shallow Layers 1..l_a-1]                                     |
+|                              |                                                    |
+|                              v                                                    |
+|        +---> [Mid-Stack Reasoning Span: Layers l_a .. l_b] ---+                   |
+|        |                     |                                |                   |
+|        |          Loop K times at Test Time                    |                   |
+|        +--- Damped Contraction: h <- (1-\eta)h_{\text{in}} + \eta h_{\text{out}}  |
+|                              |                                                    |
+|                              v                                                    |
+|                     [Deep Readout Layers l_b+1..L]                                |
++-----------------------------------------------------------------------------------+
+```
+
+#### 🎯 背景与痛点 (Background & Pain Points)
+* **能否在不重新训练的情况下让现成开源大模型享受循环深度扩展？** 以往工作普遍认为 Looped Transformer 必须从头带循环拓扑预训练，否则直接把某一层重复执行会导致隐状态偏离后续层期望的输入流形。
+
+#### 💡 核心方法与数学公式 (Core Methodology & Math)
+1. **中段层块的近似压缩不动点迭代性质（Mid-Stack Contractive Mapping）**：
+   作者分析发现，在预训练 Transformer 的中间深层区间 $[l_a, l_b]$（通常位于 $0.4L \sim 0.75L$），相邻层的输入输出处于同一缓变语义流形上，复合块算子 $\mathcal{F}_{l_a:l_b}$ 在局部切空间上近似构成压缩不动点精化映射。
+2. **阻尼流形拉回循环更新（Damped Manifold-Preserving Loop）**：
+   为防止在测试期重复调用 $\mathcal{F}_{l_a:l_b}$ 时隐状态范数越界，在第 $k$ 次额外循环后施加范数匹配与阻尼凸组合：
+   $$h^{(k)} = \frac{\|h^{(0)}\|_2}{\|\tilde{h}^{(k)}\|_2} \tilde{h}^{(k)}, \qquad \text{where } \tilde{h}^{(k)} = (1 - \eta) h^{(k-1)} + \eta \mathcal{F}_{l_a:l_b}(h^{(k-1)})$$
+
+#### 📊 关键实验与结论 (Key Experiments & Takeaways)
+* 在完全零训练（Zero Finetuning）的 **Llama-3-8B** 与 **Mistral-7B** 上，对中段 6 层额外循环 $K=2$ 次，在 GSM8K、ARC-Challenge 与逻辑推理任务上直接获得 **`+2.1%` 至 `+3.8%`** 的免费准确率提升。
+
+#### 🔗 与我们工作（Our Works）的直接关联与落地启发
+* **与我们 `vla-loop`（Layer-Specific Span-Bounded Dynamic Halting）及 *Transformer-Geometry* (`arXiv:2609.15975`, EMNLP 2026) 高度同源**：
+  * 该文通过范数重缩放 $\frac{\|h^{(0)}\|_2}{\|\tilde{h}^{(k)}\|_2}$ 抑制测试期循环发散，本质上正是我们在 *Transformer-Geometry* 中指出的**抑制平行径向膨胀、仅保留球面切向正交精化**！
+
+---
+
+> [!TIP]
+> **🎯 `Router-Tuning-Mixture-of-Depths` 仓库代码级落地点 (`Target Module`)**：`router_tuning/` (Dynamic Token Halting across Looped Transformer Steps)  
+> **📚 上游精读归档 (`Upstream Source`)**：`scholar-odyssey/intelligence/papers/2026-09-24_ai_paper_notes.md`
+
+
+---
+
+### 2.7 [2026-09-23] StepKV: Step-Aware KV Cache Compression for Preserving Reasoning Continuity
+
+* **论文信息**：`arXiv:2609.22158` (2026-09)
+* **核心关键词**：Step-Aware KV Compression、Long-CoT Reasoning Continuity、Semantic Span Eviction、Discourse Boundary Detection
+
+#### 📐 架构与核心算法流程图 (ASCII Blueprint)
+
+```text
++-----------------------------------------------------------------------------------+
+|       StepKV: Step-Aware KV Cache Compression for Long-CoT Reasoning Models       |
++-----------------------------------------------------------------------------------+
+|                                                                                   |
+|  Generated CoT Stream ---> Boundary Detector (\n\n, "Wait,", equation delimiters) |
+|                            Partitions tokens into Reasoning Steps {S_1, S_2..S_M} |
+|                                        |                                          |
+|                                        v                                          |
+|  +-----------------------------------------------------------------------------+  |
+|  | 1. Step-Level Cohesive Saliency Scoring (推理步级内聚显著性打分)            |  |
+|  |    U(S_m) = \frac{1}{|S_m|^\alpha} \sum_{j \in S_m} A_{\text{future} \to j} |  |
+|  |             \cdot (1 + \gamma \cdot \mathbb{I}[\text{is\_milestone}(S_m)])  |  |
+|  +-----------------------------------------------------------------------------+  |
+|                                        |                                          |
+|                                        v                                          |
+|  +-----------------------------------------------------------------------------+  |
+|  | 2. Whole-Step Retention or Summary Compression (整步保留或边界锚点折叠)     |  |
+|  |    Never punch holes inside an active mathematical equation or logic step!  |  |
+|  +-----------------------------------------------------------------------------+  |
++-----------------------------------------------------------------------------------+
+```
+
+#### 🎯 背景与痛点 (Background & Pain Points)
+* **逐 Token 驱逐在长思维链（Long-CoT）中的“公式穿孔效应（Formula Swiss-Cheese Effect）”**：在 DeepSeek-R1 或 Qwen-QwQ 等推理模型生成数万 Token 的推导过程中，H2O/SnapKV 等按单 Token 注意力打分驱逐的方法往往会保留某一步方程的等号和首尾变量，却把括号内的中间符号剪掉。这种“半句话残骸”留在 KV 缓存中会严重误导后续注意力回溯，导致模型陷入重复验算死循环。
+
+#### 💡 核心方法与数学公式 (Core Methodology & Math)
+1. **推理步边界切分与步内完整性约束**：
+   将长思维链序列划分为语义内聚的推理步集合 $\mathcal{S} = \{S_1, S_2, \dots, S_M\}$（以换行符、逻辑连接词或公式块定界）。引入步级二值保留决策变量 $z_m \in \{0, 1\}$（而非 Token 级独立变量），将预算为 $B$ 的 KV 缓存淘汰问题形式化为带步长权重的 0-1 背包优化：
+   $$\max_{z \in \{0, 1\}^M} \sum_{m=1}^M z_m \cdot \mathcal{U}_{\text{step}}(S_m) \qquad \text{s.t.} \quad \sum_{m=1}^M z_m |S_m| + \sum_{m=1}^M (1 - z_m) c_{\text{anchor}} \le B$$
+   其中被淘汰的冗余探索步（如已推翻的“Wait, let me recalculate”死胡同分支，$z_m=0$）仅保留其末尾 $c_{\text{anchor}}=2$ 个结论边界 Token 作为消极记忆锚点，而保留的关键推导步（$z_m=1$）则完整保留其内部全部 Token。
+
+#### 📊 关键实验与结论 (Key Experiments & Takeaways)
+* 在 **AIME 2025**、**MATH-500** 与 **GPQA-Diamond** 上，StepKV 在压缩 **65%–75% CoT KV 缓存** 的条件下，相比逐 Token 驱逐的 SnapKV / H2O 将推理准确率大幅提升 **`+9.4%` 至 `+15.2%`**，并缩短了 18% 的无效重复反思长度。
+
+#### 🔗 与我们工作（Our Works）的直接关联与落地启发
+* **与我们 *EffiR* (ACL 2026) 及 `Efficient Ads / HisTrim` 的块级结构化剪枝高度一致**：
+  * 在我们的用户行为序列压缩（HisTrim）与长程推理压缩（EffiR）中，同样发现按完整事件/完整推理子句（Event/Step-Level）进行内聚度打分与整块保留，远比破坏局部语法结构的零散 Token 剔除稳健得多。
+
+---
+
+> [!TIP]
+> **🎯 `Router-Tuning-Mixture-of-Depths` 仓库代码级落地点 (`Target Module`)**：`router_tuning/` (`CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths`)  
+> **📚 上游精读归档 (`Upstream Source`)**：`scholar-odyssey/intelligence/papers/2026-09-23_ai_paper_notes.md`
+
+
+---
+
+### 2.8 [2026-09-23] HetDPT: Rethinking Depth Pruning for Vision Transformers — A Heterogeneity-Aware Perspective
+
+* **论文信息**：`arXiv:2607.03784` (2026-07)
+* **核心关键词**：Heterogeneity-Aware Depth Pruning、Decoupled MHSA/FFN Pruning、Vision Transformers
+
+#### 📐 架构与核心算法流程图 (ASCII Blueprint)
+
+```text
++-----------------------------------------------------------------------------------+
+|      HetDPT: Heterogeneity-Aware Decoupled Sub-Layer Depth Pruning for ViTs       |
++-----------------------------------------------------------------------------------+
+|                                                                                   |
+|  Standard Block l:  X ---> [MHSA^{(l)} (Spatial Mixing)] ---> [FFN^{(l)} (Channel)]|
+|                                        |                                          |
+|                                        v                                          |
+|  +-----------------------------------------------------------------------------+  |
+|  | 1. Sub-Layer Functional Heterogeneity Profiling (子层异构功能解耦剖析)      |  |
+|  |    Deep MHSA layers exhibit high spatial attention map redundancy;          |  |
+|  |    Shallow/Mid FFN layers exhibit higher channel transformation redundancy  |  |
+|  +-----------------------------------------------------------------------------+  |
+|                                        |                                          |
+|                                        v                                          |
+|  +-----------------------------------------------------------------------------+  |
+|  | 2. Independent Sub-Layer Pruning under Latency Constraint                   |  |
+|  |    Can prune MHSA^{(l)} while keeping FFN^{(l)} (or vice versa) with zero   |  |
+|  |    dimension mismatch via residual identity bypass                          |  |
+|  +-----------------------------------------------------------------------------+  |
++-----------------------------------------------------------------------------------+
+```
+
+#### 🎯 背景与痛点 (Background & Pain Points)
+* **整块绑定剪枝（Coupled Block Pruning）忽略了注意力与 FFN 的深度角色错位**：传统深度剪枝总是将第 $l$ 层的 $( \text{MHSA}^{(l)}, \text{FFN}^{(l)} )$ 捆绑在一起同时保留或同时删除。然而在视觉与多模态编码器中，深层的空间跨 Token 交互（MHSA）早已收敛（注意力图趋于恒等或全局平均），但深层的逐 Token 特征非线性映射（FFN）仍在执行关键的语义分类投影。
+
+#### 💡 核心方法与数学公式 (Core Methodology & Math)
+1. **MHSA 与 FFN 异构解耦敏感度建模**：
+   分别为每个子层引入独立的二值门控 $(m_{\text{attn}}^{(l)}, m_{\text{ffn}}^{(l)}) \in \{0, 1\}^2$：
+   $$h_{\text{mid}}^{(l)} = h^{(l-1)} + m_{\text{attn}}^{(l)} \cdot \text{MHSA}^{(l)}\big(\text{LN}_1(h^{(l-1)})\big)$$
+   $$h^{(l)} = h_{\text{mid}}^{(l)} + m_{\text{ffn}}^{(l)} \cdot \text{FFN}^{(l)}\big(\text{LN}_2(h_{\text{mid}}^{(l)})\big)$$
+   利用泰勒二阶敏感度联合硬件实测延迟表 $\tau_{\text{attn}}, \tau_{\text{ffn}}$ 求解整数线性规划（ILP）：
+   $$\min_{\{m_{\text{attn}}^{(l)}, m_{\text{ffn}}^{(l)}\}} \sum_{l=1}^L \Big( (1 - m_{\text{attn}}^{(l)}) \Omega_{\text{attn}}^{(l)} + (1 - m_{\text{ffn}}^{(l)}) \Omega_{\text{ffn}}^{(l)} \Big) \quad \text{s.t.} \quad \sum_{l=1}^L \big( m_{\text{attn}}^{(l)} \tau_{\text{attn}} + m_{\text{ffn}}^{(l)} \tau_{\text{ffn}} \big) \le T_{\text{budget}}$$
+
+#### 📊 关键实验与结论 (Key Experiments & Takeaways)
+* 在 **DeiT**、**Swin** 与 **CLIP-ViT-L/14** 上，HetDPT 在相同 **1.5x–1.8x 硬件实测加速比** 下，比整块深度剪枝提升了 **`+1.9%` 至 `+3.2%`** 的 ImageNet 与多模态下游准确率。
+
+#### 🔗 与我们工作（Our Works）的直接关联与落地启发
+* **与我们 *Layer Dropping* (TMLR 2025) & `vla-dtr` 的子层解耦路由完美呼应**：在 VLA 视觉主干与动作专家的深度剪枝中，深层 Cross-Attention 往往比 FFN 更早饱和，采用解耦子层跳过可进一步压榨 15% 延迟。
+
+---
+
+> [!TIP]
+> **🎯 `Router-Tuning-Mixture-of-Depths` 仓库代码级落地点 (`Target Module`)**：`router_tuning/` (Decoupled Attention-MoD vs FFN-MoD Routing Budgets)  
+> **📚 上游精读归档 (`Upstream Source`)**：`scholar-odyssey/intelligence/papers/2026-09-23_ai_paper_notes.md`
+
+
+---
+
+### 2.9 [2026-09-23] HiMoE-VLA: Hierarchical Mixture-of-Experts for Generalist Vision-Language-Action Policies
+
+* **论文信息**：`arXiv:2512.05693` (2025/2026)
+* **核心关键词**：Hierarchical MoE、Generalist VLA Policy、Task-Skill Decoupled Routing、Gradient Conflict Mitigation
+
+#### 📐 架构与核心算法流程图 (ASCII Blueprint)
+
+```text
++-----------------------------------------------------------------------------------+
+|       HiMoE-VLA: Hierarchical Mixture-of-Experts for Generalist VLA Policies      |
++-----------------------------------------------------------------------------------+
+|                                                                                   |
+|  Language Goal + Visual State ---> [Level-1: Task/Embodiment Router G_{\text{task}}]|
+|                                           |                                       |
+|                   Selects Domain Expert Group \mathcal{G}_m                       |
+|                                           v                                       |
+|         Proprioception + Local Patch ---> [Level-2: Skill Primitive Router G_{\text{skill}}]|
+|                                           |                                       |
+|                   Activates Fine-Grained Motor Primitives (Reach / Grasp / Place) |
++-----------------------------------------------------------------------------------+
+```
+
+#### 🎯 背景与痛点 (Background & Pain Points)
+* **异构本体与多任务联合训练中的“扁平路由混淆”**：在跨机械臂本体、跨数十种操作任务的通用 VLA 训练中，单层扁平 MoE 路由器容易按表层视觉背景而非底层运动学技能聚类，导致不同任务间出现严重的负迁移。
+
+#### 💡 核心方法与数学公式 (Core Methodology & Math)
+1. **双层语义-运动解耦条件路由（Bi-Level Semantic-Kinematic Conditional Routing）**：
+   高层路由器 $G_{\text{task}}(c_{\text{lang}}, I_{\text{global}})$ 根据语言指令与全局视觉场景选择任务簇 $m \in \{1, \dots, M\}$，低层路由器 $G_{\text{skill}}^{(m)}(s_{\text{prop}}, I_{\text{wrist}})$ 根据本体关节状态与腕部相机高频特征在簇内选择动作基元专家 $e \in \mathcal{E}_m$：
+   $$P(e \mid x) = \sum_{m=1}^M G_{\text{task}}(m \mid c_{\text{lang}}, I_{\text{global}}) \cdot G_{\text{skill}}^{(m)}(e \mid s_{\text{prop}}, I_{\text{wrist}}) \cdot \mathbb{I}(e \in \mathcal{E}_m)$$
+
+#### 📊 关键实验与结论 (Key Experiments & Takeaways)
+* 在跨 50+ 任务的 Open-X Embodiment 与仿真套件上，HiMoE-VLA 比同激活参数量的稠密 VLA 与单层 MoE-VLA 平均成功率提升 **`+8.7%`**。
+
+#### 🔗 与我们工作（Our Works）的直接关联与落地启发
+* **与我们 `ads-rsi` 中的 GemTagger 分层路由与 *Router-Tuning* (EMNLP 2025) 高度契合**：将高层任务上下文路由与底层高频状态路由树状解耦，可大幅提升细粒度专家的专业化纯度。
+
+---
+
+> [!TIP]
+> **🎯 `Router-Tuning-Mixture-of-Depths` 仓库代码级落地点 (`Target Module`)**：`router_tuning/` (`CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths`)  
+> **📚 上游精读归档 (`Upstream Source`)**：`scholar-odyssey/intelligence/papers/2026-09-23_ai_paper_notes.md`
+
+
+---
+
+### 2.10 [2026-09-23] D-Cut: Adaptive Verification Depth Pruning for Batched Speculative Decoding
+
+* **论文信息**：`arXiv:2607.14647` (2026-07)
+* **核心关键词**：Speculative Decoding、Verification Depth Pruning、Cross-Request Budget Allocation
+
+#### 📐 架构与核心算法流程图 (ASCII Blueprint)
+
+```text
++-----------------------------------------------------------------------------------+
+|       D-Cut: Adaptive Verification Depth Pruning for Batched Speculative Decoding |
++-----------------------------------------------------------------------------------+
+|                                                                                   |
+|  Batched Draft Trees {T_1, ..., T_B} with Draft Confidence Scores {c_1, ..., c_B} |
+|                                        |                                          |
+|                                        v                                          |
+|  +-----------------------------------------------------------------------------+  |
+|  | Early-Layer Margin Verification (浅层置信度提前决断)                        |  |
+|  |    At Intermediate Layer L_{\text{cut}} < L:                                |  |
+|  |    If early logit margin \Delta z^{(L_{\text{cut}})} >> \tau_accept or << -\tau_reject:|
+|  |    Drop verified/rejected draft tokens from remaining layers L_{\text{cut}}+1..L|
+|  +-----------------------------------------------------------------------------+  |
++-----------------------------------------------------------------------------------+
+```
+
+#### 🎯 背景与痛点 (Background & Pain Points)
+* **批量投机解码验证阶段的深层算力浪费**：在大 Batch 投机解码中，目标大模型需要同时并行验证每个请求的 $K$ 个草稿 Token。实际上，超过 70% 的简单正确草稿或明显错误的草稿在目标模型的前 $60\%$ 层就已经毫无悬念地分出胜负，继续让它们跑完后 $40\%$ 层纯属浪费。
+
+#### 💡 核心方法与数学公式 (Core Methodology & Math)
+1. **基于中间层 Logit 间隔的动态截断准则**：
+   在中间探测层 $l_{\text{probe}}$，通过轻量早期退出投影计算草稿 Token $y_i$ 的对数概率边际 $\Delta_{i}^{(l)} = \hat{\ell}^{(l)}(y_i) - \max_{v \neq y_i} \hat{\ell}^{(l)}(v)$。当 $|\Delta_{i}^{(l)}| > \gamma_l$ 时，立即锁定接受/拒绝决策，并将该草稿及其后续依赖子树从第 $l+1 \dots L$ 层的批次张量中动态压缩移除。
+
+#### 📊 关键实验与结论 (Key Experiments & Takeaways)
+* 在 Batch Size = 16–64 的生产级投机解码服务中，D-Cut 将验证阶段算力开销削减 **38%**，端到端吞吐在 EAGLE-2 基线上进一步提升 **1.42x**。
+
+#### 🔗 与我们工作（Our Works）的直接关联与落地启发
+* **与我们 *Capacity-Aware Inference* (ICLR 2026) & *Layer Dropping* (TMLR 2025) 直接协同**：在多步推理或投机验证中引入中间层间隔早退门控，可显著提升高并发批次下的有效吞吐。
+
+---
+
+> [!TIP]
+> **🎯 `Router-Tuning-Mixture-of-Depths` 仓库代码级落地点 (`Target Module`)**：`router_tuning/` (Confidence-Margin Early Depth Termination)  
+> **📚 上游精读归档 (`Upstream Source`)**：`scholar-odyssey/intelligence/papers/2026-09-23_ai_paper_notes.md`
+
+
+---
+
+### 2.11 [2026-09-21] DeepLoop: Depth Scaling for Looped Transformers
+
+* **论文信息**：`arXiv:2607.13491` (2026-07)
+* **核心关键词**：Looped Transformers、Residual-Scaling Problem、Coherent Variance Growth、Depth Scaling Law
+
+#### 📐 架构与核心算法流程图 (ASCII Blueprint)
+
+```text
++-----------------------------------------------------------------------------------+
+|               DeepLoop: Depth Scaling for Looped Transformers                     |
++-----------------------------------------------------------------------------------+
+|                                                                                   |
+|  Unrolled Standard Transformer (Independent Weights W_l):                         |
+|    \text{Var}(h^{(L)}) \approx \text{Var}(h^{(0)}) + \sum_{l=1}^L \sigma_l^2 = O(L)|
+|                                                                                   |
+|  Naive Looped Transformer (Shared Weight W reused K times):                       |
+|    Coherent alignment \langle f_W(h^{(k)}), f_W(h^{(j)}) \rangle > 0              |
+|    ===> \text{Var}(h^{(K)}) = O(K^2)  [Catastrophic Residual & Gradient Explosion]|
+|                                        |                                          |
+|                                        v                                          |
+|  +-----------------------------------------------------------------------------+  |
+|  | DeepLoop Coherent-Aware Residual Scaling & Step-Conditioned Norm            |  |
+|  |    h^{(k)} = h^{(k-1)} + \frac{\alpha_k}{K^{\gamma}} f_W\big(\text{LN}_k(h^{(k-1)})\big)|
+|  |    where \gamma \in [1/2, 1] interpolates between diffusive & coherent drift|  |
+|  +-----------------------------------------------------------------------------+  |
++-----------------------------------------------------------------------------------+
+```
+
+#### 🎯 背景与痛点 (Background & Pain Points)
+* **循环复用的“相干方差爆炸（Coherent Variance Explosion）”**：在标准非循环 Transformer（如 DeepNorm / Pre-LN）中，由于各层权重 $W^{(l)}$ 相互独立，层间残差增量的交叉协方差近似为零，因此 $L$ 层后的隐状态方差按随机游走以 $O(L)$ 线性增长（仅需 $1/\sqrt{L}$ 缩放）。然而在 **Looped Transformer** 中，同一物理层 $f_W$ 被连续迭代调用 $K$ 次，第 $k$ 步的残差增量 $f_W(h^{(k-1)})$ 与前一步高度正相关（相干叠加），导致隐状态范数以 **$O(K^2)$ 二次方速度爆炸**，使得循环步数 $K > 4$ 时训练迅速崩溃！
+
+#### 💡 核心方法与数学公式 (Core Methodology & Math)
+1. **相干循环残差方差增长定理（Coherent Residual Variance Theorem）**：
+   设循环块映射为 $h^{(k)} = h^{(k-1)} + \beta_k f_W(h^{(k-1)})$。令步间余弦相关系数为 $\rho_{j,k} = \frac{\mathbb{E}[\langle f_W(h^{(j)}), f_W(h^{(k)}) \rangle]}{\|f_W(h^{(j)})\|_2 \|f_W(h^{(k)})\|_2}$。当 $\rho_{j,k} \ge \bar{\rho} > 0$ 时，$K$ 步循环后的终端方差满足：
+   $$\mathbb{E}\big[\|h^{(K)} - h^{(0)}\|_2^2\big] = \sum_{k=1}^K \beta_k^2 \sigma_f^2 + 2 \sum_{1 \le j < k \le K} \beta_j \beta_k \rho_{j,k} \sigma_f^2 = \Theta\left( \Big(\sum_{k=1}^K \beta_k\Big)^2 \right)$$
+2. **DeepLoop 步间解耦缩放法则（Coherence-Compensated Scaling Law）**：
+   为保证无论循环深度 $K$ 如何扩展，终端隐状态流形半径始终保持 $\Theta(1)$ 李雅普诺夫有界，DeepLoop 引入经验相干指数 $\gamma(\bar{\rho}) = \frac{1}{2} + \frac{1}{2}\bar{\rho} \in [\frac{1}{2}, 1]$，设定第 $k$ 步残差门控缩放系数为：
+   $$\beta_k(K) = \frac{c_k}{K^{\gamma(\bar{\rho})}}, \qquad \text{with step-specific affine gain } \text{LN}_k(h) = \gamma_k \odot \frac{h - \mu}{\sigma} + b_k$$
+
+#### 📊 关键实验与结论 (Key Experiments & Takeaways)
+* 在循环深度从 $K=2$ 扩展至 **$K=16$** 的语言与数学推理预训练中，标准 Pre-LN 循环架构在 $K \ge 6$ 时完全发散，而 **DeepLoop** 稳定收敛并实现随循环次数 $K$ 对数线性下降的测试集 Loss，以 **1/4 的物理参数量** 追平同有效深度标准 Transformer 的推理性能。
+
+#### 🔗 与我们工作（Our Works）的直接关联与落地启发
+* **为我们 *Transformer-Geometry* (`arXiv:2609.15975`, EMNLP 2026) 与 `vla-loop`（定律 v18：Continuous Horizon-Phase Terminal Decay）提供精确的二阶统计力学解释！**
+  * DeepLoop 发现的“相干叠加 $\rho_{j,k} > 0$ 导致 $O(K^2)$ 范数爆炸”，从几何上看正是因为共享权重 $f_W$ 在每次循环中持续向**平行径向分量 $\Delta h_\parallel$** 注入同向推力！这再次证明了我们在 `vla-loop` 与 *Transformer-Geometry* 中剔除平行分量、仅保留正交切空间更新 $\Delta h_\perp$（使 $\rho_{j,k}^{\parallel} \to 0$，从而将方差增长压回良性的 $O(K)$）并配合终端步长衰减 $(1-\tau_k)^\beta$ 的根本必要性。
+
+---
+
+> [!TIP]
+> **🎯 `Router-Tuning-Mixture-of-Depths` 仓库代码级落地点 (`Target Module`)**：`router_tuning/` (Dynamic Token Halting across Looped Transformer Steps)  
+> **📚 上游精读归档 (`Upstream Source`)**：`scholar-odyssey/intelligence/papers/2026-09-21_ai_paper_notes.md`
+
+
+---
+
+### 2.12 [2026-09-21] RotateK: Rotation-Aligned Key Channel Pruning for Vision-Language Models
+
+* **论文信息**：`arXiv:2605.19218` (2026-05)
+* **核心关键词**：Key Channel Pruning、Orthogonal Rotation Alignment、Vision-Language Models (VLMs)、Head-Dimension Compression
+
+#### 📐 架构与核心算法流程图 (ASCII Blueprint)
+
+```text
++-----------------------------------------------------------------------------------+
+|       RotateK: Rotation-Aligned Key Channel Pruning for Vision-Language Models    |
++-----------------------------------------------------------------------------------+
+|                                                                                   |
+|  Attention Score Invariance under Orthogonal Rotation R \in O(d_k):               |
+|    Q K^\top = (Q R)(K R)^\top   where R^\top R = I_{d_k}                          |
+|                                        |                                          |
+|                                        v                                          |
+|  +-----------------------------------------------------------------------------+  |
+|  | 1. Cross-Modal Key-Query Co-Energy SVD (跨模态查询-键联合能量奇异值对齐)    |  |
+|  |    Compute covariance C_K = \mathbb{E}[K_{\text{vis}}^\top K_{\text{vis}}]  |  |
+|  |    Eigendecompose C_K = R \Lambda R^\top ---> Fold R into W_Q, W_K offline  |  |
+|  +-----------------------------------------------------------------------------+  |
+|                                        |                                          |
+|                                        v                                          |
+|  +-----------------------------------------------------------------------------+  |
+|  | 2. Tail Channel Truncation (尾部低能量通道截断: 兼容 RoPE 2x2 块旋转)       |  |
+|  |    Retain top-r channels (r = 0.4 d_k) -> 60% Key Cache & GEMM Reduction    |  |
+|  +-----------------------------------------------------------------------------+  |
++-----------------------------------------------------------------------------------+
+```
+
+#### 🎯 背景与痛点 (Background & Pain Points)
+* **原始坐标轴下的通道能量弥散**：在多模态大模型（VLM）中，除序列长度方向（Token 维度）冗余外，注意力头内部的特征维度 $d_k$（如 $d_k=128$）在视觉特征空间中实际上具有极低的本征秩。然而，在原始训练得到的正交基下，信号能量均匀弥散在全部 128 个通道上，直接按坐标轴剪除任何通道都会造成较大的内积误差 $\|Q K^\top - \tilde{Q} \tilde{K}^\top\|_F$。
+
+#### 💡 核心方法与数学公式 (Core Methodology & Math)
+1. **RoPE 兼容的分块正交旋转能量集中（RoPE-Compatible Block-Orthogonal Rotation）**：
+   由于旋转位置编码（RoPE）以二维子平面 $(2i, 2i+1)$ 为单位作用：$R_\Theta(m) = \text{diag}(R_{\theta_1}^{(m)}, \dots, R_{\theta_{d_k/2}}^{(m)})$，为保持与 RoPE 的可交换性，RotateK 将 $d_k/2$ 个二维频率对按预期内积能量贡献 $\mathcal{E}_i = \mathbb{E}\big[ \| q_{[2i:2i+1]} \|_2^2 \cdot \| k_{[2i:2i+1]} \|_2^2 \big]$ 进行重排，并在每个同频子空间内执行正交主轴对齐 $U_i \in O(2)$：
+   $$\tilde{W}_Q = W_Q U_{\text{rot}}, \qquad \tilde{W}_K = W_K U_{\text{rot}}$$
+2. **误差上界最小化通道截断**：
+   保留能量最高的前 $r$ 个通道子块，此时注意力 logit 截断误差满足紧上界：
+   $$\mathbb{E}\big[ | q^\top k - \tilde{q}_{1:r}^\top \tilde{k}_{1:r} |^2 \big] \le \sum_{i = r/2 + 1}^{d_k/2} \lambda_i(C_Q) \lambda_i(C_K)$$
+
+#### 📊 关键实验与结论 (Key Experiments & Takeaways)
+* 在 **LLaVA-NeXT**、**Qwen2-VL-7B** 与 **InternVL-2** 上，RotateK 剪除 **50%–60% 的 Key 通道**而无需微调，且与视觉 Token 剪枝（如 FastV / VLA-Pruner）**100% 正交兼容**，联合实现 **4.2x** 注意力加速且 VQA 精度损失 `<0.5%`。
+
+#### 🔗 与我们工作（Our Works）的直接关联与落地启发
+* **与我们 `MerA` SVD 初始化及 *Sparsity for Unified Multimodal Models* (TMLR 2026) 的正交协同**：
+  * RotateK 在特征通道维度 $d_k$ 上的正交旋转浓缩与我们在 Token 维度 $N_{\text{vis}}$ 上的剪枝构成了完整的二维矩阵联合低秩逼近（Row + Column Dual Sparsity），可直接嵌入 `vla-distillation` 的视觉前缀压缩器中。
+
+---
+
+> [!TIP]
+> **🎯 `Router-Tuning-Mixture-of-Depths` 仓库代码级落地点 (`Target Module`)**：`router_tuning/` (`CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths`)  
+> **📚 上游精读归档 (`Upstream Source`)**：`scholar-odyssey/intelligence/papers/2026-09-21_ai_paper_notes.md`
+
+
+---
+
+### 2.13 [2026-09-21] Token Sparse Attention: Efficient Long-Context Inference with Interleaved Token Selection
+
+* **论文信息**：`arXiv:2602.03216` (2026-02)
+* **核心关键词**：Token Sparse Attention、Interleaved Compress-Decompress、Reversible Token Selection、Dense Kernel Compatibility
+
+#### 📐 架构与核心算法流程图 (ASCII Blueprint)
+
+```text
++-----------------------------------------------------------------------------------+
+|     Token Sparse Attention (TSA): Interleaved Reversible Token Sparsification     |
++-----------------------------------------------------------------------------------+
+|                                                                                   |
+|  Layer l Input Hidden States H^{(l)} \in R^{L x d}                                |
+|          |                                                                        |
+|          +---> [Select Top-M Active Tokens I_l] ---> Gather Q_sub, K_sub, V_sub   |
+|          |                                                   |                    |
+|          |                                                   v                    |
+|          |                                      Dense FlashAttention (M x M)      |
+|          |                                                   |                    |
+|          +---> [Scatter-Add Back to Full Length L] <---------+                    |
+|          |                                                                        |
+|          v                                                                        |
+|  Layer l+1 Input H^{(l+1)} \in R^{L x d} (Previously skipped tokens can re-awake!)|
++-----------------------------------------------------------------------------------+
+```
+
+#### 🎯 背景与痛点 (Background & Pain Points)
+* **永久性 Token 丢弃（Permanent Token Dropping）的不可逆信息损失**：传统早退或逐层漏斗式 Token 剪枝（如 FastV、PyramidDrop）一旦在第 $l$ 层将某个 Token 丢弃，该 Token 在后续第 $l+1 \dots L$ 层中便永远消失。然而，在多跳推理或长文档问答中，浅层看似不相关的背景段落往往需要在深层推理出中间结论后才被重新检索激活。
+
+#### 💡 核心方法与数学公式 (Core Methodology & Math)
+1. **层内 Gather-Attention-Scatter 可逆稀疏算子**：
+   在第 $l$ 层，轻量路由器根据当前隐状态打分选出活跃下标集 $\mathcal{I}_l \subset \{1, \dots, L\}$（$|\mathcal{I}_l| = M = \rho L \ll L$）。通过行抽取算子 $P_{\mathcal{I}_l} \in \{0, 1\}^{M \times L}$ 构造紧凑子矩阵：
+   $$\tilde{Q} = P_{\mathcal{I}_l} Q, \quad \tilde{K} = P_{\mathcal{I}_l} K, \quad \tilde{V} = P_{\mathcal{I}_l} V \in \mathbb{R}^{M \times d}$$
+   在紧凑稠密张量上直接调用标准 FlashAttention-3 内核计算 $\tilde{O} = \text{FlashAttn}(\tilde{Q}, \tilde{K}, \tilde{V})$，随后通过转置散射算子 $P_{\mathcal{I}_l}^\top$ 还原回全序列残差流：
+   $$H^{(l+1)} = H^{(l)} + P_{\mathcal{I}_l}^\top \big( \tilde{O} W_O \big)$$
+   由于非活跃 Token $j \notin \mathcal{I}_l$ 通过恒等残差分支完整保留了其隐状态 $H_j^{(l)}$，它在第 $l+1$ 层可根据更新后的全局语义被重新选入 $\mathcal{I}_{l+1}$！
+
+#### 📊 关键实验与结论 (Key Experiments & Takeaways)
+* 在 64K–128K 多跳检索与大海捞针基准（RULER Multi-Hop Tracing）上，不可逆 Token 剪枝在 70% 稀疏度下准确率跌至 `31.2%`，而 **Token Sparse Attention** 保持了 **`88.4%`** 的高准确率，同时因完全复用稠密 FlashAttention 内核实现了 **2.6x** 真实注意力加速。
+
+#### 🔗 与我们工作（Our Works）的直接关联与落地启发
+* **与我们 *Demystifying When Pruning Works via Representation Hierarchies* (ICML 2026) & *Layer Dropping* (TMLR 2025) 的本质联系**：
+  * TSA 的 `Gather -> Attention -> Scatter-Add` 本质上是对非活跃 Token 执行了**“Token 级条件层跳过（Token-Wise Conditional Layer Dropping）”**！这为我们把整层跳过（Layer Dropping）细粒度化为每个循环步/每层的动态子集更新提供了极佳的硬件友好范式。
+
+---
+
+## 🔥 板块二：全球前沿热点精选 (Trending Frontier)
+
+---
+
+> [!TIP]
+> **🎯 `Router-Tuning-Mixture-of-Depths` 仓库代码级落地点 (`Target Module`)**：`router_tuning/` (Reversible Token Bypass vs Irreversible Drop in MoD)  
+> **📚 上游精读归档 (`Upstream Source`)**：`scholar-odyssey/intelligence/papers/2026-09-21_ai_paper_notes.md`
+
+
+---
+
+### 2.14 [2026-09-20] CARE: Spend Experts Where You Are Unsure — Confidence-Adaptive Routing for MoE-LoRA
+
+* **论文信息**：`arXiv:2607.26052` (2026-07)
+* **核心关键词**：Confidence-Adaptive Routing、MoE-LoRA、Nucleus Expert Activation、Router Uncertainty Entropy
+
+#### 📐 架构与核心算法流程图 (ASCII Blueprint)
+
+```text
++-----------------------------------------------------------------------------------+
+|            CARE: Confidence-Adaptive Routing for Mixture-of-Experts               |
++-----------------------------------------------------------------------------------+
+|                                                                                   |
+|  Token Hidden State h_t ---> Router Probabilities p_t = Softmax(W_r h_t) \in \Delta^E|
+|                                        |                                          |
+|                                        v                                          |
+|  +-----------------------------------------------------------------------------+  |
+|  | 1. Router Uncertainty Quantification (路由分布置信度/不确定性度量)          |  |
+|  |    Sort probabilities: p_{t,(1)} >= p_{t,(2)} >= ... >= p_{t,(E)}           |  |
+|  |    High confidence (peaked p_t) -> K_t = 1; High entropy -> K_t = K_{\max}  |  |
+|  +-----------------------------------------------------------------------------+  |
+|                                        |                                          |
+|                                        v                                          |
+|  +-----------------------------------------------------------------------------+  |
+|  | 2. Nucleus & Margin-Gated Dynamic Top-K(t) Selection                        |  |
+|  |    K_t = \min \{ k \in [K_{\min}, K_{\max}] : \sum_{i=1}^k p_{t,(i)} >= \tau_p|
+|  |               \text{ or } p_{t,(k)} - p_{t,(k+1)} >= \tau_m \}              |  |
+|  +-----------------------------------------------------------------------------+  |
++-----------------------------------------------------------------------------------+
+```
+
+#### 🎯 背景与痛点 (Background & Pain Points)
+* **静态 Top-$k$ 路由的算力错配**：标准 MoE 对序列中的每一个 Token（无论是标点符号、常见停用词，还是复杂的逻辑转折词）均无差别地激活固定数量 $k$ 个专家。对于路由器高度确信的简单 Token（例如 $p_{t,(1)} > 0.85$），强制拉起第 $2 \dots k$ 个低概率专家不仅浪费算力，还会引入长尾噪声干扰；而对于处于知识边界的模糊 Token，固定 $k$ 个专家又不足以覆盖多维语义假设。
+
+#### 💡 核心方法与数学公式 (Core Methodology & Math)
+1. **累积概率核与边际跳变双门控（Nucleus & Margin Gated Dynamic $K_t$）**：
+   将排序后的专家门控概率记为 $p_{t,(1)} \ge p_{t,(2)} \ge \dots \ge p_{t,(E)}$。CARE 为每个 Token $t$ 动态分配激活专家个数 $K_t \in [K_{\min}, K_{\max}]$：
+   $$K_t = \min \left\{ k \in \{K_{\min}, \dots, K_{\max}\} \;\middle|\; \sum_{i=1}^k p_{t,(i)} \ge \tau_{\text{nuc}} \;\;\lor\;\; \big(p_{t,(k)} - p_{t,(k+1)}\big) \ge \tau_{\text{margin}} \right\}$$
+2. **零训练即插即用温度校准（Temperature Calibration under Global FLOPs Target）**：
+   给定目标平均激活专家预算 $\bar{K}_{\text{target}}$，在校准集上通过单标量温度 $\beta$ 缩放路由 logits $p_t(\beta) = \text{Softmax}(W_r h_t / \beta)$，满足 $\mathbb{E}_t[K_t(\beta)] = \bar{K}_{\text{target}}$。
+
+#### 📊 关键实验与结论 (Key Experiments & Takeaways)
+* 在多任务 MoE-LoRA 与稀疏 MoE 语言模型上，CARE 在削减 **32%–45% 平均专家激活 FLOPs** 的同时，在常识推理、代码与数学基准上全面持平甚至超越固定 Top-$k$ 基线（`+0.9%` 平均准确率）。
+
+#### 🔗 与我们工作（Our Works）的直接关联与落地启发
+* **与我们 *Capacity-Aware Inference* (ICLR 2026) & *Router-Tuning* (EMNLP 2025) 的协同**：可将 CARE 的 Token 级置信度核门控（Nucleus Routing）与我们在 ICLR 2026 中提出的硬件容量感知丢弃/重路由（Capacity-Aware Dropping）级联，在软件置信度与硬件队列容量两个维度同时实现最优分配。
+
+---
+
+> [!TIP]
+> **🎯 `Router-Tuning-Mixture-of-Depths` 仓库代码级落地点 (`Target Module`)**：`router_tuning/` (Cumulative Probability Nucleus + Marginal Jump Dynamic Depth Gate)  
+> **📚 上游精读归档 (`Upstream Source`)**：`scholar-odyssey/intelligence/papers/2026-09-20_ai_paper_notes.md`
+
+
+---
+
+### 2.15 [2026-09-18] 🧩 *MoE-Tile: Warp-Aligned Tensor Slicing for Zero-Overhead Dynamic Sparse Routing on Modern Accelerators*
+> **聚焦领域**：Mixture of Experts (MoE) · GPU Kernel Optimization · Warp Divergence · Hardware-Aware Sparsity  
+> **arXiv**：[`arXiv:2609.09112`](https://arxiv.org/abs/2609.09112)
+
+```
+  动态 Token 路由序列 ──► [ 块级非对齐碎片 (Warp 严重分化) ] ──► 计算利用率 38%
+                                      │
+                                      ▼
+                      [ MoE-Tile 算子: Warp-Aligned 2D Slicing ]
+                                      ├── 线程块内 128x128 Tile 对齐填充
+                                      └── 零开销 TMA (Tensor Memory Accelerator) 异步流水
+                                      ▼
+                    [ 算子级 GEMM 吞吐达 89% 理论峰值 (提速 2.34x) ]
+```
+
+#### 🎯 背景与硬件级痛点剖析 (Hardware Bottleneck)
+* **动态门控与 GPU 线程块的天然矛盾**：MoE 模型的 Top-$k$ 门控路由将不同数量的 Token 动态分发给不同 Expert。在 GPU 底层执行专家 FFN 矩阵乘（GEMM）时，每个 Expert 分配到的实际 Token 数（Batch $M_e$）并非硬件友好的 128 或 256 的倍数，导致大量 Warp 处于空转分化（Warp Divergence）状态，且引发非连续非对齐的显存搬运（Uncoalesced Memory Access），Tensor Core 实际利用率极低。
+
+#### 💡 核心方法与原文底层工程实现 (Detailed System Mechanism)
+1. **Warp 对齐二维分块调度器 (Warp-Aligned 2D Tile Slicer)**：
+   - 设第 $e$ 个 Expert 接收到的 Token 数量为 $M_e$，隐藏维度为 $K$ 与 $N$；
+   - 传统实现采用 Padding 将 $M_e$ 补齐到固定上界（造成显存与计算浪费），或采用 Ragged Batch（引发线程分化）；
+   - 原文提出跨 Expert 全局排队与 Tile 重映射机制：将所有专家的计算任务切分为固定大小的硬件微块 $\mathcal{T}_{i,j} \in \mathbb{R}^{128 \times 128}$，将跨 Expert 的边界碎片（Tail Residuals）打包组合进统一的共享微块中执行。
+2. **硬件 TMA 异步流水线重叠 (Asynchronous TMA Pipelining)**：
+   - 利用现代 GPU（Hopper/Blackwell）的 Tensor Memory Accelerator（TMA），在 Shared Memory 与 Global Memory 之间构建三级流水线缓冲，将 Tile 索引寻址重排序开销完全隐藏在 FFN 计算延迟内部。
+
+#### 📊 关键实验与结论 (Experiments & Findings)
+* **硬件测试平台**：NVIDIA H100 80GB SXM5 与 B200 GPU 集群；
+* **测试模型**：DeepSeek-V2/V3 (236B/671B)、Mixtral-8x22B；
+* **实测性能**：
+  * **算子级 GEMM 计算吞吐**：相比标准 Megatron-LM 与 vLLM MoE 算子，计算吞吐提升 **2.34 倍**，Tensor Core 利用率从 38.2% 提升至 **89.1%**；
+  * **端到端端 Decode 延迟**：Token 生成阶段延迟降低 **43.5%**，完全消除了动态路由带来的硬件抖动。
+
+#### 🔗 与我们工作（Our Works）的直接关联与落地启发 (Relevance & Synergy with Our Works)
+* **🎯 锚定代表作**：
+  * [Paper #11: *Capacity-Aware Inference: Mitigating the Straggler Effect in Mixture of Experts* (ICLR 2026)]
+  * [Paper #10: *Router-Tuning for Dynamic Mixture of Experts* (EMNLP 2025)]
+  * [Paper #5: *MEO: Mixture of Experts Optimization* (EMNLP 2023)]
+* **🔬 机理对比与技术演进**：
+  * 我们在 *Capacity-Aware Inference (ICLR 26)* 中从**分布式全局宏观调度层面**定义了动态 Capacity Factor 与 Token 溢出分配策略；
+  * *MoE-Tile* 则在**单卡底层 CUDA 算子与微架构 Tile 粒度**上解决了非规整 Token 批处理的执行开销；
+* **💡 下一阶段研究（Next Research Directions）落地启发**：
+  * 可将我们 ICLR 26 的全局分布式调度器与 MoE-Tile 底层 Triton/CUDA 算子进行纵向打通：由我们算法在上层输出动态均衡的 Expert 负载约束，下层由 MoE-Tile 执行 128 对齐的极速计算，构建从分布式集群到单卡底层内核的端到端超高效 MoE 推理栈。
+
+---
+
+> [!TIP]
+> **🎯 `Router-Tuning-Mixture-of-Depths` 仓库代码级落地点 (`Target Module`)**：`router_tuning/` (`CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths`)  
+> **📚 上游精读归档 (`Upstream Source`)**：`scholar-odyssey/intelligence/papers/2026-09-18_ai_paper_notes.md`
+
+
+---
