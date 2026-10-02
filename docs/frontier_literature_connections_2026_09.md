@@ -1,10 +1,10 @@
 # ⚡ Router-Tuning (Mixture-of-Depths): 每日前沿文献关联与动态深度/Token 路由落地库 (2026-09 — 2026-10)
 
-**Document ID:** `ROUTERTUNING-LIT-202609` | **Last Updated:** `2026-10-01` | **Target Path:** `docs/frontier_literature_connections_2026_09.md` | **Total Routed Papers:** `23`
+**Document ID:** `ROUTERTUNING-LIT-202609` | **Last Updated:** `2026-10-02` | **Target Path:** `docs/frontier_literature_connections_2026_09.md` | **Total Routed Papers:** `25`
 
 > [!IMPORTANT]
 > **🔗 跨仓库文献引用链闭环 (Cross-Repository Reference Chain Closure)**
-> 本文件由每日 AI 前沿论文精读流水线自动路由生成，专门收录与我们 **EMNLP 2025 代表作 (*Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers*, `CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths`)** 直接关联的动态 Token 级层跳过（Mixture-of-Depths）、自适应层选择（`ASL`, `CLSE`, `DEE-VLA`, `DORA`, `FocusVLA`, `EvoESAP`）、层内可逆稀疏路由（`Token Sparse Attention`）、低秩 Lipschitz 路由器（`L2R`）、双阈值自适应激活（`CARE`）以及循环动态停止（`DeepLoop`, `Training-Free Looped`）最新 arXiv 论文笔记。
+> 本文件由每日 AI 前沿论文精读流水线自动路由生成，专门收录与我们 **EMNLP 2025 代表作 (*Router-Tuning: A Simple and Effective Approach for Enabling Dynamic-Depth in Transformers*, `CASE-Lab-UMD/Router-Tuning-Mixture-of-Depths`)** 直接关联的动态 Token 级层跳过（Mixture-of-Depths）、自适应层选择（`ASL`, `CLSE`, `DEE-VLA`, `DORA`, `FocusVLA`, `EvoESAP`, `DySL-VLA`, `DySta`）、层内可逆稀疏路由（`Token Sparse Attention`）、低秩 Lipschitz 路由器（`L2R`）、双阈值自适应激活（`CARE`）以及循环动态停止（`DeepLoop`, `Training-Free Looped`）最新 arXiv 论文笔记。
 > 每一篇收录文献均包含：**核心痛点、底层数学公式、ASCII 架构图、关键实测指标**，以及**与 `Router-Tuning-Mixture-of-Depths` 仓库具体代码模块和我们已发表代表作（Our Works）的双向锚定**。
 
 ---
@@ -13,6 +13,8 @@
 
 | 收录日期 | 论文标题与 arXiv 链接 | 关键实测收益 / 核心结论 | 锚定本仓库代码模块与文档路径 (`Target Module`) | 原始精读归档 |
 | :---: | :--- | :--- | :--- | :---: |
+| `2026-10-02` | [**✂️ DySL-VLA & DySta**](https://arxiv.org/abs/2602.22896) (`arXiv:2602.22896`) | **CALVIN 具身操纵基准**：`DySL-VLA` 在 CALVIN 长程基准测试中，平均成功任务链长度（Success Length）相较 Deer-VLA 提升 **`+2.1%`**，在保持相同任务成功率的前提下，可训... | `router_tuning/` (Action-Sensitivity Prior-Post Guidance Dynamic-Static Layer-Skipping Router) | [2026-10-02](https://github.com/Shwai-He/scholar-odyssey/blob/main/intelligence/papers/2026-10-02_ai_paper_notes.md) |
+| `2026-10-02` | [**🧩 SlimQwen & MAESTRO**](https://arxiv.org/abs/2605.08738) (`arXiv:2605.08738`) | **预训练规模下后剪枝显著优于从头训练**：`SlimQwen` 证实，在完全相同的千亿级 Token 预训练算力预算下，对预训练完成的 `Qwen3-Next-80A3B` 实施渐进专家剪枝所得的 `23A2B` 模型，在 MM... | `router_tuning/` (Ergodic Markov Chain Stationary Transition Routing Analysis) | [2026-10-02](https://github.com/Shwai-He/scholar-odyssey/blob/main/intelligence/papers/2026-10-02_ai_paper_notes.md) |
 | `2026-10-01` | [**AIMER & EvoESAP**](https://arxiv.org/abs/2603.18492) (`arXiv:2603.18492`) | **`AIMER` 超越基于 C4 校准集的强基线且速度快几个数量级**：在涵盖 `7B` 至 `47B` 不同架构的 MoE 语言模型及 **16 个多样化基准**上，免校准的 `AIMER` 不仅全面超越现有免校准方法，更在跨... | `router_tuning/` (Evolutionary Non-Uniform Layerwise Token/Expert Capacity Allocation) | [2026-10-01](https://github.com/Shwai-He/scholar-odyssey/blob/main/intelligence/papers/2026-10-01_ai_paper_notes.md) |
 | `2026-10-01` | [**FocusVLA & Navigation Heads**](https://arxiv.org/abs/2603.28740) (`arXiv:2603.28740`) | **`FocusVLA` 提升精细操作与收敛速度**：在仿真与真实世界机器人基准上，`FocusVLA` 通过切断非视觉捷径并显式抑制无关背景噪声，在灵巧操作任务上大幅提升任务成功率并显著加快训练收敛速度。 | `router_tuning/` (Action-Conditioned Query-Guided Visual Token Routing Gate) | [2026-10-01](https://github.com/Shwai-He/scholar-odyssey/blob/main/intelligence/papers/2026-10-01_ai_paper_notes.md) |
 | `2026-09-30` | [**ACPruner & SCOPD**](https://arxiv.org/abs/2609.34558) (`arXiv:2609.34558`) | `ACPruner` (`2609.34558`) 保留 64/576 视觉 Token 维持 97.4% 精度；`SCOPD` (`2609.34044`) 10% 视觉 Token 保留率下 13 基准保留率：Vanilla 86.37%、SCOPD 90.49%、SCOPD+ 92.43% | `router_tuning/` (Biased Attention Coverage Maximization for Token Routing) | [2026-09-30](https://github.com/Shwai-He/scholar-odyssey/blob/main/intelligence/papers/2026-09-30_ai_paper_notes.md) |
@@ -40,6 +42,30 @@
 ---
 
 ## 🔎 2. 来源核验、推导边界与复现补充规范 (Source Verification & Reproducibility Notes)
+
+### 🔎 来源核验与研究补充（2026-10-02）
+
+本期精读的 6 组（共 12 篇）论文均直接抓取自 arXiv 官方网站，所有论文标题、预印本编号、作者团队及实测 Benchmark 指标均经过直接核对无误：
+
+| 主题组 | 原始论文来源（arXiv 编号与官方链接） |
+| :--- | :--- |
+| **具身 VLA 动态层跳过与时空静态解耦剪枝** | 1. `DySL-VLA: Efficient Vision-Language-Action Model Inference via Dynamic-Static Layer-Skipping for Robot Manipulation` ([`arXiv:2602.22896`](https://arxiv.org/abs/2602.22896))<br>2. `DySta: Efficient Long-Horizon Vision-Language-Action Models via Static-Dynamic Disentanglement` ([`arXiv:2602.03983`](https://arxiv.org/abs/2602.03983)) |
+| **预训练规模 MoE 专家剪枝与马尔可夫全局路由稀疏化** | 3. `SlimQwen: Exploring the Pruning and Distillation in Large MoE Model Pre-training` ([`arXiv:2605.08738`](https://arxiv.org/abs/2605.08738))<br>4. `It Takes a MAESTRO To Prune Bad Experts` ([`arXiv:2607.08601`](https://arxiv.org/abs/2607.08601)) |
+| **免草稿前瞻与 RoPE 旋转对齐 KV 缓存压缩** | 5. `LookaheadKV: Fast and Accurate KV Cache Eviction by Glimpsing into the Future without Generation` ([`arXiv:2603.10899`](https://arxiv.org/abs/2603.10899))<br>6. `RAP: KV-Cache Compression via RoPE-Aligned Pruning` ([`arXiv:2602.02599`](https://arxiv.org/abs/2602.02599)) |
+| **具身世界动作工作区演练与多智能体战术手册蒸馏** | 7. `World Action Agent: Harnessing VLMs for Robot Manipulation via World Action Rehearsal` ([`arXiv:2609.29964`](https://arxiv.org/abs/2609.29964))<br>8. `Recursive Harness Distillation across Agents for Robot Manipulation` ([`arXiv:2609.33378`](https://arxiv.org/abs/2609.33378)) |
+| **全局转移流匹配与多尺度自洽连续动力学** | 9. `Transition Flow Matching` ([`arXiv:2603.15689`](https://arxiv.org/abs/2603.15689))<br>10. `Recursive Flow Matching` ([`arXiv:2605.26535`](https://arxiv.org/abs/2605.26535)) |
+| **参数-上下文协同进化与基于博弈树搜索的代码 RSI** | 11. `COEVO: Co-Evolving Context and Parameters for Recursive Self-Improvement` ([`arXiv:2609.33398`](https://arxiv.org/abs/2609.33398))<br>12. `Self Improvement via Fast Tree-search` ([`arXiv:2609.19526`](https://arxiv.org/abs/2609.19526)) |
+
+**推导与实现边界**：
+* `DySL-VLA` 的跳层机制依赖两阶段知识蒸馏，且仅在增量层执行跳过，底层信息层强制常驻以保留基础跨模态表征；
+* `RAP` 严格要求旋转位置编码的复数旋转维度成对存在，其通道剪枝粒度必须以 2 为最小单位，无法应用于任意奇数维度的线性截断；
+* `Transition Flow Matching` 假定流场的转移关系满足全局积分一致性，对于强随机外力扰动下的多体非线性碰撞系统，需结合 SDE 随机修正项。
+
+**建议复现顺序**：
+1. 先在 `axon_v2` / `VLADrop` 中复现 `DySL-VLA` 与 `DySta`，在 CALVIN 与 LIBERO 上验证动作敏感性跳层与静态视觉 Token 缓存复用门控；
+2. 在 `TraceCraft` 与 `transformer-geometry` 中验证 `RAP` 的成对 RoPE 剪枝与 `LookaheadKV` 的轻量前瞻预测头，评估长上下文大海捞针（NIAH）保持率；
+3. 在 `ModelLesion` 与 `Capacity-Aware-MoE` 中部署 `SlimQwen` 的部分保留专家合并与 `MAESTRO` 各态历经马尔可夫平稳分布打分器；
+4. 在 `mera` 与 `axon_v2` 中将 `Transition Flow Matching` 与 `RecFM` 接入 1-NFE 动作轨迹蒸馏流水线。
 
 ### 🔎 来源核验与研究补充（2026-10-01）
 
@@ -92,7 +118,274 @@
 
 ## 📐 3. 逐篇论文深度机制解构、数学公式与本仓库落地指南 (Per-Paper Deep-Dive Cards)
 
-### 3.1 [2026-10-01] AIMER & EvoESAP: Calibration-Free Weight Concentration MoE Expert Pruning & Speculative-Acceptance Evolutionary Non-Uniform Allocation (`arXiv:2603.18492` & `arXiv:2603.06003`)
+### 3.1 [2026-10-02] ✂️ DySL-VLA & DySta: 机器人具身操作中的动作自适应动态跳层与时空解耦视觉 Token 缓存复用
+
+> **关联论文**：
+> * `DySL-VLA: Efficient Vision-Language-Action Model Inference via Dynamic-Static Layer-Skipping for Robot Manipulation` ([`arXiv:2602.22896`](https://arxiv.org/abs/2602.22896)，北京大学 SEC Lab)
+> * `Efficient Long-Horizon Vision-Language-Action Models via Static-Dynamic Disentanglement` ([`arXiv:2602.03983`](https://arxiv.org/abs/2602.03983))
+
+#### 📌 核心痛点与研究动机
+现有的通用具身 Vision-Language-Action（VLA）模型（如 OpenVLA、RoboFlamingo、Octo）均采用静态网络架构：每一个连续控制时间步（Time Step）无论当前执行的是粗粒度的自由空间臂展移动，还是亚毫米级的精密抓取接触，都必须完整执行 30–40 层的深层 Transformer 主干网络。这造成了两大严重缺陷：
+1. **计算资源分配与动作物理敏感度错配**：长程操作任务中，大部分步数属于容错率高的轨迹插值步，盲目执行深层网络带来极高的推理开销与控制延迟；
+2. **多帧视觉输入的上下文冗余**：连续相机画幅中，背景桌面等静态环境占据 70% 以上视觉像素，逐帧重新提取特征并常驻 KV 缓存导致显存带宽过早耗尽。
+
+#### ⚙️ 核心机制与数学公式推导
+**`DySL-VLA`** 提出动作感知的两级分层架构，将网络层划分为信息层（Informative Layers $\mathcal{L} _ {\text{info}}$ ）与增量层（Incremental Layers $\mathcal{L} _ {\text{incr}}$ ）。定义当前动作步的状态表征为 $s _ t$ ，动作敏感度得分由先验跳层门控 $\mathcal{G} _ {\text{prior}}$ 预测：
+
+$$
+\pi _ {\text{skip}}(s _ t) = \sigma\left(\mathbf{W} _ {\text{gate}} \cdot \text{Pooling}(H _ t^{(\text{info})}) + b\right)
+$$
+
+若 $\pi _ {\text{skip}}(s _ t) > \tau _ {\text{thresh}}$ ，则跳过全部增量层 $\mathcal{L} _ {\text{incr}}$ ，直接将信息层隐状态送入动作预测头：
+
+$$
+a _ t = \begin{cases} \text{Head}\left(H _ t^{(\text{info})}\right), & \text{if } \pi _ {\text{skip}}(s _ t) > \tau _ {\text{thresh}} \cr \text{Head}\left(\mathcal{F} _ {\text{incr}}(H _ t^{(\text{info})})\right), & \text{otherwise} \end{cases}
+$$
+
+为了消除跳层带来的特征分布偏移，设计跳层感知的两阶段知识蒸馏损失：
+
+$$
+\mathcal{L} _ {\text{KD}} = \alpha \mathcal{L} _ {\text{MSE}}(a _ t, a _ t^\star) + (1-\alpha) \mathcal{D} _ {\text{KL}}\left(\mathcal{P} _ {\text{student}}(a _ t) \Vert \mathcal{P} _ {\text{teacher}}(a _ t^\star)\right)
+$$
+
+**`DySta`** 则将多模态视觉 Token 显式解耦为静态语义基底 $T _ {\text{static}}$ 与动态交互差分 $T _ {\text{dyn}}$ ：
+
+$$
+T _ v(t) = T _ {\text{static}} \oplus \Delta T _ {\text{dyn}}(t)
+$$
+
+在长程交互中仅保留单份静态 KV 缓存：
+
+$$
+K _ v(t) = K _ {\text{static}} \cup K _ {\Delta}(t), \quad V _ v(t) = V _ {\text{static}} \cup V _ {\Delta}(t)
+$$
+
+仅当环境发生大幅剧烈变动时（通过重缓存门控 $\mathcal{R} _ {\text{gate}} > \epsilon$ 触发）才全量刷新 $K _ {\text{static}}$ 。
+
+#### 🎨 架构图与核心伪代码
+
+```mermaid
+flowchart TD
+    subgraph Input ["视觉与语言输入序列"]
+        V["多视角相机画幅 V_t"]
+        L["任务语言指令 L"]
+    end
+
+    subgraph DySta ["DySta: 静态/动态视觉解耦"]
+        Decouple["空间差分与运动解耦算子"]
+        V_Static["全局静态环境 Token (跨帧共享)"]
+        V_Dyn["局部动态接触 Token (每帧更新)"]
+    end
+
+    subgraph DySL ["DySL-VLA: 动态层选择器"]
+        Info_L["基础信息层 L_info (强制执行 1..M)"]
+        Gate{"先验跳层门控 G_prior"}
+        Incr_L["高精度增量层 L_incr (选跳 M+1..N)"]
+        Action_Head["连续动作解码头 Action Head"]
+    end
+
+    V --> Decouple
+    Decouple --> V_Static
+    Decouple --> V_Dyn
+    V_Static --> Info_L
+    V_Dyn --> Info_L
+    L --> Info_L
+
+    Info_L --> Gate
+    Gate -- "低风险平移 (Skip)" --> Action_Head
+    Gate -- "高灵敏接触 (Execute)" --> Incr_L
+    Incr_L --> Action_Head
+
+    style DySta fill:#eff6ff,stroke:#3b82f6,stroke-width:1.5px
+    style DySL fill:#ecfdf5,stroke:#10b981,stroke-width:1.5px
+```
+
+```python
+import torch
+import torch.nn as nn
+
+class DySLVLAPruner(nn.Module):
+    def __init__(self, info_layers, incr_layers, action_head, threshold=0.65):
+        super().__init__()
+        self.info_layers = info_layers
+        self.incr_layers = incr_layers
+        self.action_head = action_head
+        self.gate = nn.Linear(info_layers[-1].hidden_dim, 1)
+        self.threshold = threshold
+
+    def forward(self, x, static_kv_cache=None):
+        # 1. 强制执行基础信息层提取全局物理与时空语义
+        h = x
+        for layer in self.info_layers:
+            h = layer(h, kv_cache=static_kv_cache)
+        
+        # 2. 预测动作敏感度并计算跳层概率
+        skip_logit = self.gate(h.mean(dim=1))
+        skip_prob = torch.sigmoid(skip_logit)
+
+        # 3. 动态分支路由
+        if skip_prob.item() > self.threshold:
+            # 粗粒度动作：直接跳过增量层
+            action = self.action_head(h)
+        else:
+            # 精细接触动作：完整执行增量层细化轨迹
+            for layer in self.incr_layers:
+                h = layer(h)
+            action = self.action_head(h)
+            
+        return action, skip_prob
+```
+
+#### 📊 实验指标与结论
+* **CALVIN 具身操纵基准**：`DySL-VLA` 在 CALVIN 长程基准测试中，平均成功任务链长度（Success Length）相较 Deer-VLA 提升 **`+2.1%`**，在保持相同任务成功率的前提下，可训练参数量骤减 **`85.7×`**，端到端控制速度实现 **`3.75×` 加速**；
+* **仿真与真机实测**：`DySta` 在仿真基准上实现 **`2.0×` 推理加速**且成功率提升 **`+2.3%`**；在真实机器人机械臂长程操作任务中，多帧特征整合能力提升 **`24.5%`**，真实物理场景任务绝对成功率跃升 **`+23.3%`**，推理延迟降低至原生基线的 **`45%`**。
+
+#### 💡 与我们研究的闭环关联
+* 🎯 **锚定关联工作**：直接对接我们的 **`axon_v2`**（`Pillar 1: RL-HiSTrim` 视觉剪枝与 `Pillar 3: VLADrop` 动态层剪枝）与 **`VLADrop`**（`CASE-Lab-UMD/VLADrop` 2D DTR+WTR 宽深协同压缩框架）；
+* 🔬 **机理对比与技术异同**：我们此前的 `VLADrop` 侧重于离线结构化通道切除与静态权重折叠，而 `DySL-VLA` 将层丢弃（Layer Dropping）提升为**在线动作触发式动态早退**，弥补了我们在连续时间步上缺乏“物理接触感知计算自适应分配”的盲区；
+* 💡 **下一阶段研究启发**：在 `axon_v2/models/vla_pruner.py` 中引入 `DySL-VLA` 的两阶段门控，将 HiSTrim 的视觉 Token 剪枝率与增量层跳层门控联动——在平移阶段同时执行高比例视觉 Token 剪枝与全量增量层跳过，实现高达 5x 的端到端推理提速。
+
+#### 💡 工程启发与落地建议
+在嵌入式机器人控制器（如 Jetson AGX Orin）部署时，增量层的动态跳过可转化为异步算子调度，避免 GPU 显存内空载等待；静态 Token 缓存建议分配在持久化 pinned memory 中，仅当相机发生剧烈位姿转动（通过 IMU 读数阈值触发）时再更新。
+
+---
+
+> [!TIP]
+> **🎯 `Router-Tuning-Mixture-of-Depths` 仓库代码级落地点 (`Target Module`)**：`router_tuning/` (Action-Sensitivity Prior-Post Guidance Dynamic-Static Layer-Skipping Router)  
+> **📚 上游精读归档 (`Upstream Source`)**：`scholar-odyssey/intelligence/papers/2026-10-02_ai_paper_notes.md`
+
+
+---
+
+### 3.2 [2026-10-02] 🧩 SlimQwen & MAESTRO: 预训练规模 MoE 渐进专家剪枝与各态历经马尔可夫全局路由稀疏化
+
+> **关联论文**：
+> * `SlimQwen: Exploring the Pruning and Distillation in Large MoE Model Pre-training` ([`arXiv:2605.08738`](https://arxiv.org/abs/2605.08738))
+> * `It Takes a MAESTRO To Prune Bad Experts` ([`arXiv:2607.08601`](https://arxiv.org/abs/2607.08601))
+
+#### 📌 核心痛点与研究动机
+万亿参数级稀疏 MoE（如 Qwen-MoE、DeepSeekMoE、Mixtral）通过门控动态激活少数专家实现了训练与前向 FLOPs 的解耦，但庞大的全部专家参数池在部署时必须全量常驻显存，构成了极端的“内存墙（Memory Wall）”。现有的 MoE 专家剪枝方案存在两大局限：
+1. **单样本局部贪心评估的不可靠性**：传统方案仅依据单个 Token 的路由器输出概率或激活频率打分，完全忽视了专家在深层自回归序列中的**跨层相干协同与转移依赖**；
+2. **后剪枝与从头预训练的范式之争**：在千亿级 Token 预训练规模下，究竟是“先剪枝再继续预训练”更优，还是直接从头训练小尺寸 MoE 更强，此前缺乏严格的量化对比。
+
+#### ⚙️ 核心机制与数学公式推导
+**`MAESTRO`** 颠覆了孤立评估单个专家的视角，将自回归生成过程中专家激活的转移轨迹建模为**各态历经马尔可夫链（Ergodic Markov Chain）**。设模型有 $E$ 个专家，在层 $\ell$ 专家 $i$ 激活后紧接着在层 $\ell+1$ 激活专家 $j$ 的转移概率矩阵为 $P^{(\ell)} \in \mathbb{R}^{E \times E}$ ：
+
+$$
+P _ {ij}^{(\ell)} = \frac{\sum _ {t=1}^T \mathbb{I}(e _ t^{(\ell)} = i \land e _ t^{(\ell+1)} = j)}{\sum _ {t=1}^T \mathbb{I}(e _ t^{(\ell)} = i)}
+$$
+
+由于其状态空间不可约且非周期，存在唯一的全局平稳分布向量 $\pi^{(\ell)}$ 满足：
+
+$$
+\pi^{(\ell)} P^{(\ell)} = \pi^{(\ell)}, \quad \sum _ {i=1}^E \pi _ i^{(\ell)} = 1
+$$
+
+$\pi _ i^{(\ell)}$ 反映了专家 $i$ 在全局信息流中的长期稳态驻留权重。据此定义专家全局综合重要性得分：
+
+$$
+\mathcal{S} _ {\text{global}}(e _ i^{(\ell)}) = \pi _ i^{(\ell)} \cdot \left\lVert \mathbf{W} _ {\text{down}, i}^{(\ell)} \mathbf{W} _ {\text{up}, i}^{(\ell)} \right\rVert _ F
+$$
+
+**`SlimQwen`** 提出“部分保留专家合并（Partial-Preservation Expert Merging）”原则，将待剪除的冗余专家按余弦亲和度投影合并至高分幸存专家，并引入多 Token 预测（MTP）辅助自蒸馏损失：
+
+$$
+\mathcal{L} _ {\text{total}} = \mathcal{L} _ {\text{LM}}(x) + \lambda _ {\text{KD}} \mathcal{D} _ {\text{KL}}\left(\mathcal{P} _ {\text{stu}}(x) \Vert \mathcal{P} _ {\text{tea}}(x)\right) + \sum _ {k=1}^K \beta _ k \mathcal{L} _ {\text{MTP}}(x _ {t+k})
+$$
+
+其渐进式剪枝退火策略消除了突变剪枝引发的梯度爆炸。
+
+#### 🎨 架构图与核心伪代码
+
+```mermaid
+flowchart TD
+    subgraph Transition ["自回归专家激活轨迹采集"]
+        Tokens["输入 Token 序列"] --> Router1["第 l 层路由器"]
+        Router1 --> Act1["激活专家 e_i"]
+        Act1 --> Router2["第 l+1 层路由器"]
+        Router2 --> Act2["激活专家 e_j"]
+    end
+
+    subgraph Markov ["MAESTRO: 马尔可夫转移矩阵构建"]
+        Transition_Count["统计转移频次 P_ij"]
+        Eigen_Solve["各态历经平稳分布解算: π P = π"]
+        Stationary_Weight["全局稳态权重向量 π"]
+    end
+
+    subgraph Prune_Merge ["SlimQwen: 部分保留合并与 MTP 蒸馏"]
+        Score["结合权重范数确定保留专家"]
+        Merge["余弦相似度投影合并被剪除专家"]
+        MTP["MTP 辅助蒸馏继续预训练"]
+    end
+
+    Act2 --> Transition_Count
+    Transition_Count --> Eigen_Solve
+    Eigen_Solve --> Stationary_Weight
+    Stationary_Weight --> Score
+    Score --> Merge
+    Merge --> MTP
+
+    style Markov fill:#eff6ff,stroke:#3b82f6,stroke-width:1.5px
+    style Prune_Merge fill:#fef3c7,stroke:#f59e0b,stroke-width:1.5px
+```
+
+```python
+import torch
+
+def compute_maestro_stationary_scores(expert_activations_seq, num_experts):
+    """
+    expert_activations_seq: [num_tokens, num_layers], 记录每个 token 在每层的激活专家 ID
+    """
+    num_layers = expert_activations_seq.shape[1]
+    global_expert_scores = []
+
+    for l in range(num_layers - 1):
+        # 1. 统计相邻层间的专家激活转移频次矩阵
+        src = expert_activations_seq[:, l]
+        dst = expert_activations_seq[:, l + 1]
+        
+        counts = torch.zeros((num_experts, num_experts), dtype=torch.float32)
+        for s, d in zip(src, dst):
+            counts[s, d] += 1.0
+            
+        # 2. 构造行归一化随机转移矩阵 (加拉普拉斯平滑防吸收态)
+        transition_matrix = (counts + 1e-4) / (counts.sum(dim=-1, keepdim=True) + 1e-4 * num_experts)
+        
+        # 3. 求解左特征向量主本征方程 (特征值为 1 的平稳分布)
+        eigenvalues, eigenvectors = torch.linalg.eig(transition_matrix.T)
+        real_eigenvalues = eigenvalues.real
+        # 寻找最接近 1.0 的本征向量
+        idx = torch.argmin(torch.abs(real_eigenvalues - 1.0))
+        stationary_dist = eigenvectors[:, idx].real
+        stationary_dist = torch.abs(stationary_dist) / torch.sum(torch.abs(stationary_dist))
+        
+        global_expert_scores.append(stationary_dist)
+
+    return global_expert_scores
+```
+
+#### 📊 实验指标与结论
+* **预训练规模下后剪枝显著优于从头训练**：`SlimQwen` 证实，在完全相同的千亿级 Token 预训练算力预算下，对预训练完成的 `Qwen3-Next-80A3B` 实施渐进专家剪枝所得的 `23A2B` 模型，在 MMLU、GSM8K 与 HumanEval 上的表现全面超越从头训练的等规模架构，知识留存率高达 **`96.8%`**；
+* **极端压缩鲁棒性**：`MAESTRO` 在安全、偏见与复杂推理 5 大领域评测中，面对 `50%` 的专家切除率，模型性能留存率相较传统频次打分基线提升高达 **`+10.61%`**，且跨任务方差降低 40%，证明了各态历经马尔可夫平稳分布能够强力捕获跨层知识协同链路。
+
+#### 💡 与我们研究的闭环关联
+* 🎯 **锚定关联工作**：直接对应我们的 **`ModelLesion`**（`width_woodbury_pruner.py`）与 **`Capacity-Aware-MoE`**（`router_tuning` 专家剪枝框架）；
+* 🔬 **机理对比与技术异同**：我们此前的 `Capacity-Aware-MoE` 侧重于依据单个 Token 的 Capacity 限制硬截断候选专家，属于前向阶段的局部剪枝；`MAESTRO` 提供的马尔可夫稳态分布为我们的离线结构剪枝提供了首个具有严谨概率论保证的**跨层全局重要性先验**；
+* 💡 **下一阶段研究启发**：将 `MAESTRO` 的平稳转移分布 $\pi^{(\ell)}$ 与 `ModelLesion` 的 Woodbury 逆 Hessian 矩阵求交——使用马尔可夫稳态概率确定保留专家拓扑，使用 Woodbury 残差代数补偿被剪除专家的投影漂移。
+
+#### 💡 工程启发与落地建议
+专家激活转移矩阵的统计开销极低，可以在 Prefill 阶段利用现有的监控打点顺带统计（仅占用 $O(L \cdot E^2)$ 空间），无需保存中间巨幅激活张量；结合 MTP 蒸馏微调时，仅需更新合并后专家的 Down-projection 权重，即可在 24 小时内完成十亿级参数模型的部署级瘦身。
+
+---
+
+> [!TIP]
+> **🎯 `Router-Tuning-Mixture-of-Depths` 仓库代码级落地点 (`Target Module`)**：`router_tuning/` (Ergodic Markov Chain Stationary Transition Routing Analysis)  
+> **📚 上游精读归档 (`Upstream Source`)**：`scholar-odyssey/intelligence/papers/2026-10-02_ai_paper_notes.md`
+
+
+---
+
+### 3.3 [2026-10-01] AIMER & EvoESAP: Calibration-Free Weight Concentration MoE Expert Pruning & Speculative-Acceptance Evolutionary Non-Uniform Allocation (`arXiv:2603.18492` & `arXiv:2603.06003`)
 * **论文标题**：
   1. *AIMER: Calibration-Free Task-Agnostic MoE Expert Pruning* (`arXiv:2603.18492`)
   2. *EvoESAP: Non-Uniform Expert Pruning for Sparse MoE* (`arXiv:2603.06003`)
@@ -161,7 +454,7 @@ $$
 
 ---
 
-### 3.2 [2026-10-01] FocusVLA & Navigation Heads: Modality Cascaded Focus Attention & Zero-Overhead Attention-Head Path Deviation Detection in VLAs (`arXiv:2603.28740` & `arXiv:2603.13782`)
+### 3.4 [2026-10-01] FocusVLA & Navigation Heads: Modality Cascaded Focus Attention & Zero-Overhead Attention-Head Path Deviation Detection in VLAs (`arXiv:2603.28740` & `arXiv:2603.13782`)
 * **论文标题**：
   1. *FocusVLA: Focused Visual Utilization for Vision-Language-Action Models* (`arXiv:2603.28740`)
   2. *Your Vision-Language-Action Model Already Has Attention Heads For Path Deviation Detection* (`arXiv:2603.13782`)
@@ -232,7 +525,7 @@ $$
 
 ---
 
-### 3.3 [2026-09-30] ACPruner & SCOPD: Visual Token Pruning as Biased Attention Coverage Maximization & Sparse-Context On-Policy Self-Distillation (`arXiv:2609.34558` & `arXiv:2609.34044`)
+### 3.5 [2026-09-30] ACPruner & SCOPD: Visual Token Pruning as Biased Attention Coverage Maximization & Sparse-Context On-Policy Self-Distillation (`arXiv:2609.34558` & `arXiv:2609.34044`)
 * **论文标题**：
   1. *ACPruner: Visual Token Pruning as Biased Attention Coverage Maximization in LVLMs* (`arXiv:2609.34558`)
   2. *SCOPD: Sparse-Context On-Policy Self-Distillation for Efficient Vision-Language Models* (`arXiv:2609.34044`)
@@ -296,7 +589,7 @@ $$
 
 ---
 
-### 3.4 [2026-09-30] Dynamic Flow, Static Graph & DORA: KV Cache Reuse on Static NPU Graphs & Dynamic Online RL Token Pruning (`arXiv:2609.34727` & `arXiv:2609.34325`)
+### 3.6 [2026-09-30] Dynamic Flow, Static Graph & DORA: KV Cache Reuse on Static NPU Graphs & Dynamic Online RL Token Pruning (`arXiv:2609.34727` & `arXiv:2609.34325`)
 * **论文标题**：
   1. *Dynamic Flow, Static Graph: KV Cache Reuse for Efficient LLM Serving on Mobile NPUs* (`arXiv:2609.34727`)
   2. *DORA: Dynamic Online Reinforcement Agent for Token Pruning in Vision Transformers* (`arXiv:2609.34325`)
@@ -360,7 +653,7 @@ $$
 
 ---
 
-### 3.5 [2026-09-29] ✂️ *CoverPruner & SFPruner: Who Speaks for the Pruned? Visual Token Pruning as Coverage Optimization & Single-Forward Ridge Leverage*
+### 3.7 [2026-09-29] ✂️ *CoverPruner & SFPruner: Who Speaks for the Pruned? Visual Token Pruning as Coverage Optimization & Single-Forward Ridge Leverage*
 > 🏷️ **核心关键词**：Visual Token Pruning · Representational Coverage Maximization (RCM) · Ridge Leverage Score · High-Resolution MLLMs  
 > 🔗 **arXiv 链接**：[`arXiv:2609.03158`](https://arxiv.org/abs/2609.03158) (`CoverPruner`) & [`arXiv:2607.23046`](https://arxiv.org/abs/2607.23046) (`SFPruner`)
 
@@ -404,7 +697,7 @@ $$
 
 ---
 
-### 3.6 [2026-09-29] 🦾 *DEE-VLA: Decoupled Early Exits for Task-Dependent Compute Allocation in Flow-Matching VLAs*
+### 3.8 [2026-09-29] 🦾 *DEE-VLA: Decoupled Early Exits for Task-Dependent Compute Allocation in Flow-Matching VLAs*
 > 🏷️ **核心关键词**：Vision-Language-Action (VLA) · Flow Matching · Decoupled Early Exits · Dynamic Compute Allocation  
 > 🔗 **arXiv 链接**：[`arXiv:2609.29382`](https://arxiv.org/abs/2609.29382)
 
@@ -448,7 +741,7 @@ $$
 
 ---
 
-### 3.7 [2026-09-28] ✂️ *CLSE: Spectral Evolution-Guided Token Pruning in Multimodal Large Language Models*
+### 3.9 [2026-09-28] ✂️ *CLSE: Spectral Evolution-Guided Token Pruning in Multimodal Large Language Models*
 > 🏷️ **核心关键词**：Multimodal Token Pruning · Cross-Layer Spectral Evolution · Discrete Cosine Transform (DCT) · Training-Free Compression  
 > 🔗 **arXiv 链接**：[`arXiv:2606.24165`](https://arxiv.org/abs/2606.24165) (ECCV 2026)
 
@@ -495,7 +788,7 @@ $$
 
 ---
 
-### 3.8 [2026-09-28] ✂️ *ASL: Adaptive Layer Selection for Layer-Wise Token Pruning in LLM Inference*
+### 3.10 [2026-09-28] ✂️ *ASL: Adaptive Layer Selection for Layer-Wise Token Pruning in LLM Inference*
 > 🏷️ **核心关键词**：Layer-Wise Token Pruning · Adaptive Layer Selection · Attention Variance · Long-Context LLM Inference  
 > 🔗 **arXiv 链接**：[`arXiv:2601.07667`](https://arxiv.org/abs/2601.07667) (ACL 2026 Findings)
 
@@ -541,7 +834,7 @@ $$
 
 ---
 
-### 3.9 [2026-09-27] L2R: Low-Rank and Lipschitz-Controlled Routing for Mixture-of-Experts
+### 3.11 [2026-09-27] L2R: Low-Rank and Lipschitz-Controlled Routing for Mixture-of-Experts
 
 * **论文信息**：Minghao Yang, Ren Togo, Guang Li, Takahiro Ogawa, Miki Haseyama (`arXiv:2601.21349`, 2026-01)
 * **核心关键词**：MoE Routing Geometry、Low-Rank Latent Space、Lipschitz Continuity、Saturated Inner-Product Scoring (SIPS)、Multi-Anchor Routing
@@ -634,7 +927,7 @@ $$
 
 ---
 
-### 3.10 [2026-09-26] 🔄 *LoopMoE: Unifying Iterative Computation with Mixture-of-Experts for Language Modeling*
+### 3.12 [2026-09-26] 🔄 *LoopMoE: Unifying Iterative Computation with Mixture-of-Experts for Language Modeling*
 > **聚焦领域**：Looped Transformers · Mixture of Experts (MoE) · Iterative Depth Scaling · Weight Sharing  
 > **arXiv**：[`arXiv:2606.04438`](https://arxiv.org/abs/2606.04438)
 
@@ -687,7 +980,7 @@ $$
 
 ---
 
-### 3.11 [2026-09-26] 🤖 *VLA-Pruner: Temporal-Aware Dual-Level Visual Token Pruning for Efficient Vision-Language-Action Inference*
+### 3.13 [2026-09-26] 🤖 *VLA-Pruner: Temporal-Aware Dual-Level Visual Token Pruning for Efficient Vision-Language-Action Inference*
 > **聚焦领域**：Vision-Language-Action (VLA) · Embodied AI · Visual Token Pruning · Temporal Consistency  
 > **arXiv**：[`arXiv:2511.16449`](https://arxiv.org/abs/2511.16449)
 
@@ -743,7 +1036,7 @@ $$
 
 ---
 
-### 3.12 [2026-09-25] Fully Looped Transformer: Stabilizing Looped Models via Attention Injection and Residual Scaling
+### 3.14 [2026-09-25] Fully Looped Transformer: Stabilizing Looped Models via Attention Injection and Residual Scaling
 
 * **论文信息**：`arXiv:2605.18797` (2026-05)
 * **核心关键词**：Fully Looped Transformer、Attention Injection、Anchor KV Grounding、Gradient Oscillation Prevention
@@ -809,7 +1102,7 @@ $$
 
 ---
 
-### 3.13 [2026-09-24] LearnPruner: Two-Stage Differentiable Visual Token Pruning for Large Vision-Language Models
+### 3.15 [2026-09-24] LearnPruner: Two-Stage Differentiable Visual Token Pruning for Large Vision-Language Models
 
 * **论文信息**：`arXiv:2604.23950` (2026-04)
 * **核心关键词**：Two-Stage Visual Token Pruning、Differentiable Gumbel/Sigmoid Masking、Shallow Deduplication & Deep Grounding
@@ -869,7 +1162,7 @@ $$
 
 ---
 
-### 3.14 [2026-09-24] Training-Free Looped Transformers: Test-Time Mid-Stack Layer Looping
+### 3.16 [2026-09-24] Training-Free Looped Transformers: Test-Time Mid-Stack Layer Looping
 
 * **论文信息**：`arXiv:2605.23872` (2026-05)
 * **核心关键词**：Training-Free Looped Transformer、Test-Time Depth Scaling、Mid-Stack Fixed-Point Iteration
@@ -923,7 +1216,7 @@ $$
 
 ---
 
-### 3.15 [2026-09-23] StepKV: Step-Aware KV Cache Compression for Preserving Reasoning Continuity
+### 3.17 [2026-09-23] StepKV: Step-Aware KV Cache Compression for Preserving Reasoning Continuity
 
 * **论文信息**：`arXiv:2609.22158` (2026-09)
 * **核心关键词**：Step-Aware KV Compression、Long-CoT Reasoning Continuity、Semantic Span Eviction、Discourse Boundary Detection
@@ -982,7 +1275,7 @@ $$
 
 ---
 
-### 3.16 [2026-09-23] HetDPT: Rethinking Depth Pruning for Vision Transformers — A Heterogeneity-Aware Perspective
+### 3.18 [2026-09-23] HetDPT: Rethinking Depth Pruning for Vision Transformers — A Heterogeneity-Aware Perspective
 
 * **论文信息**：`arXiv:2607.03784` (2026-07)
 * **核心关键词**：Heterogeneity-Aware Depth Pruning、Decoupled MHSA/FFN Pruning、Vision Transformers
@@ -1048,7 +1341,7 @@ $$
 
 ---
 
-### 3.17 [2026-09-23] HiMoE-VLA: Hierarchical Mixture-of-Experts for Generalist Vision-Language-Action Policies
+### 3.19 [2026-09-23] HiMoE-VLA: Hierarchical Mixture-of-Experts for Generalist Vision-Language-Action Policies
 
 * **论文信息**：`arXiv:2512.05693` (2025/2026)
 * **核心关键词**：Hierarchical MoE、Generalist VLA Policy、Task-Skill Decoupled Routing、Gradient Conflict Mitigation
@@ -1096,7 +1389,7 @@ $$
 
 ---
 
-### 3.18 [2026-09-23] D-Cut: Adaptive Verification Depth Pruning for Batched Speculative Decoding
+### 3.20 [2026-09-23] D-Cut: Adaptive Verification Depth Pruning for Batched Speculative Decoding
 
 * **论文信息**：`arXiv:2607.14647` (2026-07)
 * **核心关键词**：Speculative Decoding、Verification Depth Pruning、Cross-Request Budget Allocation
@@ -1142,7 +1435,7 @@ $$
 
 ---
 
-### 3.19 [2026-09-21] DeepLoop: Depth Scaling for Looped Transformers
+### 3.21 [2026-09-21] DeepLoop: Depth Scaling for Looped Transformers
 
 * **论文信息**：`arXiv:2607.13491` (2026-07)
 * **核心关键词**：Looped Transformers、Residual-Scaling Problem、Coherent Variance Growth、Depth Scaling Law
@@ -1204,7 +1497,7 @@ $$
 
 ---
 
-### 3.20 [2026-09-21] RotateK: Rotation-Aligned Key Channel Pruning for Vision-Language Models
+### 3.22 [2026-09-21] RotateK: Rotation-Aligned Key Channel Pruning for Vision-Language Models
 
 * **论文信息**：`arXiv:2605.19218` (2026-05)
 * **核心关键词**：Key Channel Pruning、Orthogonal Rotation Alignment、Vision-Language Models (VLMs)、Head-Dimension Compression
@@ -1268,7 +1561,7 @@ $$
 
 ---
 
-### 3.21 [2026-09-21] Token Sparse Attention: Efficient Long-Context Inference with Interleaved Token Selection
+### 3.23 [2026-09-21] Token Sparse Attention: Efficient Long-Context Inference with Interleaved Token Selection
 
 * **论文信息**：`arXiv:2602.03216` (2026-02)
 * **核心关键词**：Token Sparse Attention、Interleaved Compress-Decompress、Reversible Token Selection、Dense Kernel Compatibility
@@ -1333,7 +1626,7 @@ $$
 
 ---
 
-### 3.22 [2026-09-20] CARE: Spend Experts Where You Are Unsure — Confidence-Adaptive Routing for MoE-LoRA
+### 3.24 [2026-09-20] CARE: Spend Experts Where You Are Unsure — Confidence-Adaptive Routing for MoE-LoRA
 
 * **论文信息**：`arXiv:2607.26052` (2026-07)
 * **核心关键词**：Confidence-Adaptive Routing、MoE-LoRA、Nucleus Expert Activation、Router Uncertainty Entropy
@@ -1392,7 +1685,7 @@ $$
 
 ---
 
-### 3.23 [2026-09-18] 🧩 *MoE-Tile: Warp-Aligned Tensor Slicing for Zero-Overhead Dynamic Sparse Routing on Modern Accelerators*
+### 3.25 [2026-09-18] 🧩 *MoE-Tile: Warp-Aligned Tensor Slicing for Zero-Overhead Dynamic Sparse Routing on Modern Accelerators*
 > **聚焦领域**：Mixture of Experts (MoE) · GPU Kernel Optimization · Warp Divergence · Hardware-Aware Sparsity  
 > **arXiv**：[`arXiv:2609.09112`](https://arxiv.org/abs/2609.09112)
 
